@@ -1,0 +1,97 @@
+{
+  "name": "@nexbrowser/mcp",
+  "version": "1.0.4",
+  "description": "Model Context Protocol server for NexBrowser environment management and browser automation",
+  "type": "module",
+  "main": "lib/index.cjs",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
+      },
+      "require": {
+        "types": "./lib/index.d.cts",
+        "default": "./lib/index.cjs"
+      },
+      "default": "./lib/index.cjs"
+    }
+  },
+  "bin": {
+    "nexbrowser-mcp": "lib/cli.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "start": "node lib/cli.js",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run test/integration-real.test.ts",
+    "gen:catalog": "vitest run test/skill-catalog.test.ts",
+    "test:dist": "node scripts/package-smoke.mjs",
+    "test:package": "pnpm run build && pnpm run test && pnpm run test:dist && pnpm run lint:package",
+    "lint:package": "publint && attw --pack .",
+    "format": "prettier --write . --ignore-unknown",
+    "format:check": "prettier --check . --ignore-unknown",
+    "typecheck": "pnpm run typecheck:src && pnpm run typecheck:test",
+    "typecheck:src": "tsc --noEmit -p tsconfig.json",
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
+    "inspect": "pnpm run build && pnpm dlx @modelcontextprotocol/inspector node lib/cli.js",
+    "inspect:cli": "pnpm run build && pnpm dlx @modelcontextprotocol/inspector --cli node lib/cli.js",
+    "prepublishOnly": "pnpm run typecheck && pnpm run build && pnpm run test && pnpm run test:dist && pnpm run lint:package",
+    "clean": "rimraf lib"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "nexbrowser",
+    "browser-automation",
+    "cdp",
+    "chrome-devtools-protocol"
+  ],
+  "files": [
+    "lib",
+    "skills",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "README.zh_CN.md",
+    "package.json"
+  ],
+  "author": "NexBrowser",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nex-browser/nexbrowser-mcp.git"
+  },
+  "homepage": "https://github.com/nex-browser/nexbrowser-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/nex-browser/nexbrowser-mcp/issues"
+  },
+  "packageManager": "pnpm@11.18.0",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "commander": "13.1.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@types/node": "^22.0.0",
+    "prettier": "^3.6.2",
+    "publint": "^0.3.23",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "5.9.3",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

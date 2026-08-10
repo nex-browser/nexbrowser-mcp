@@ -1,0 +1,1224 @@
+[
+  {
+    "name": "nex_list_browsers",
+    "description": "List or count NexBrowser browser environments (also called NexBrowser windows or profiles) without starting them. This does not list operating-system application windows.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "page": {
+          "type": "number"
+        },
+        "size": {
+          "type": "number"
+        },
+        "keyword": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_open_browsers",
+    "description": "Start one or more NexBrowser environments and return their status.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "teamId",
+        "windowId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_get_connection_info",
+    "description": "Inspect the status of running NexBrowser environments.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "teamId",
+        "windowId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_close_browsers",
+    "description": "Close one or more NexBrowser environments.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "windowId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "nex_browser_connect",
+    "description": "Connect to a NexBrowser window using the active team by default and create an isolated automation session.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Optional team ID. Omit it to use the team currently selected in NexBrowser."
+        },
+        "windowId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "startIfNeeded": {
+          "type": "boolean",
+          "description": "Explicitly start the window when it is not running."
+        }
+      },
+      "required": [
+        "windowId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_disconnect",
+    "description": "Disconnect an automation session without closing the NexBrowser environment.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_tab_list",
+    "description": "List tabs and the active stable page ID for an automation session.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "browser_tab_new",
+    "description": "Open a new tab and optionally navigate it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_tab_select",
+    "description": "Select a tab by stable page ID.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pageId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_tab_close",
+    "description": "Close a tab by stable page ID.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pageId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "browser_navigate",
+    "description": "Navigate the selected page and return its refreshed accessibility snapshot.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_reload",
+    "description": "Page reloaded.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_go_back",
+    "description": "Navigated back.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_go_forward",
+    "description": "Navigated forward.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_click",
+    "description": "Click or double-click an element from the latest snapshot or a CSS selector.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "doubleClick": {
+          "type": "boolean"
+        },
+        "button": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right",
+            "middle"
+          ]
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_hover",
+    "description": "Hover over an element.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_type",
+    "description": "Type text into an element using sequential key events.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "text": {
+          "type": "string"
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "target",
+        "text"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_fill_form",
+    "description": "Fill one or more form controls in order.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "fields": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string",
+                "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "target",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "fields"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_select_option",
+    "description": "Select one or more values in a select control.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "values": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "target",
+        "values"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_check",
+    "description": "Check a checkbox or radio control.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_uncheck",
+    "description": "Uncheck a checkbox or radio control.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_press_key",
+    "description": "Press a key on the selected page or focused element.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_key_down",
+    "description": "Hold a keyboard key down until browser_key_up is called.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_key_up",
+    "description": "Release a keyboard key held by browser_key_down.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_drag",
+    "description": "Drag one snapshot ref or selector to another.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "startTarget": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "endTarget": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "required": [
+        "startTarget",
+        "endTarget"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_scroll",
+    "description": "Scroll the page, optionally bringing a target into view first.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "deltaX": {
+          "type": "number"
+        },
+        "deltaY": {
+          "type": "number"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_wait_for",
+    "description": "Wait for a target, text, or a bounded duration.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 120000
+        },
+        "timeout": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 120000
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_resize",
+    "description": "Resize the active page viewport.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "height": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_snapshot",
+    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "boxes": {
+          "type": "boolean"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "browser_page_title",
+    "description": "Page title.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "browser_page_url",
+    "description": "Page URL.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "browser_get_text",
+    "description": "Read visible text from the page or one target.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "browser_console_messages",
+    "description": "Read console messages buffered by this automation session.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "clear": {
+          "type": "boolean"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_network_requests",
+    "description": "Read network requests buffered by this automation session.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "clear": {
+          "type": "boolean"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_network_request",
+    "description": "Read one buffered network request by its 1-based index.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "index": {
+          "type": "number",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "index"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "browser_handle_dialog",
+    "description": "List pending dialogs or accept/dismiss one dialog.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "id": {
+          "type": "number",
+          "minimum": 1
+        },
+        "accept": {
+          "type": "boolean"
+        },
+        "dismiss": {
+          "type": "boolean"
+        },
+        "promptText": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_evaluate",
+    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "expression": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "expression"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_run_code",
+    "description": "Run page JavaScript when the separate runCode permission is enabled.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_take_screenshot",
+    "description": "Capture a screenshot and return MCP image content when it is small enough.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "png",
+            "jpeg"
+          ]
+        },
+        "fullPage": {
+          "type": "boolean"
+        },
+        "quality": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_file_upload",
+    "description": "Upload approved local files through a file input target.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "files": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "target",
+        "files"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "browser_drop",
+    "description": "Drop approved files or MIME-typed text data onto a target.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "data": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  }
+]

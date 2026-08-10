@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "timezone": "Asia/Shanghai",
+  "schedule": ["before 9am on monday"],
+  "labels": ["dependencies"],
+  "configMigration": true,
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
+  "osvVulnerabilityAlerts": true,
+  "postUpdateOptions": ["pnpmDedupe"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "sdk 与 zod 精确钉死：zod 的 JSON Schema 序列化即 LLM 可见工具面（golden 基线钉守），SDK 与 zod 互操作对版本敏感。升级必须走显式 PR 且 CI 全绿。",
+      "matchPackageNames": ["@modelcontextprotocol/sdk", "zod"],
+      "rangeStrategy": "pin",
+      "groupName": "protocol surface (sdk + zod)"
+    },
+    {
+      "description": "开发依赖的 minor/patch 合并为单个 PR，减少噪音。",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies (non-major)"
+    },
+    {
+      "description": "TypeScript 大版本需人工批准：编译器大版本可能影响当前由 tsc 独立生成声明文件的构建架构。",
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "pnpm 大版本需人工批准：packageManager 升级必须连同 Node 开发版本和 CI 矩阵一起评估。",
+      "matchPackageNames": ["pnpm"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}
