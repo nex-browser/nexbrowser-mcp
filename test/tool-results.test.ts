@@ -75,7 +75,7 @@ describe('tool result mapping', () => {
       request: async () => ({ code: 'WINDOW_NOT_FOUND', msg: 'missing', data: null })
     } as unknown as NexApiClient;
     const tool = createBrowserManagementTools(client).find(
-      (candidate) => candidate.name === 'nex_get_connection_info'
+      (candidate) => candidate.name === 'nex_browser_connection_info'
     );
 
     expect(tool).toBeDefined();
@@ -92,7 +92,7 @@ describe('tool result mapping', () => {
       request: async () => ({ code: 'SESSION_NOT_FOUND', msg: 'Session not found', data: null })
     } as unknown as NexApiClient;
     const tool = createBrowserAutomationTools(client).find(
-      (candidate) => candidate.name === 'browser_snapshot'
+      (candidate) => candidate.name === 'nex_browser_snapshot'
     );
 
     const result = await tool!.execute({});
@@ -121,7 +121,7 @@ describe('tool result mapping', () => {
       })
     } as unknown as NexApiClient;
     const tool = createBrowserAutomationTools(client).find(
-      (candidate) => candidate.name === 'browser_take_screenshot'
+      (candidate) => candidate.name === 'nex_browser_take_screenshot'
     );
 
     expect(tool).toBeDefined();
@@ -155,7 +155,7 @@ describe('tool result mapping', () => {
       })
     } as unknown as NexApiClient;
     const tool = createBrowserManagementTools(client).find(
-      (candidate) => candidate.name === 'nex_get_connection_info'
+      (candidate) => candidate.name === 'nex_browser_connection_info'
     );
 
     const result = await tool!.execute({ teamId: 'team-1', windowId: 'window-1' });
@@ -174,7 +174,7 @@ describe('tool result mapping', () => {
       })
     } as unknown as NexApiClient;
     const tool = createBrowserManagementTools(client).find(
-      (candidate) => candidate.name === 'nex_get_connection_info'
+      (candidate) => candidate.name === 'nex_browser_connection_info'
     );
 
     const result = await tool!.execute({ teamId: 'team-1', windowId: 'window-1' });

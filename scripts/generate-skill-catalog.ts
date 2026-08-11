@@ -81,7 +81,7 @@ export function generateSkillCatalog(): string {
     '     Regenerate: pnpm gen:catalog',
     '     Do not edit by hand - a drift test pins this file to the specs. -->',
     '',
-    'Start automation with `browser_snapshot` to obtain current page targets. A target is normally a bare snapshot ref such as `e12`; unique CSS selectors are a fallback.',
+    'Start automation with `nex_browser_snapshot` to obtain current page targets. A target is normally a bare snapshot ref such as `e12`; unique CSS selectors are a fallback.',
     '',
     "Most automation tools also accept optional `sessionId` (defaults to this client's active session) and `pageId` (defaults to the session's active page); they are omitted from the per-tool input lists below.",
     '',

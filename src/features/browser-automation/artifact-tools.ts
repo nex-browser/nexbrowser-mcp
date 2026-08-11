@@ -11,7 +11,7 @@ import { automationSchema, TARGET_PROPERTY } from './schema.js';
  */
 export const ARTIFACT_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
-    name: 'browser_take_screenshot',
+    name: 'nex_browser_take_screenshot',
     description: 'Capture a screenshot and return MCP image content when it is small enough.',
     inputSchema: automationSchema({
       filename: z.string().optional(),
@@ -34,7 +34,7 @@ export const ARTIFACT_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_file_upload',
+    name: 'nex_browser_file_upload',
     description: 'Upload approved local files through a file input target.',
     inputSchema: automationSchema({
       target: TARGET_PROPERTY,
@@ -50,7 +50,7 @@ export const ARTIFACT_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_drop',
+    name: 'nex_browser_drop',
     description: 'Drop approved files or MIME-typed text data onto a target.',
     inputSchema: automationSchema({
       target: TARGET_PROPERTY,

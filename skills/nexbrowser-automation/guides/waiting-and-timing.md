@@ -6,8 +6,8 @@ Wait after navigation and every action that can change page state.
 
 ```text
 state-changing action
-→ browser_wait_for(text="expected content") or browser_wait_for(target="e12")
-→ browser_snapshot
+→ nex_browser_wait_for(text="expected content") or nex_browser_wait_for(target="e12")
+→ nex_browser_snapshot
 ```
 
 Use `time` only as a small fallback buffer when no stable observable text is available. It is measured in milliseconds (for example `time=2000` for two seconds) and capped at 120000.

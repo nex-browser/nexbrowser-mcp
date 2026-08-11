@@ -7,9 +7,9 @@ NexBrowser unified MCP uses accessibility snapshots. Interactive nodes contain r
 Copy the ref exactly and pass it as `target`:
 
 ```text
-browser_click(target="e50")
-browser_type(target="e48", text="hello")
-browser_select_option(target="e70", values=["option1"])
+nex_browser_click(target="e50")
+nex_browser_type(target="e48", text="hello")
+nex_browser_select_option(target="e70", values=["option1"])
 ```
 
 The MCP also accepts the `aria-ref=e48` form, but bare `e48` is preferred. A unique CSS selector is supported when snapshot targeting is unavailable.

@@ -1,7 +1,7 @@
 [
   {
-    "name": "nex_list_browsers",
-    "description": "List or count NexBrowser browser environments (also called NexBrowser windows or profiles) without starting them. This does not list operating-system application windows.",
+    "name": "nex_browser_list",
+    "description": "Preferred NexBrowser LocalAPI tool for requests such as 'use NexBrowser to show or count my windows'. Lists managed NexBrowser environments/profiles. Never reports Chrome, Edge, the Codex in-app browser, operating-system application windows, or browser tabs.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -33,7 +33,7 @@
     }
   },
   {
-    "name": "nex_open_browsers",
+    "name": "nex_browser_open",
     "description": "Start one or more NexBrowser environments and return their status.",
     "inputSchema": {
       "type": "object",
@@ -85,7 +85,7 @@
     }
   },
   {
-    "name": "nex_get_connection_info",
+    "name": "nex_browser_connection_info",
     "description": "Inspect the status of running NexBrowser environments.",
     "inputSchema": {
       "type": "object",
@@ -140,7 +140,7 @@
     }
   },
   {
-    "name": "nex_close_browsers",
+    "name": "nex_browser_close",
     "description": "Close one or more NexBrowser environments.",
     "inputSchema": {
       "type": "object",
@@ -247,7 +247,7 @@
     }
   },
   {
-    "name": "browser_tab_list",
+    "name": "nex_browser_tab_list",
     "description": "List tabs and the active stable page ID for an automation session.",
     "inputSchema": {
       "type": "object",
@@ -265,7 +265,7 @@
     }
   },
   {
-    "name": "browser_tab_new",
+    "name": "nex_browser_tab_new",
     "description": "Open a new tab and optionally navigate it.",
     "inputSchema": {
       "type": "object",
@@ -283,7 +283,7 @@
     }
   },
   {
-    "name": "browser_tab_select",
+    "name": "nex_browser_tab_select",
     "description": "Select a tab by stable page ID.",
     "inputSchema": {
       "type": "object",
@@ -304,7 +304,7 @@
     }
   },
   {
-    "name": "browser_tab_close",
+    "name": "nex_browser_tab_close",
     "description": "Close a tab by stable page ID.",
     "inputSchema": {
       "type": "object",
@@ -328,7 +328,7 @@
     }
   },
   {
-    "name": "browser_navigate",
+    "name": "nex_browser_navigate",
     "description": "Navigate the selected page and return its refreshed accessibility snapshot.",
     "inputSchema": {
       "type": "object",
@@ -353,7 +353,7 @@
     }
   },
   {
-    "name": "browser_reload",
+    "name": "nex_browser_reload",
     "description": "Page reloaded.",
     "inputSchema": {
       "type": "object",
@@ -372,7 +372,7 @@
     }
   },
   {
-    "name": "browser_go_back",
+    "name": "nex_browser_go_back",
     "description": "Navigated back.",
     "inputSchema": {
       "type": "object",
@@ -391,7 +391,7 @@
     }
   },
   {
-    "name": "browser_go_forward",
+    "name": "nex_browser_go_forward",
     "description": "Navigated forward.",
     "inputSchema": {
       "type": "object",
@@ -410,7 +410,7 @@
     }
   },
   {
-    "name": "browser_click",
+    "name": "nex_browser_click",
     "description": "Click or double-click an element from the latest snapshot or a CSS selector.",
     "inputSchema": {
       "type": "object",
@@ -447,7 +447,7 @@
     }
   },
   {
-    "name": "browser_hover",
+    "name": "nex_browser_hover",
     "description": "Hover over an element.",
     "inputSchema": {
       "type": "object",
@@ -473,7 +473,7 @@
     }
   },
   {
-    "name": "browser_type",
+    "name": "nex_browser_type",
     "description": "Type text into an element using sequential key events.",
     "inputSchema": {
       "type": "object",
@@ -507,7 +507,7 @@
     }
   },
   {
-    "name": "browser_fill_form",
+    "name": "nex_browser_fill_form",
     "description": "Fill one or more form controls in order.",
     "inputSchema": {
       "type": "object",
@@ -557,7 +557,7 @@
     }
   },
   {
-    "name": "browser_select_option",
+    "name": "nex_browser_select_option",
     "description": "Select one or more values in a select control.",
     "inputSchema": {
       "type": "object",
@@ -591,7 +591,7 @@
     }
   },
   {
-    "name": "browser_check",
+    "name": "nex_browser_check",
     "description": "Check a checkbox or radio control.",
     "inputSchema": {
       "type": "object",
@@ -617,7 +617,7 @@
     }
   },
   {
-    "name": "browser_uncheck",
+    "name": "nex_browser_uncheck",
     "description": "Uncheck a checkbox or radio control.",
     "inputSchema": {
       "type": "object",
@@ -643,7 +643,7 @@
     }
   },
   {
-    "name": "browser_press_key",
+    "name": "nex_browser_press_key",
     "description": "Press a key on the selected page or focused element.",
     "inputSchema": {
       "type": "object",
@@ -672,8 +672,8 @@
     }
   },
   {
-    "name": "browser_key_down",
-    "description": "Hold a keyboard key down until browser_key_up is called.",
+    "name": "nex_browser_key_down",
+    "description": "Hold a keyboard key down until nex_browser_key_up is called.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -697,8 +697,8 @@
     }
   },
   {
-    "name": "browser_key_up",
-    "description": "Release a keyboard key held by browser_key_down.",
+    "name": "nex_browser_key_up",
+    "description": "Release a keyboard key held by nex_browser_key_down.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -722,7 +722,7 @@
     }
   },
   {
-    "name": "browser_drag",
+    "name": "nex_browser_drag",
     "description": "Drag one snapshot ref or selector to another.",
     "inputSchema": {
       "type": "object",
@@ -753,7 +753,7 @@
     }
   },
   {
-    "name": "browser_scroll",
+    "name": "nex_browser_scroll",
     "description": "Scroll the page, optionally bringing a target into view first.",
     "inputSchema": {
       "type": "object",
@@ -782,7 +782,7 @@
     }
   },
   {
-    "name": "browser_wait_for",
+    "name": "nex_browser_wait_for",
     "description": "Wait for a target, text, or a bounded duration.",
     "inputSchema": {
       "type": "object",
@@ -818,7 +818,7 @@
     }
   },
   {
-    "name": "browser_resize",
+    "name": "nex_browser_resize",
     "description": "Resize the active page viewport.",
     "inputSchema": {
       "type": "object",
@@ -851,7 +851,7 @@
     }
   },
   {
-    "name": "browser_snapshot",
+    "name": "nex_browser_snapshot",
     "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs.",
     "inputSchema": {
       "type": "object",
@@ -885,7 +885,7 @@
     }
   },
   {
-    "name": "browser_page_title",
+    "name": "nex_browser_page_title",
     "description": "Page title.",
     "inputSchema": {
       "type": "object",
@@ -907,7 +907,7 @@
     }
   },
   {
-    "name": "browser_page_url",
+    "name": "nex_browser_page_url",
     "description": "Page URL.",
     "inputSchema": {
       "type": "object",
@@ -929,7 +929,7 @@
     }
   },
   {
-    "name": "browser_get_text",
+    "name": "nex_browser_get_text",
     "description": "Read visible text from the page or one target.",
     "inputSchema": {
       "type": "object",
@@ -955,7 +955,7 @@
     }
   },
   {
-    "name": "browser_console_messages",
+    "name": "nex_browser_console_messages",
     "description": "Read console messages buffered by this automation session.",
     "inputSchema": {
       "type": "object",
@@ -977,7 +977,7 @@
     }
   },
   {
-    "name": "browser_network_requests",
+    "name": "nex_browser_network_requests",
     "description": "Read network requests buffered by this automation session.",
     "inputSchema": {
       "type": "object",
@@ -999,7 +999,7 @@
     }
   },
   {
-    "name": "browser_network_request",
+    "name": "nex_browser_network_request",
     "description": "Read one buffered network request by its 1-based index.",
     "inputSchema": {
       "type": "object",
@@ -1028,7 +1028,7 @@
     }
   },
   {
-    "name": "browser_handle_dialog",
+    "name": "nex_browser_handle_dialog",
     "description": "List pending dialogs or accept/dismiss one dialog.",
     "inputSchema": {
       "type": "object",
@@ -1060,7 +1060,7 @@
     }
   },
   {
-    "name": "browser_evaluate",
+    "name": "nex_browser_evaluate",
     "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled.",
     "inputSchema": {
       "type": "object",
@@ -1085,7 +1085,7 @@
     }
   },
   {
-    "name": "browser_run_code",
+    "name": "nex_browser_run_code",
     "description": "Run page JavaScript when the separate runCode permission is enabled.",
     "inputSchema": {
       "type": "object",
@@ -1110,7 +1110,7 @@
     }
   },
   {
-    "name": "browser_take_screenshot",
+    "name": "nex_browser_take_screenshot",
     "description": "Capture a screenshot and return MCP image content when it is small enough.",
     "inputSchema": {
       "type": "object",
@@ -1147,7 +1147,7 @@
     }
   },
   {
-    "name": "browser_file_upload",
+    "name": "nex_browser_file_upload",
     "description": "Upload approved local files through a file input target.",
     "inputSchema": {
       "type": "object",
@@ -1181,7 +1181,7 @@
     }
   },
   {
-    "name": "browser_drop",
+    "name": "nex_browser_drop",
     "description": "Drop approved files or MIME-typed text data onto a target.",
     "inputSchema": {
       "type": "object",

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createBrowserAutomationTools, type NexApiClient } from '../src/index.js';
 
-function tabsClient(toolName: 'browser_tab_select' | 'browser_tab_close') {
+function tabsClient(toolName: 'nex_browser_tab_select' | 'nex_browser_tab_close') {
   const request = vi.fn(async () => ({ code: 0, msg: 'ok', data: { done: true } }));
   const client = { request, getActiveSessionId: () => 'session-1' } as unknown as NexApiClient;
   const tool = createBrowserAutomationTools(client).find(
@@ -12,7 +12,7 @@ function tabsClient(toolName: 'browser_tab_select' | 'browser_tab_close') {
 
 describe('tab operations', () => {
   it('selects a tab by stable page ID', async () => {
-    const { request, tool } = tabsClient('browser_tab_select');
+    const { request, tool } = tabsClient('nex_browser_tab_select');
     await tool.execute({ pageId: 'page-first' });
 
     expect(request).toHaveBeenLastCalledWith(
@@ -22,7 +22,7 @@ describe('tab operations', () => {
   });
 
   it('closes a tab by stable page ID', async () => {
-    const { request, tool } = tabsClient('browser_tab_close');
+    const { request, tool } = tabsClient('nex_browser_tab_close');
     await tool.execute({ pageId: 'page-last' });
 
     expect(request).toHaveBeenLastCalledWith(

@@ -62,16 +62,17 @@ export function errorResult(
 const NEX_ERROR_HINTS: Record<string, string> = {
   UNAUTHORIZED: 'API key rejected — check NEX_API_KEY (or --api-key) and retry.',
   TEAM_REQUIRED: 'A team is required — pass teamId or select a team in NexBrowser first.',
-  WINDOW_NOT_FOUND: 'Window not found — call nex_list_browsers to confirm the windowId.',
+  WINDOW_NOT_FOUND: 'Window not found — call nex_browser_list to confirm the windowId.',
   WINDOW_NOT_RUNNING:
-    'Window is not running — retry nex_browser_connect with startIfNeeded=true, or call nex_open_browsers first.',
+    'Window is not running — retry nex_browser_connect with startIfNeeded=true, or call nex_browser_open first.',
   SESSION_NOT_FOUND:
     'Session expired or unknown — call nex_browser_connect to create a new session, then retry.',
-  PAGE_NOT_FOUND: 'Page is gone or pageId is stale — call browser_tab_list for current page IDs.',
+  PAGE_NOT_FOUND:
+    'Page is gone or pageId is stale — call nex_browser_tab_list for current page IDs.',
   ACTION_NOT_ALLOWED:
     'This action is blocked by permission policy (for example the evaluate/runCode permission is disabled).',
   ACTION_TIMEOUT:
-    'Action timed out — wait with browser_wait_for until the page settles, then retry.',
+    'Action timed out — wait with nex_browser_wait_for until the page settles, then retry.',
   PLAYWRIGHT_CONNECTION_LOST:
     'Browser connection lost — call nex_browser_connect to reconnect, then retry.',
   FILE_ACCESS_DENIED: 'File path not allowed — use files inside the approved directories.'

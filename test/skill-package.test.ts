@@ -13,7 +13,9 @@ describe('bundled automation skill', () => {
   it('has valid discovery frontmatter', () => {
     const skill = readFileSync(SKILL_PATH, 'utf8');
     expect(skill).toMatch(/^---\r?\nname: nexbrowser-automation\r?\n/);
-    expect(skill).toMatch(/\r?\ndescription: Guides live web automation/);
+    expect(skill).toMatch(/\r?\ndescription: Use whenever the user explicitly names NexBrowser/);
+    expect(skill).toContain('including listing or counting managed windows/environments/profiles');
+    expect(skill).toContain('never generic Browser, Chrome, or computer-use tools');
   });
 
   it('only links to bundled markdown references', () => {

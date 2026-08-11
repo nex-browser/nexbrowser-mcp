@@ -18,12 +18,19 @@ describe('NexBrowser MCP protocol', () => {
 
     try {
       expect(session.client.getInstructions()).toMatch(
-        /does not enumerate operating-system application windows/i
+        /never substitute the Browser plugin, Chrome plugin, computer-use/i
+      );
+      expect(session.client.getInstructions()).toContain(
+        "'使用 NexBrowser 查看我有多少窗口' means call nex_browser_list"
       );
       const listed = await session.client.listTools();
-      expect(listed.tools.find((tool) => tool.name === 'nex_list_browsers')?.description).toMatch(
-        /count NexBrowser browser environments/i
+      expect(listed.tools.find((tool) => tool.name === 'nex_browser_list')?.description).toMatch(
+        /Preferred NexBrowser LocalAPI tool/i
       );
+      expect(listed.tools.find((tool) => tool.name === 'nex_browser_list')?.description).toMatch(
+        /Never reports Chrome, Edge, the Codex in-app browser/i
+      );
+      expect(listed.tools.filter((tool) => tool.name === 'nex_browser_list')).toHaveLength(1);
     } finally {
       await session.close();
     }
@@ -38,17 +45,35 @@ describe('NexBrowser MCP protocol', () => {
     try {
       const listed = await session.client.listTools();
       const names = listed.tools.map((tool) => tool.name);
+      expect(names).toHaveLength(41);
+      expect(names.every((name) => name.startsWith('nex_browser_'))).toBe(true);
+      expect(names).not.toEqual(
+        expect.arrayContaining([
+          'nexbrowser_list_windows',
+          'nex_list_browsers',
+          'nex_open_browsers',
+          'browser_snapshot'
+        ])
+      );
       expect(names).toEqual(
-        expect.arrayContaining(['nex_list_browsers', 'nex_browser_connect', 'browser_snapshot'])
+        expect.arrayContaining(['nex_browser_list', 'nex_browser_connect', 'nex_browser_snapshot'])
       );
 
       const result = await session.client.callTool({
-        name: 'nex_list_browsers',
+        name: 'nex_browser_list',
         arguments: { teamId: 'team-1' }
       });
       expect(result.isError).not.toBe(true);
-      // nex_list_browsers forwards to the NexBrowser OpenAPI screen-list endpoint.
-      // nex_list_browsers 转发到 NexBrowser OpenAPI 的环境列表端点。
+      expect(result.content).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'text',
+            text: expect.stringContaining('NexBrowser managed windows/environments')
+          })
+        ])
+      );
+      // The preferred branded tool forwards to the NexBrowser OpenAPI screen-list endpoint.
+      // 首选品牌化工具转发到 NexBrowser OpenAPI 的环境列表端点。
       expect(fetchMock).toHaveBeenCalledWith(
         'http://127.0.0.1:45536/screen_load',
         expect.objectContaining({ method: 'POST' })
@@ -66,7 +91,7 @@ describe('NexBrowser MCP protocol', () => {
 
     try {
       const result = await session.client.callTool({
-        name: 'browser_resize',
+        name: 'nex_browser_resize',
         arguments: { width: 0, height: 720 }
       });
 
@@ -86,7 +111,7 @@ describe('NexBrowser MCP protocol', () => {
     try {
       // No sessionId argument and no active session for this client.
       // 未传 sessionId 且该客户端没有活动会话。
-      const result = await session.client.callTool({ name: 'browser_tab_list', arguments: {} });
+      const result = await session.client.callTool({ name: 'nex_browser_tab_list', arguments: {} });
 
       expect(result.isError).toBe(true);
       expect(result.structuredContent).toMatchObject({ code: 'INVALID_ARGUMENT' });
@@ -97,7 +122,7 @@ describe('NexBrowser MCP protocol', () => {
   });
 
   it('exports Zod schemas as standard JSON Schema for host previews', () => {
-    const resizeTool = TOOLS.find((tool) => tool.name === 'browser_resize');
+    const resizeTool = TOOLS.find((tool) => tool.name === 'nex_browser_resize');
     const connectTool = TOOLS.find((tool) => tool.name === 'nex_browser_connect');
 
     expect(resizeTool?.inputSchema).toMatchObject({

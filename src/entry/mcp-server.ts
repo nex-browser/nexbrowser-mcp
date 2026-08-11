@@ -34,7 +34,7 @@ export class NexBrowserMcpServer {
       {
         capabilities: { tools: {} },
         instructions:
-          'NexBrowser manages NexBrowser browser environments, also called NexBrowser windows or profiles; it does not enumerate operating-system application windows. For requests to list or count NexBrowser windows/environments/profiles, call nex_list_browsers first. Do not use system-window or computer-use tools unless the user explicitly asks about Windows/macOS application windows or all desktop applications.'
+          "IMPORTANT ROUTING RULE: NexBrowser is the product and this MCP server, not a generic browser. Whenever the user explicitly says NexBrowser/nexbrowser or asks to use our LocalAPI, use this server's nex_browser_* tools; never substitute the Browser plugin, Chrome plugin, computer-use, shell commands, or process enumeration. For requests to list or count NexBrowser windows/environments/profiles, call nex_browser_list first. Example: '使用 NexBrowser 查看我有多少窗口' means call nex_browser_list. NexBrowser windows are managed environments/profiles, not operating-system application windows or browser tabs. Every public tool in this server uses the nex_browser_* namespace; former tool names are not available."
       }
     );
     const registered = new Set<string>();

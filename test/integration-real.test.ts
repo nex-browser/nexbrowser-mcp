@@ -19,8 +19,8 @@ describe.skipIf(!enabled)('real NexBrowser OpenAPI integration', () => {
     expect(windowId, 'Set NEX_E2E_WINDOW_ID to a dedicated running test window.').toBeTruthy();
 
     const connect = tool('nex_browser_connect');
-    const snapshot = tool('browser_snapshot');
-    const scroll = tool('browser_scroll');
+    const snapshot = tool('nex_browser_snapshot');
+    const scroll = tool('nex_browser_scroll');
     const disconnect = tool('nex_browser_disconnect');
     let connected = false;
     try {

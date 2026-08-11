@@ -42,14 +42,14 @@ MCP 客户端。
 
 ## 版本兼容性
 
-| 组件               | 支持版本                                                                    |
-| ------------------ | --------------------------------------------------------------------------- |
-| NexBrowser MCP     | `1.x`（[版本发布](https://github.com/nex-browser/nexbrowser-mcp/releases)） |
-| NexBrowser Desktop | 包含 **API MCP** 页面及统一 `/ai/browser/*` 接口的当前版本                  |
-| Node.js 运行时     | `>=18`；推荐 Node.js 20 或更高版本                                          |
+| 组件               | 支持版本                                                                      |
+| ------------------ | ----------------------------------------------------------------------------- |
+| NexBrowser MCP     | `1.0.6`（[版本发布](https://github.com/nex-browser/nexbrowser-mcp/releases)） |
+| NexBrowser Desktop | 包含 **API MCP** 页面及统一 `/ai/browser/*` 接口的当前版本                    |
+| Node.js 运行时     | `>=18`；推荐 Node.js 20 或更高版本                                            |
 
-如果自动化工具返回 `Not found`，请先更新 NexBrowser Desktop。MCP 的次版本可以新增工具，
-但不会删除现有 `1.x` 工具名；不兼容的公开 API 变更必须发布新的 MCP 主版本。
+如果自动化工具返回 `Not found`，请先更新 NexBrowser Desktop。版本 1.0.6 仅公开统一的
+`nex_browser_*` 命名空间，不再注册原工具名。
 
 ## 安装
 
@@ -104,10 +104,10 @@ npm install --global @nexbrowser/mcp
 
 完整工具目录通过 MCP 的 `tools/list` 提供，常见工具包括：
 
-- `nex_list_browsers`、`nex_open_browsers`、`nex_get_connection_info`
-- `nex_browser_connect`、`browser_tab_list`、`browser_snapshot`
-- `browser_click`、`browser_fill_form`、`browser_wait_for`
-- `browser_take_screenshot`、`browser_console_messages`、`browser_network_requests`
+- `nex_browser_list`、`nex_browser_open`、`nex_browser_close`、`nex_browser_connection_info`
+- `nex_browser_connect`、`nex_browser_tab_list`、`nex_browser_snapshot`
+- `nex_browser_click`、`nex_browser_fill_form`、`nex_browser_wait_for`
+- `nex_browser_take_screenshot`、`nex_browser_console_messages`、`nex_browser_network_requests`
 
 `nex_browser_connect` 要求提供 `windowId`。`teamId` 为可选参数：省略时由
 NexBrowser Desktop 使用当前选中的团队。现有调用方仍可显式传入 `teamId`；
@@ -126,7 +126,7 @@ npm 包同时包含 `skills/nexbrowser-automation`，用于指导支持 Skill �
 MCP 工具结果对所配置的 MCP 客户端可见，也可能发送给其模型服务商。浏览器快照、截图、
 console 输出、网络诊断、页面内容和可选的 CDP 连接信息均可能包含敏感数据。CDP 地址默认会
 被隐藏，只有设置 `NEX_EXPOSE_CDP=1` 或传入 `--expose-cdp` 才会返回。请只使用可信客户端与
-模型，不要公开分享执行记录，并仅在必要时启用 `browser_evaluate`、`browser_run_code` 和本地
+模型，不要公开分享执行记录，并仅在必要时启用 `nex_browser_evaluate`、`nex_browser_run_code` 和本地
 文件访问。授权与文件访问策略最终由 NexBrowser Desktop 执行。
 
 不要在共享环境中通过命令行传递 API Key。OpenAPI 服务应仅绑定可信网络接口；如果 Desktop

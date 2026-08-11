@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
+import {
+  bindTools,
+  defineTool,
+  type McpToolSpec,
+  type ToolContext
+} from '../../shared/define-tool.js';
 import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
 import type { McpToolDefinition } from '../../shared/types.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
@@ -12,6 +17,14 @@ import {
 
 const browserIdSchema = z.union([z.string(), z.number()]);
 const browserIdsSchema = z.union([browserIdSchema, z.array(browserIdSchema)]);
+const listBrowsersInputSchema = z
+  .object({
+    teamId: browserIdSchema.optional(),
+    page: z.number().optional(),
+    size: z.number().optional(),
+    keyword: z.string().optional()
+  })
+  .passthrough();
 
 /**
  * Coerces a scalar or array into an ID list, silently dropping null/undefined/empty-string entries.
@@ -67,53 +80,55 @@ function profileSummary(profile: any): string {
 }
 
 /**
+ * Lists managed NexBrowser environments through Desktop LocalAPI.
+ * 通过 Desktop LocalAPI 列出受管的 NexBrowser 环境。
+ */
+async function listBrowserEnvironments(
+  args: z.output<typeof listBrowsersInputSchema>,
+  ctx: ToolContext
+) {
+  const page = Number(args.page) > 0 ? Number(args.page) : 1;
+  const size = Number(args.size) > 0 ? Number(args.size) : 100;
+  const response = await ctx.api.request<any>(SCREEN_LOAD_ROUTE, {
+    method: 'POST',
+    body: JSON.stringify({
+      page,
+      size,
+      ...(args.teamId ? { teamId: args.teamId } : {}),
+      ...(args.keyword ? { keyword: String(args.keyword) } : {})
+    })
+  });
+  if (response.code !== 0) return apiErrorResult('Failed to list browsers', response);
+  const rows = Array.isArray(response.data?.data) ? response.data.data : [];
+  const total = Number(response.data?.count ?? response.data?.total ?? rows.length);
+  return successResult(
+    rows.length
+      ? [
+          `Found ${total} NexBrowser managed windows/environments in workspace ${args.teamId ?? 'current'}:`,
+          '',
+          rows.map(profileSummary).join('\n\n')
+        ].join('\n')
+      : `No NexBrowser managed windows/environments found in workspace ${args.teamId ?? 'current'}.`,
+    { rows, total, page, size }
+  );
+}
+
+/**
  * Stateless environment management specs. These schemas accept additional
  * Desktop request metadata, while automation action schemas are strict.
  * 无状态环境管理规格。这里允许附加 Desktop 请求元数据；自动化动作 schema 则采用严格模式。
  */
 export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
-    name: 'nex_list_browsers',
+    name: 'nex_browser_list',
     description:
-      'List or count NexBrowser browser environments (also called NexBrowser windows or profiles) without starting them. This does not list operating-system application windows.',
+      "Preferred NexBrowser LocalAPI tool for requests such as 'use NexBrowser to show or count my windows'. Lists managed NexBrowser environments/profiles. Never reports Chrome, Edge, the Codex in-app browser, operating-system application windows, or browser tabs.",
     annotations: { readOnlyHint: true },
-    inputSchema: z
-      .object({
-        teamId: browserIdSchema.optional(),
-        page: z.number().optional(),
-        size: z.number().optional(),
-        keyword: z.string().optional()
-      })
-      .passthrough(),
-    execute: async (args, ctx) => {
-      const page = Number(args.page) > 0 ? Number(args.page) : 1;
-      const size = Number(args.size) > 0 ? Number(args.size) : 100;
-      const response = await ctx.api.request<any>(SCREEN_LOAD_ROUTE, {
-        method: 'POST',
-        body: JSON.stringify({
-          page,
-          size,
-          ...(args.teamId ? { teamId: args.teamId } : {}),
-          ...(args.keyword ? { keyword: String(args.keyword) } : {})
-        })
-      });
-      if (response.code !== 0) return apiErrorResult('Failed to list browsers', response);
-      const rows = Array.isArray(response.data?.data) ? response.data.data : [];
-      const total = Number(response.data?.count ?? response.data?.total ?? rows.length);
-      return successResult(
-        rows.length
-          ? [
-              `Found ${total} browsers in workspace ${args.teamId ?? 'current'}:`,
-              '',
-              rows.map(profileSummary).join('\n\n')
-            ].join('\n')
-          : `No browsers found in workspace ${args.teamId ?? 'current'}.`,
-        { rows, total, page, size }
-      );
-    }
+    inputSchema: listBrowsersInputSchema,
+    execute: listBrowserEnvironments
   }),
   defineTool({
-    name: 'nex_open_browsers',
+    name: 'nex_browser_open',
     description: 'Start one or more NexBrowser environments and return their status.',
     inputSchema: z.object({ teamId: browserIdSchema, windowId: browserIdsSchema }).passthrough(),
     execute: async (args, ctx) => {
@@ -152,7 +167,7 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
     }
   }),
   defineTool({
-    name: 'nex_get_connection_info',
+    name: 'nex_browser_connection_info',
     description: 'Inspect the status of running NexBrowser environments.',
     annotations: { readOnlyHint: true },
     inputSchema: z.object({ teamId: browserIdSchema, windowId: browserIdsSchema }).passthrough(),
@@ -178,13 +193,13 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
                 connectionSummary(connection, ctx.api.exposeCdp === true)
               )
             ].join('\n')
-          : 'No opened browsers found.\n\nUse `nex_open_browsers` to open browsers first.',
+          : 'No opened browsers found.\n\nUse `nex_browser_open` to open browsers first.',
         { connections }
       );
     }
   }),
   defineTool({
-    name: 'nex_close_browsers',
+    name: 'nex_browser_close',
     description: 'Close one or more NexBrowser environments.',
     annotations: { destructiveHint: true },
     inputSchema: z
