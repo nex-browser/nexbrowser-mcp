@@ -57,9 +57,10 @@ jobs:
       - run: pnpm audit --prod
       - run: npm pack --dry-run --json
 
-      # npm detects the GitHub Actions OIDC token and publishes with provenance.
+      # npm detects the GitHub Actions OIDC token. Sigstore provenance is disabled
+      # because npm only supports provenance from public source repositories.
       - name: Publish with npm Trusted Publishing
-        run: npm publish --provenance
+        run: npm publish --provenance=false
 
       - name: Create GitHub release
         env:
