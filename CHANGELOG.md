@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-08-11
+
+### Changed
+
+- Rename every public MCP tool into the single `nex_browser_*` namespace and remove all former tool names without compatibility aliases.
+- Strengthen MCP and bundled Skill routing guidance with bilingual intent triggers so explicit NexBrowser and LocalAPI requests are not redirected to generic browser, Chrome, computer-use, or operating-system window tools.
+
 ## [1.0.5] - 2026-08-10
 
 ## [1.0.4] - 2026-08-10
@@ -25,7 +32,7 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ### Changed
 
-- Clarify that `nex_list_browsers` lists NexBrowser environments rather than operating-system application windows, and publish matching MCP routing guidance.
+- Clarify that `nex_browser_list` lists NexBrowser environments rather than operating-system application windows, and publish matching MCP routing guidance.
 - Disable source-map generation in the published package.
 - Make the MCP client configuration examples explicitly install the latest published package.
 

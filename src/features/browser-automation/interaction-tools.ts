@@ -8,21 +8,21 @@ import { automationSchema, TARGET_PROPERTY } from './schema.js';
 
 // Navigation specs are declared once and inserted in the public registration order. 导航规格集中声明，并按公开注册顺序插入。
 const RELOAD = defineTool({
-  name: 'browser_reload',
+  name: 'nex_browser_reload',
   description: 'Page reloaded.',
   inputSchema: automationSchema(),
   execute: (args, ctx) => callAction(ctx, args, 'reload', {}, 'Page reloaded.')
 });
 
 const GO_BACK = defineTool({
-  name: 'browser_go_back',
+  name: 'nex_browser_go_back',
   description: 'Navigated back.',
   inputSchema: automationSchema(),
   execute: (args, ctx) => callAction(ctx, args, 'goBack', {}, 'Navigated back.')
 });
 
 const GO_FORWARD = defineTool({
-  name: 'browser_go_forward',
+  name: 'nex_browser_go_forward',
   description: 'Navigated forward.',
   inputSchema: automationSchema(),
   execute: (args, ctx) => callAction(ctx, args, 'goForward', {}, 'Navigated forward.')
@@ -34,7 +34,7 @@ const GO_FORWARD = defineTool({
  */
 export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
-    name: 'browser_navigate',
+    name: 'nex_browser_navigate',
     description: 'Navigate the selected page and return its refreshed accessibility snapshot.',
     inputSchema: automationSchema({ url: z.string() }),
     execute: (args, ctx) => callAction(ctx, args, 'navigate', { url: args.url }, 'Page navigated.')
@@ -43,7 +43,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
   GO_BACK,
   GO_FORWARD,
   defineTool({
-    name: 'browser_click',
+    name: 'nex_browser_click',
     description: 'Click or double-click an element from the latest snapshot or a CSS selector.',
     inputSchema: automationSchema({
       target: TARGET_PROPERTY,
@@ -60,14 +60,14 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_hover',
+    name: 'nex_browser_hover',
     description: 'Hover over an element.',
     inputSchema: automationSchema({ target: TARGET_PROPERTY }),
     execute: (args, ctx) =>
       callAction(ctx, args, 'hover', { target: args.target }, 'Element hovered.')
   }),
   defineTool({
-    name: 'browser_type',
+    name: 'nex_browser_type',
     description: 'Type text into an element using sequential key events.',
     inputSchema: automationSchema({
       target: TARGET_PROPERTY,
@@ -84,7 +84,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_fill_form',
+    name: 'nex_browser_fill_form',
     description: 'Fill one or more form controls in order.',
     inputSchema: automationSchema({
       fields: z
@@ -112,7 +112,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
     }
   }),
   defineTool({
-    name: 'browser_select_option',
+    name: 'nex_browser_select_option',
     description: 'Select one or more values in a select control.',
     inputSchema: automationSchema({
       target: TARGET_PROPERTY,
@@ -129,7 +129,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   ...(['check', 'uncheck'] as const).map((action) =>
     defineTool({
-      name: `browser_${action}`,
+      name: `nex_browser_${action}`,
       description: `${action === 'check' ? 'Check' : 'Uncheck'} a checkbox or radio control.`,
       inputSchema: automationSchema({ target: TARGET_PROPERTY }),
       execute: (args, ctx) =>
@@ -137,26 +137,26 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
     })
   ),
   defineTool({
-    name: 'browser_press_key',
+    name: 'nex_browser_press_key',
     description: 'Press a key on the selected page or focused element.',
     inputSchema: automationSchema({ target: TARGET_PROPERTY.optional(), key: z.string() }),
     execute: (args, ctx) =>
       callAction(ctx, args, 'press', { target: args.target, key: args.key }, 'Key pressed.')
   }),
   defineTool({
-    name: 'browser_key_down',
-    description: 'Hold a keyboard key down until browser_key_up is called.',
+    name: 'nex_browser_key_down',
+    description: 'Hold a keyboard key down until nex_browser_key_up is called.',
     inputSchema: automationSchema({ key: z.string() }),
     execute: (args, ctx) => callAction(ctx, args, 'keyDown', { key: args.key }, 'Key held down.')
   }),
   defineTool({
-    name: 'browser_key_up',
-    description: 'Release a keyboard key held by browser_key_down.',
+    name: 'nex_browser_key_up',
+    description: 'Release a keyboard key held by nex_browser_key_down.',
     inputSchema: automationSchema({ key: z.string() }),
     execute: (args, ctx) => callAction(ctx, args, 'keyUp', { key: args.key }, 'Key released.')
   }),
   defineTool({
-    name: 'browser_drag',
+    name: 'nex_browser_drag',
     description: 'Drag one snapshot ref or selector to another.',
     inputSchema: automationSchema({
       startTarget: TARGET_PROPERTY,
@@ -172,7 +172,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_scroll',
+    name: 'nex_browser_scroll',
     description: 'Scroll the page, optionally bringing a target into view first.',
     inputSchema: automationSchema({
       target: TARGET_PROPERTY.optional(),
@@ -189,7 +189,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_wait_for',
+    name: 'nex_browser_wait_for',
     description: 'Wait for a target, text, or a bounded duration.',
     inputSchema: automationSchema({
       target: TARGET_PROPERTY.optional(),
@@ -207,7 +207,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_resize',
+    name: 'nex_browser_resize',
     description: 'Resize the active page viewport.',
     inputSchema: automationSchema({
       width: z.number().min(1).max(10_000),

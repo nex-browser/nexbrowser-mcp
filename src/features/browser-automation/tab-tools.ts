@@ -12,7 +12,7 @@ const baseSchema = z.object({ sessionId: SESSION_PROPERTIES.sessionId }).strict(
 /** Tab tool specifications using stable page IDs. 使用稳定 pageId 的标签页工具规格。 */
 export const TAB_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
-    name: 'browser_tab_list',
+    name: 'nex_browser_tab_list',
     description: 'List tabs and the active stable page ID for an automation session.',
     annotations: { readOnlyHint: true },
     inputSchema: baseSchema,
@@ -25,7 +25,7 @@ export const TAB_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_tab_new',
+    name: 'nex_browser_tab_new',
     description: 'Open a new tab and optionally navigate it.',
     inputSchema: baseSchema.extend({ url: z.string().optional() }),
     execute: async (args, ctx) =>
@@ -38,7 +38,7 @@ export const TAB_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   ...(['select', 'close'] as const).map((operation) =>
     defineTool({
-      name: `browser_tab_${operation}`,
+      name: `nex_browser_tab_${operation}`,
       description: `${operation === 'select' ? 'Select' : 'Close'} a tab by stable page ID.`,
       ...(operation === 'close' ? { annotations: { destructiveHint: true } } : {}),
       inputSchema: baseSchema.extend({ pageId: z.string() }),

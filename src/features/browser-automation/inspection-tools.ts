@@ -7,7 +7,7 @@ import { automationSchema, TARGET_PROPERTY } from './schema.js';
 
 // Page-code execution remains a distinct permission-gated tool. 页面代码执行是独立的权限受控工具。
 const RUN_CODE = defineTool({
-  name: 'browser_run_code',
+  name: 'nex_browser_run_code',
   description: 'Run page JavaScript when the separate runCode permission is enabled.',
   inputSchema: automationSchema({ code: z.string() }),
   execute: (args, ctx) => callAction(ctx, args, 'runCode', { code: args.code }, 'Code result.')
@@ -19,7 +19,7 @@ const RUN_CODE = defineTool({
  */
 export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
-    name: 'browser_snapshot',
+    name: 'nex_browser_snapshot',
     description: 'Capture an accessibility/ARIA snapshot with short-lived actionable refs.',
     annotations: { readOnlyHint: true },
     inputSchema: automationSchema({
@@ -38,8 +38,8 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   ...(
     [
-      ['browser_page_title', 'title', 'Page title.'],
-      ['browser_page_url', 'url', 'Page URL.']
+      ['nex_browser_page_title', 'title', 'Page title.'],
+      ['nex_browser_page_url', 'url', 'Page URL.']
     ] as const
   ).map(([name, action, label]) =>
     defineTool({
@@ -51,7 +51,7 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
     })
   ),
   defineTool({
-    name: 'browser_get_text',
+    name: 'nex_browser_get_text',
     description: 'Read visible text from the page or one target.',
     annotations: { readOnlyHint: true },
     inputSchema: automationSchema({ target: TARGET_PROPERTY.optional() }),
@@ -59,21 +59,21 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   // The two buffer readers below omit readOnlyHint because clear=true empties the session buffer. 下方两个缓冲读取工具未标 readOnlyHint，因为 clear=true 会清空会话缓冲。
   defineTool({
-    name: 'browser_console_messages',
+    name: 'nex_browser_console_messages',
     description: 'Read console messages buffered by this automation session.',
     inputSchema: automationSchema({ clear: z.boolean().optional() }),
     execute: (args, ctx) =>
       callAction(ctx, args, 'consoleMessages', { clear: args.clear }, 'Console messages.')
   }),
   defineTool({
-    name: 'browser_network_requests',
+    name: 'nex_browser_network_requests',
     description: 'Read network requests buffered by this automation session.',
     inputSchema: automationSchema({ clear: z.boolean().optional() }),
     execute: (args, ctx) =>
       callAction(ctx, args, 'networkRequests', { clear: args.clear }, 'Network requests.')
   }),
   defineTool({
-    name: 'browser_network_request',
+    name: 'nex_browser_network_request',
     description: 'Read one buffered network request by its 1-based index.',
     annotations: { readOnlyHint: true },
     inputSchema: automationSchema({ index: z.number().min(1) }),
@@ -82,7 +82,7 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
       callAction(ctx, args, 'networkRequests', { index: args.index }, 'Network request.')
   }),
   defineTool({
-    name: 'browser_handle_dialog',
+    name: 'nex_browser_handle_dialog',
     description: 'List pending dialogs or accept/dismiss one dialog.',
     inputSchema: automationSchema({
       id: z.number().min(1).optional(),
@@ -100,7 +100,7 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
-    name: 'browser_evaluate',
+    name: 'nex_browser_evaluate',
     description: 'Evaluate JavaScript when the dedicated evaluate permission is enabled.',
     inputSchema: automationSchema({ expression: z.string() }),
     execute: (args, ctx) =>

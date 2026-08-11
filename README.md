@@ -45,13 +45,12 @@ key, so update every authorized MCP client after a reset.
 
 | Component          | Supported version                                                                |
 | ------------------ | -------------------------------------------------------------------------------- |
-| NexBrowser MCP     | `1.x` ([releases](https://github.com/nex-browser/nexbrowser-mcp/releases))       |
+| NexBrowser MCP     | `1.0.6` ([releases](https://github.com/nex-browser/nexbrowser-mcp/releases))     |
 | NexBrowser Desktop | Current release containing **API MCP** and the unified `/ai/browser/*` endpoints |
 | Node.js runtime    | `>=18`; Node.js 20 or later recommended                                          |
 
-If an automation tool returns `Not found`, first update NexBrowser Desktop. MCP minor releases may
-add tools without removing existing `1.x` tool names; incompatible public API changes require a new
-MCP major version.
+If an automation tool returns `Not found`, first update NexBrowser Desktop. Version 1.0.6 exposes
+one consistent `nex_browser_*` namespace and intentionally does not register former tool names.
 
 ## Install
 
@@ -108,10 +107,10 @@ visible to other local processes.
 
 The complete catalog is advertised through MCP `tools/list`. Common tools include:
 
-- `nex_list_browsers`, `nex_open_browsers`, `nex_get_connection_info`
-- `nex_browser_connect`, `browser_tab_list`, `browser_snapshot`
-- `browser_click`, `browser_fill_form`, `browser_wait_for`
-- `browser_take_screenshot`, `browser_console_messages`, `browser_network_requests`
+- `nex_browser_list`, `nex_browser_open`, `nex_browser_close`, `nex_browser_connection_info`
+- `nex_browser_connect`, `nex_browser_tab_list`, `nex_browser_snapshot`
+- `nex_browser_click`, `nex_browser_fill_form`, `nex_browser_wait_for`
+- `nex_browser_take_screenshot`, `nex_browser_console_messages`, `nex_browser_network_requests`
 
 `nex_browser_connect` requires `windowId`. Its `teamId` is optional: when omitted, the
 NexBrowser Desktop app uses its currently selected team. Existing callers may continue to pass an
@@ -133,7 +132,7 @@ MCP tool results are visible to the configured MCP client and may be sent to its
 Browser snapshots, screenshots, console output, network diagnostics, page content, and optional CDP
 connection information can contain sensitive data. CDP endpoints are redacted unless the operator
 sets `NEX_EXPOSE_CDP=1` or passes `--expose-cdp`. Use trusted clients and models, avoid sharing
-transcripts publicly, and enable `browser_evaluate`, `browser_run_code`, and local-file access only
+transcripts publicly, and enable `nex_browser_evaluate`, `nex_browser_run_code`, and local-file access only
 when needed. The NexBrowser Desktop app remains responsible for authorization and file-policy
 enforcement.
 
