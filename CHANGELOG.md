@@ -51,7 +51,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.6...HEAD
+[1.0.6]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.2...v1.0.3
