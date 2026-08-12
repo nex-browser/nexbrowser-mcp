@@ -1,0 +1,1526 @@
+[
+  {
+    "name": "nex_browser_list",
+    "description": "Preferred NexBrowser OpenAPI tool for requests such as 'use NexBrowser to show or count my windows'. Lists managed NexBrowser environments/profiles. Never reports Chrome, Edge, the Codex in-app browser, operating-system application windows, or browser tabs.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "page": {
+          "type": "number"
+        },
+        "size": {
+          "type": "number"
+        },
+        "keyword": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_proxy_list",
+    "description": "List proxy resources available in the active NexBrowser workspace so a proxyId can be selected for window creation or binding. Credentials are never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "keyword": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_create",
+    "description": "Create NexBrowser environments in the desktop app's active workspace. Every unset field falls back to the desktop create-window defaults (fingerprint, preferences, layout, startup page), and each created window gets its own generated fingerprint, so pass only the fields that must differ.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Window title; a batch of more than one appends -01, -02 to this name"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "How many to create"
+        },
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Target window group; 0 keeps them ungrouped"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "proxyId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Proxy to bind; 0 means no proxy"
+        },
+        "accountIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Platform account IDs to bind, so nex_browser_fill_account can sign in later"
+        },
+        "pluginIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "startupUrl": {
+          "type": "string"
+        },
+        "screen": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {},
+          "description": "Raw screen field overrides for the create payload"
+        },
+        "preference": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {},
+          "description": "Raw preference field overrides"
+        },
+        "fingerprint": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {},
+          "description": "Raw fingerprint field overrides"
+        }
+      },
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_browser_bind_proxy",
+    "description": "Bind one proxy resource to one or more closed NexBrowser windows. Pass proxyId=0 to remove the binding. Running windows are rejected and must be closed first.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "One window ID or a list of closed window IDs"
+        },
+        "proxyId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Proxy resource ID to bind; 0 removes the proxy binding"
+        }
+      },
+      "required": [
+        "windowId",
+        "proxyId"
+      ],
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "nex_browser_open",
+    "description": "Start NexBrowser environments and return per-window status. For multi-window tasks, pass every window ID in one windowId array so Desktop can batch-start and tile them before creating automation sessions.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "One window ID, or all target window IDs in one array for a single batch-start request."
+        }
+      },
+      "required": [
+        "teamId",
+        "windowId"
+      ],
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_browser_connection_info",
+    "description": "Inspect the status of running NexBrowser environments.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "teamId",
+        "windowId"
+      ],
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_close",
+    "description": "Close one or more NexBrowser environments.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "windowId"
+      ],
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "nex_browser_accounts",
+    "description": "List the platform accounts bound to NexBrowser environments. Usernames come back masked and passwords and 2FA secrets are never returned; call nex_browser_fill_account with an accountId from here to sign in.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "windowId"
+      ],
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_connect",
+    "description": "Connect to one NexBrowser window using the active team by default and create an isolated automation session. For multiple windows, first call nex_browser_open once with all window IDs, then connect each window with startIfNeeded=false.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Optional team ID. Omit it to use the team currently selected in NexBrowser."
+        },
+        "windowId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "startIfNeeded": {
+          "type": "boolean",
+          "description": "Explicitly start one window when it is not running. Keep false after a multi-window batch open."
+        }
+      },
+      "required": [
+        "windowId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_disconnect",
+    "description": "Disconnect an automation session without closing the NexBrowser environment.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_tab_list",
+    "description": "List tabs and the active stable page ID for an automation session.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_tab_new",
+    "description": "Open a new tab and optionally navigate it.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_tab_select",
+    "description": "Select a tab by stable page ID.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pageId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_tab_close",
+    "description": "Close a tab by stable page ID.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pageId"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "nex_browser_navigate",
+    "description": "Navigate the selected page and return its refreshed accessibility snapshot.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_reload",
+    "description": "Page reloaded.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_go_back",
+    "description": "Navigated back.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_go_forward",
+    "description": "Navigated forward.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_click",
+    "description": "Click or double-click an element from the latest snapshot or a CSS selector.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "doubleClick": {
+          "type": "boolean"
+        },
+        "button": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right",
+            "middle"
+          ]
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_hover",
+    "description": "Hover over an element.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_type",
+    "description": "Type text into an element using sequential key events.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "text": {
+          "type": "string"
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "target",
+        "text"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_fill_form",
+    "description": "Fill one or more form controls in order.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "fields": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string",
+                "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "target",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "fields"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_fill_account",
+    "description": "Fill the login fields of the session window's bound platform account. Desktop resolves the stored password and generates the current 2FA code itself, so no credential is exposed here. Call nex_browser_accounts first for the accountId, pass only the field targets that are visible right now (call again for a later step of a multi-step sign-in), and submit the form yourself afterwards — this tool never submits.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "accountId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Bound account to use; optional when the window has exactly one"
+        },
+        "usernameTarget": {
+          "type": "string",
+          "description": "Target of the currently visible username field"
+        },
+        "passwordTarget": {
+          "type": "string",
+          "description": "Target of the currently visible password field"
+        },
+        "totpTarget": {
+          "type": "string",
+          "description": "Target of the currently visible 2FA code field"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_select_option",
+    "description": "Select one or more values in a select control.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "values": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "target",
+        "values"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_check",
+    "description": "Check a checkbox or radio control.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_uncheck",
+    "description": "Uncheck a checkbox or radio control.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_press_key",
+    "description": "Press a key on the selected page or focused element.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_key_down",
+    "description": "Hold a keyboard key down until nex_browser_key_up is called.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_key_up",
+    "description": "Release a keyboard key held by nex_browser_key_down.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_drag",
+    "description": "Drag one snapshot ref or selector to another.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "startTarget": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "endTarget": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "required": [
+        "startTarget",
+        "endTarget"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_scroll",
+    "description": "Scroll the page, optionally bringing a target into view first.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "deltaX": {
+          "type": "number"
+        },
+        "deltaY": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_wait_for",
+    "description": "Wait for a target, text, or a bounded duration.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 120000
+        },
+        "timeout": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 120000
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_resize",
+    "description": "Resize the active page viewport.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "height": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_snapshot",
+    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "boxes": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_page_title",
+    "description": "Page title.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_page_url",
+    "description": "Page URL.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_get_text",
+    "description": "Read visible text from the page or one target.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_console_messages",
+    "description": "Read console messages buffered by this automation session.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "clear": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_network_requests",
+    "description": "Read network requests buffered by this automation session.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "clear": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_network_request",
+    "description": "Read one buffered network request by its 1-based index.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "index": {
+          "type": "number",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_handle_dialog",
+    "description": "List pending dialogs or accept/dismiss one dialog.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "id": {
+          "type": "number",
+          "minimum": 1
+        },
+        "accept": {
+          "type": "boolean"
+        },
+        "dismiss": {
+          "type": "boolean"
+        },
+        "promptText": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_evaluate",
+    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "expression": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "expression"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_run_code",
+    "description": "Run page JavaScript when the separate runCode permission is enabled.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_take_screenshot",
+    "description": "Capture a screenshot and return MCP image content when it is small enough.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "png",
+            "jpeg"
+          ]
+        },
+        "fullPage": {
+          "type": "boolean"
+        },
+        "quality": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_file_upload",
+    "description": "Upload approved local files through a file input target.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "files": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "target",
+        "files"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_browser_drop",
+    "description": "Drop approved files or MIME-typed text data onto a target.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "data": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

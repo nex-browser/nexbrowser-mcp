@@ -1,0 +1,88 @@
+name: Publish npm package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Publishing uses npm Trusted Publishing (OIDC), never an npm token.
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    # Configure required reviewers for this environment in GitHub. A tag alone
+    # cannot publish until an approved release maintainer authorizes this job.
+    environment: npm
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      # Reads the pinned version from package.json.
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
+      # npm Trusted Publishing requires npm >= 11.5.1 and Node >= 22.14.0.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Verify tag commit is contained in main
+        shell: bash
+        run: |
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          expected_tag=$(node -p "'v' + require('./package.json').version")
+          test "$GITHUB_REF_NAME" = "$expected_tag"
+
+      - run: pnpm run format:check
+      - run: pnpm run typecheck
+      - run: pnpm run test:package
+      - run: pnpm audit --prod
+      - run: npm pack --dry-run --json
+
+      - name: Resolve release channel
+        id: release_channel
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [[ "$version" == *-* ]]; then
+            prerelease=${version#*-}
+            echo "npm_tag=${prerelease%%.*}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "npm_tag=latest" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # npm detects the GitHub Actions OIDC token and publishes with provenance.
+      - name: Publish with npm Trusted Publishing
+        run: npm publish --provenance --tag "${{ steps.release_channel.outputs.npm_tag }}"
+
+      - name: Create stable GitHub release
+        if: steps.release_channel.outputs.prerelease == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+
+      - name: Create prerelease GitHub release
+        if: steps.release_channel.outputs.prerelease == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --prerelease

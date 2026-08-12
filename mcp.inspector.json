@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "nexbrowser": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["lib/cli.js"],
+      "cwd": "."
+    }
+  }
+}

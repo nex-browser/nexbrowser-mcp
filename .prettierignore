@@ -1,0 +1,6 @@
+node_modules/
+lib/
+dist/
+reference/
+pnpm-lock.yaml
+test/__snapshots__/

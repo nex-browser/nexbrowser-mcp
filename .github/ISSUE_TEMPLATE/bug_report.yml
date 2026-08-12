@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible problem with NexBrowser MCP
+title: '[Bug]: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include API keys, CDP endpoints, cookies, authorization headers, or private browser content.
+  - type: input
+    id: version
+    attributes:
+      label: NexBrowser MCP version
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Node.js version, MCP client, and NexBrowser Desktop version.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide minimal, redacted steps.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Redact all sensitive values from errors and logs.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sensitive data check
+      options:
+        - label: I removed credentials, CDP URLs, cookies, private page content, and sensitive network data.
+          required: true

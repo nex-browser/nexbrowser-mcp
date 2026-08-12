@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: node ${{ matrix.node }} / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        # pnpm 11 itself requires Node >= 22.13, so the toolchain matrix starts
+        # at 22; a separate job switches to Node 18 after building and verifies
+        # the published runtime floor against the locked dependency tree.
+        # pnpm 11 自身要求 Node >= 22.13，故工具链矩阵从 22 起；
+        # 单独的 job 在构建后切换到 Node 18，验证发布产物的运行时下限。
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # Reads the pinned version from the "packageManager" field.
+      # 从 package.json 的 packageManager 字段读取钉死的 pnpm 版本。
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run format:check
+      - run: pnpm run typecheck
+      - run: pnpm run build
+      # Includes the golden tool-surface baseline and the skill-catalog drift test:
+      # any silent change to the LLM-visible surface or docs fails CI here.
+      # 包含 golden 工具面基线与 skill 目录漂移测试：任何对 LLM 可见面或文档的无声改动都会在此红灯。
+      - run: pnpm run test
+      - run: pnpm run test:dist
+      - run: pnpm run lint:package
+
+  minimum-runtime:
+    name: node 18 runtime floor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      # pnpm 11 needs Node >=22.13, but consumers only execute the built package.
+      # Switch runtimes after the locked install and build to test that exact path.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 18
+      - run: node scripts/runtime-smoke.mjs
