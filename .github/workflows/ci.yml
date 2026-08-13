@@ -69,3 +69,23 @@ jobs:
         with:
           node-version: 18
       - run: node scripts/runtime-smoke.mjs
+
+  npm-v12-consumer:
+    name: npm 12 consumer install
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      # Install the packed artifact with npm 12's secure defaults, then verify
+      # the public ESM, CommonJS, CLI, and bundled Skill surfaces.
+      - name: Test packed artifact with npm 12
+        env:
+          PACKAGE_SMOKE_INSTALLER: npm12
+        run: pnpm run test:dist

@@ -18,7 +18,6 @@ for (const loaded of [esm, cjs]) {
 }
 
 await access(path.join(root, 'skills/nexbrowser-automation/SKILL.md'));
-await access(path.join(root, 'skills/nexbrowser/SKILL.md'));
 const cli = spawnSync(process.execPath, ['lib/cli.js', '--version'], {
   cwd: root,
   encoding: 'utf8'

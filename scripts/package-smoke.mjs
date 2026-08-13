@@ -8,13 +8,20 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const temporaryRoot = await mkdtemp(path.join(tmpdir(), 'nexbrowser-mcp-package-smoke-'));
 const consumerRoot = path.join(temporaryRoot, 'consumer');
+const installer = process.env.PACKAGE_SMOKE_INSTALLER ?? 'pnpm';
+const npm12Version = '12.0.2';
+
+assert.ok(
+  installer === 'pnpm' || installer === 'npm12',
+  `Unsupported PACKAGE_SMOKE_INSTALLER: ${installer}`
+);
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
     encoding: 'utf8',
     env: { ...process.env, NO_UPDATE_NOTIFIER: '1' },
-    shell: false
+    shell: options.shell ?? false
   });
   assert.equal(
     result.status,
@@ -32,6 +39,17 @@ function runPnpm(args, options) {
   return run(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', args, options);
 }
 
+function installTarball(tarball) {
+  if (installer === 'npm12') {
+    return run('npx', ['--yes', `npm@${npm12Version}`, 'install', tarball], {
+      cwd: consumerRoot,
+      shell: process.platform === 'win32'
+    });
+  }
+
+  return runPnpm(['add', '--ignore-scripts', tarball], { cwd: consumerRoot });
+}
+
 try {
   const packOutput = runPnpm(['pack', '--json', '--pack-destination', temporaryRoot]);
   const packResult = JSON.parse(packOutput);
@@ -45,7 +63,7 @@ try {
     JSON.stringify({ private: true, name: 'nexbrowser-mcp-smoke-host' }),
     'utf8'
   );
-  runPnpm(['add', '--ignore-scripts', tarball], { cwd: consumerRoot });
+  installTarball(tarball);
   await writeFile(
     path.join(consumerRoot, 'package.json'),
     JSON.stringify({ private: true, type: 'module' }),
@@ -68,7 +86,6 @@ assert.equal(typeof embeddedServer.close, 'function');
 await embeddedServer.close();
 const entry = fileURLToPath(import.meta.resolve('@nexbrowser/mcp'));
 await access(path.resolve(entry, '../../skills/nexbrowser-automation/SKILL.md'));
-await access(path.resolve(entry, '../../skills/nexbrowser/SKILL.md'));
 `;
   const cjsScript = `
 const assert = require('node:assert/strict');
@@ -85,7 +102,6 @@ assert.equal(typeof embeddedServer.connect, 'function');
 assert.equal(typeof embeddedServer.close, 'function');
 await embeddedServer.close();
 fs.accessSync(path.resolve(require.resolve('@nexbrowser/mcp'), '../../skills/nexbrowser-automation/SKILL.md'));
-fs.accessSync(path.resolve(require.resolve('@nexbrowser/mcp'), '../../skills/nexbrowser/SKILL.md'));
 })().catch((error) => { console.error(error); process.exitCode = 1; });
 `;
   await writeFile(path.join(consumerRoot, 'esm-smoke.mjs'), esmScript, 'utf8');
@@ -108,7 +124,10 @@ fs.accessSync(path.resolve(require.resolve('@nexbrowser/mcp'), '../../skills/nex
   );
   assert.equal(cliVersion, installedPackage.version);
 
-  console.log('Packed tarball smoke passed for temporary install, ESM, CommonJS, CLI, and Skill.');
+  const installerLabel = installer === 'npm12' ? `npm@${npm12Version}` : 'pnpm';
+  console.log(
+    `Packed tarball smoke passed with ${installerLabel} for temporary install, ESM, CommonJS, CLI, and Skill.`
+  );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });
 }

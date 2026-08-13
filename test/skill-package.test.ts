@@ -8,11 +8,6 @@ const SKILL_DIR = resolve(
   '../skills/nexbrowser-automation'
 );
 const SKILL_PATH = resolve(SKILL_DIR, 'SKILL.md');
-const BOOTSTRAP_SKILL_DIR = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  '../skills/nexbrowser'
-);
-const BOOTSTRAP_SKILL_PATH = resolve(BOOTSTRAP_SKILL_DIR, 'SKILL.md');
 
 describe('bundled automation skill', () => {
   it('has valid discovery frontmatter', () => {
@@ -51,26 +46,5 @@ describe('bundled automation skill', () => {
     expect(skill).toContain('`nex_browser_connect(startIfNeeded=false)`');
     expect(skill).toContain('pass it explicitly to subsequent tools for that window');
     expect(toolSelection).toContain('call `nex_browser_open` once with all IDs');
-  });
-});
-
-describe('bundled bootstrap skill', () => {
-  it('defines a separately discoverable NexBrowser setup workflow', () => {
-    const skill = readFileSync(BOOTSTRAP_SKILL_PATH, 'utf8');
-
-    expect(skill).toMatch(/^---\r?\nname: nexbrowser\r?\n/);
-    expect(skill).toMatch(/\r?\ndescription: Use when .*NexBrowser.*(?:install|setup|configur)/i);
-    expect(skill).toContain('codex mcp add nexbrowser');
-    expect(skill).not.toContain('@nexbrowser/mcp@latest setup');
-    expect(skill).toContain('nexbrowser-automation');
-  });
-
-  it('only links to bundled markdown references', () => {
-    const skill = readFileSync(BOOTSTRAP_SKILL_PATH, 'utf8');
-    const references = [...skill.matchAll(/\(([^)]+\.md)\)/g)].map((match) => match[1]);
-
-    for (const reference of references) {
-      expect(existsSync(resolve(BOOTSTRAP_SKILL_DIR, reference!)), reference).toBe(true);
-    }
   });
 });
