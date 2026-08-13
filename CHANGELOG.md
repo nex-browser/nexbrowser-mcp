@@ -6,10 +6,16 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.8.13] - 2026-08-13
+
+### Changed
+
+- Streamline the English and Simplified Chinese documentation around setup, configuration, troubleshooting, and security.
+- Keep `nexbrowser-automation` as the single bundled Skill and document its direct Skills CLI installation command.
+
 ### Added
 
-- Add a separately installable `nexbrowser` bootstrap Skill that guides Agents through complete setup.
-- Document direct one-command Skill installation through the cross-agent Skills CLI.
+- Verify packed-package installation with npm 12 secure defaults in CI.
 
 ## [2026.8.12-beta.1] - 2026-08-12
 
@@ -94,7 +100,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.12-beta.1...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13...HEAD
+[2026.8.13]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.12-beta.1...v2026.8.13
 [2026.8.12-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.9...v2026.8.12-beta.1
 [1.0.9]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.7...v1.0.8
