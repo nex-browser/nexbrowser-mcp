@@ -45,7 +45,7 @@ describe('NexBrowser MCP protocol', () => {
     try {
       const listed = await session.client.listTools();
       const names = listed.tools.map((tool) => tool.name);
-      expect(names).toHaveLength(46);
+      expect(names).toHaveLength(47);
       expect(
         names.every((name) => name.startsWith('nex_browser_') || name === 'nex_proxy_list')
       ).toBe(true);
@@ -58,7 +58,12 @@ describe('NexBrowser MCP protocol', () => {
         ])
       );
       expect(names).toEqual(
-        expect.arrayContaining(['nex_browser_list', 'nex_browser_connect', 'nex_browser_snapshot'])
+        expect.arrayContaining([
+          'nex_browser_list',
+          'nex_browser_connect',
+          'nex_browser_snapshot',
+          'nex_browser_fill_credentials'
+        ])
       );
 
       const result = await session.client.callTool({

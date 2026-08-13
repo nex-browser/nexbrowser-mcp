@@ -44,6 +44,7 @@ Stateless `nex_*` tools that manage NexBrowser environments; no automation sessi
 - `nex_browser_type` — Type text into an element using sequential key events. Inputs: `target` (required), `text` (required), `delay`.
 - `nex_browser_fill_form` — Fill one or more form controls in order. Inputs: `fields` (required).
 - `nex_browser_fill_account` — Fill the login fields of the session window's bound platform account. Desktop resolves the stored password and generates the current 2FA code itself, so no credential is exposed here. Call nex_browser_accounts first for the accountId, pass only the field targets that are visible right now (call again for a later step of a multi-step sign-in), and submit the form yourself afterwards — this tool never submits. Inputs: `accountId`, `usernameTarget`, `passwordTarget`, `totpTarget`.
+- `nex_browser_fill_credentials` — Fill literal login credentials into visible fields. Prefer nex_browser_fill_account when a stored or bound account is available, because literal values cross the MCP request boundary. This tool never submits the form. Inputs: `usernameTarget`, `username`, `passwordTarget`, `password`, `totpTarget`, `totpCode`.
 - `nex_browser_select_option` — Select one or more values in a select control. Inputs: `target` (required), `values` (required).
 - `nex_browser_check` — Check a checkbox or radio control. Inputs: `target` (required).
 - `nex_browser_uncheck` — Uncheck a checkbox or radio control. Inputs: `target` (required).

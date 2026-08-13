@@ -859,6 +859,46 @@
     }
   },
   {
+    "name": "nex_browser_fill_credentials",
+    "description": "Fill literal login credentials into visible fields. Prefer nex_browser_fill_account when a stored or bound account is available, because literal values cross the MCP request boundary. This tool never submits the form.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "usernameTarget": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "username": {
+          "type": "string"
+        },
+        "passwordTarget": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "password": {
+          "type": "string"
+        },
+        "totpTarget": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "totpCode": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
     "name": "nex_browser_select_option",
     "description": "Select one or more values in a select control.",
     "inputSchema": {
