@@ -36,7 +36,7 @@ function run(command, args, options = {}) {
 function runPnpm(args, options) {
   const pnpmScript = process.env.npm_execpath;
   if (pnpmScript) return run(process.execPath, [pnpmScript, ...args], options);
-  return run(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', args, options);
+  return run('pnpm', args, options);
 }
 
 function installTarball(tarball) {
@@ -78,7 +78,7 @@ import { fileURLToPath } from 'node:url';
 import * as mcp from '@nexbrowser/mcp';
 assert.equal(mcp.MCP_SERVER_NAME, 'nexbrowser-mcp');
 assert.equal(mcp.MCP_SERVER_VERSION, mcp.PKG_VERSION);
-assert.equal(mcp.TOOLS.length, 46);
+assert.equal(mcp.TOOLS.length, 47);
 assert.equal(typeof mcp.NexBrowserMCPServer, 'function');
 const embeddedServer = new mcp.NexBrowserMCPServer();
 assert.equal(typeof embeddedServer.connect, 'function');
@@ -95,7 +95,7 @@ const mcp = require('@nexbrowser/mcp');
 void (async () => {
 assert.equal(mcp.MCP_SERVER_NAME, 'nexbrowser-mcp');
 assert.equal(mcp.MCP_SERVER_VERSION, mcp.PKG_VERSION);
-assert.equal(mcp.TOOLS.length, 46);
+assert.equal(mcp.TOOLS.length, 47);
 assert.equal(typeof mcp.NexBrowserMCPServer, 'function');
 const embeddedServer = new mcp.NexBrowserMCPServer();
 assert.equal(typeof embeddedServer.connect, 'function');

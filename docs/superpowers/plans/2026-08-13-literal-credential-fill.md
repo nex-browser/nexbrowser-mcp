@@ -22,10 +22,12 @@
 ### Task 1: Implement literal credential filling with redacted results
 
 **Files:**
+
 - Modify: `test/account-tools.test.ts`
 - Modify: `src/features/browser-automation/interaction-tools.ts`
 
 **Interfaces:**
+
 - Consumes: `automationSchema`, `TARGET_PROPERTY`, `sessionId`, `actionsRoute`, `invalidArguments`, `errorResult`, and `successResult`.
 - Produces: MCP tool `nex_browser_fill_credentials` with optional `usernameTarget`, `username`, `passwordTarget`, `password`, `totpTarget`, and `totpCode` inputs in addition to standard optional session fields.
 - Produces: sanitized result shape `{ filled: string[], submitted: false }`.
@@ -37,7 +39,9 @@ Append a `describe('nex_browser_fill_credentials', ...)` block to `test/account-
 Assert the request calls, in order, are equivalent to:
 
 ```ts
-expect(request.mock.calls.map(([path, options]) => [path, JSON.parse(String(options.body))])).toEqual([
+expect(
+  request.mock.calls.map(([path, options]) => [path, JSON.parse(String(options.body))])
+).toEqual([
   [
     '/automation/sessions/session-1/actions',
     {
@@ -122,7 +126,7 @@ JSON.stringify({
   action: 'fill',
   ...(args.pageId ? { pageId: String(args.pageId) } : {}),
   params: { target: field.target, value: field.value }
-})
+});
 ```
 
 9. On a non-zero response, discard `msg` and `data` and return:
@@ -131,16 +135,16 @@ JSON.stringify({
 errorResult(`Failed to fill ${field.label}.`, {
   code: response.code,
   field: field.label
-})
+});
 ```
 
 10. On success return:
 
 ```ts
-successResult(
-  `Filled ${filled.join(', ')}.\nThe form was not submitted.`,
-  { filled, submitted: false }
-)
+successResult(`Filled ${filled.join(', ')}.\nThe form was not submitted.`, {
+  filled,
+  submitted: false
+});
 ```
 
 Use `2FA code` as the public label for the `totpCode` pair. Set no `readOnlyHint`; filling page fields changes browser state.
@@ -168,6 +172,7 @@ git commit -m "feat(mcp): add literal credential fill tool"
 ### Task 2: Publish safety metadata and arbitrary 2FA workflow guidance
 
 **Files:**
+
 - Modify: `test/tool-safety.test.ts`
 - Modify: `test/skill-package.test.ts`
 - Modify: `skills/nexbrowser-automation/SKILL.md`
@@ -175,6 +180,7 @@ git commit -m "feat(mcp): add literal credential fill tool"
 - Modify: `CHANGELOG.md`
 
 **Interfaces:**
+
 - Consumes: the `nex_browser_fill_credentials` tool from Task 1.
 - Produces: LLM-visible safety rules that distinguish bound credentials from caller-supplied credentials.
 - Produces: a reusable arbitrary-website 2FA retrieval workflow using existing tab and interaction tools.
@@ -284,6 +290,7 @@ git commit -m "docs(skill): add literal credential login workflow"
 ### Task 3: Regenerate public catalogs and verify the package
 
 **Files:**
+
 - Modify: `test/tool-catalog.test.ts`
 - Modify: `test/mcp-server.test.ts`
 - Modify: `test/__snapshots__/tools-preview.json`
@@ -291,6 +298,7 @@ git commit -m "docs(skill): add literal credential login workflow"
 - Modify: `skills/nexbrowser-automation/references/tool-catalog.md`
 
 **Interfaces:**
+
 - Consumes: the registered tool surface and Skill changes from Tasks 1 and 2.
 - Produces: a pinned 47-tool MCP catalog and generated Skill reference matching the live schemas.
 

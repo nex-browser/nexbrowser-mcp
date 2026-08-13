@@ -13,7 +13,7 @@ const cjs = require('../lib/index.cjs');
 for (const loaded of [esm, cjs]) {
   assert.equal(loaded.MCP_SERVER_NAME, 'nexbrowser-mcp');
   assert.equal(loaded.MCP_SERVER_VERSION, loaded.PKG_VERSION);
-  assert.equal(loaded.TOOLS.length, 46);
+  assert.equal(loaded.TOOLS.length, 47);
   assert.equal(typeof loaded.NexBrowserMCPServer, 'function');
 }
 

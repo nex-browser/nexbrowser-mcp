@@ -190,6 +190,7 @@ describe('nex_browser_fill_credentials', () => {
         })
       })
     );
+    expect(request).toHaveBeenCalledTimes(3);
     expect(result.structuredContent).toEqual({
       filled: ['username', 'password', '2FA code'],
       submitted: false
@@ -220,6 +221,25 @@ describe('nex_browser_fill_credentials', () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it('treats an explicitly supplied empty string as a credential value', async () => {
+    const { request, tool } = toolWith('nex_browser_fill_credentials', {});
+
+    const result = await tool.execute({ usernameTarget: 'e12', username: '' });
+
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request).toHaveBeenCalledWith(
+      '/automation/sessions/session-1/actions',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'fill',
+          params: { target: 'e12', value: '' }
+        })
+      })
+    );
+    expect(result.structuredContent).toEqual({ filled: ['username'], submitted: false });
+  });
+
   it('stops after a failed password fill and redacts its secret', async () => {
     const request = vi
       .fn()
@@ -246,8 +266,13 @@ describe('nex_browser_fill_credentials', () => {
     expect(request).toHaveBeenCalledTimes(2);
     expect(result.isError).toBe(true);
     expect(result.structuredContent).toEqual({ code: 'ACTION_TIMEOUT', field: 'password' });
-    expect(String((result.content[0] as { text: string }).text)).toContain('Failed to fill password.');
-    expect(JSON.stringify(result)).not.toContain('secret-password');
+    expect(String((result.content[0] as { text: string }).text)).toContain(
+      'Failed to fill password.'
+    );
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain('alice@example.com');
+    expect(serialized).not.toContain('secret-password');
+    expect(serialized).not.toContain('123456');
   });
 });
 

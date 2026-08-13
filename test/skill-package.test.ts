@@ -50,10 +50,23 @@ describe('bundled automation skill', () => {
 
   it('documents literal credential filling and cautious retrieval-code handling', () => {
     const skill = readFileSync(SKILL_PATH, 'utf8');
+    const example = readFileSync(
+      resolve(SKILL_DIR, 'examples/sign-in-with-literal-credentials.md'),
+      'utf8'
+    );
 
     expect(skill).toContain('nex_browser_fill_credentials');
     expect(skill).toContain('examples/sign-in-with-literal-credentials.md');
     expect(skill).toContain('recommend `nex_browser_fill_account` when available');
     expect(skill).toMatch(/stop when a retrieval code is ambiguous/i);
+    expect(skill).toMatch(/retrieval site.*secret.*`passwordTarget`.*`password`/i);
+    expect(skill).toMatch(/never use `nex_browser_type` or `nex_browser_fill_form`.*secret/i);
+    expect(skill).toMatch(/inaccessible.*cannot safely resolve/i);
+    expect(example.match(/nex_browser_tab_list/g)).toHaveLength(2);
+    expect(example).toMatch(/retain.*LOGIN_PAGE_ID/i);
+    expect(example).toMatch(/retain.*RETRIEVAL_PAGE_ID/i);
+    expect(example).toMatch(/retrieval site.*secret.*passwordTarget.*password/i);
+    expect(example).toMatch(/never use `nex_browser_type` or `nex_browser_fill_form`.*secret/i);
+    expect(example).toMatch(/inaccessible.*cannot safely resolve/i);
   });
 });

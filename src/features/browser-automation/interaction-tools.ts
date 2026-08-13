@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
-import { apiErrorResult, errorResult, invalidArguments, successResult } from '../../shared/tool-result.js';
+import {
+  apiErrorResult,
+  errorResult,
+  invalidArguments,
+  successResult
+} from '../../shared/tool-result.js';
 import type { McpToolDefinition, McpToolResult } from '../../shared/types.js';
 import { accountFillRoute, actionsRoute } from '../../transport/routes.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
@@ -181,7 +186,9 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
         (field) => (field.target !== undefined) !== (field.value !== undefined)
       );
       if (mismatchedField)
-        return invalidArguments(`${mismatchedField.label} target and value must be provided together`);
+        return invalidArguments(
+          `${mismatchedField.label} target and value must be provided together`
+        );
       const fields = credentialFields.filter(
         (field): field is { target: string; value: string; label: string } =>
           field.target !== undefined && field.value !== undefined
