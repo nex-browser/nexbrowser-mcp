@@ -162,7 +162,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_fill_credentials',
     description:
-      'Fill literal login credentials into visible fields. Literal values cross the MCP request boundary, and this tool never submits the form.',
+      'Fill literal login credentials into visible fields. Prefer nex_browser_fill_account when a stored or bound account is available, because literal values cross the MCP request boundary. This tool never submits the form.',
     inputSchema: automationSchema({
       usernameTarget: TARGET_PROPERTY.optional(),
       username: z.string().optional(),

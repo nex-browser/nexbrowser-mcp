@@ -127,6 +127,12 @@ describe('nex_browser_fill_account', () => {
 });
 
 describe('nex_browser_fill_credentials', () => {
+  it('recommends stored-account filling when a bound account is available', () => {
+    const { tool } = toolWith('nex_browser_fill_credentials', {});
+
+    expect(tool.description).toContain('nex_browser_fill_account');
+  });
+
   it('fills literal credentials in order and redacts them from its result', async () => {
     const request = vi.fn(async () => ({
       code: 0,
