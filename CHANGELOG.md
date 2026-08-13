@@ -4,6 +4,13 @@ All notable changes to this project will be documented here.
 
 The format is based on Keep a Changelog, and the project follows Semantic Versioning for the npm package and its public MCP tool contract.
 
+## [Unreleased]
+
+### Added
+
+- Add a separately installable `nexbrowser` bootstrap Skill that guides Agents through complete setup.
+- Document direct one-command Skill installation through the cross-agent Skills CLI.
+
 ## [2026.8.12-beta.1] - 2026-08-12
 
 ### Added

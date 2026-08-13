@@ -149,10 +149,34 @@ NexBrowser Desktop app.
 
 ## Skill package
 
-The npm package also contains `skills/nexbrowser-automation`, which teaches compatible
-agents how to select tools, use short-lived snapshot references, and recover from common errors.
-MCP does not install skills automatically; install or copy that directory through your agent's
-normal skill mechanism when skill support is available.
+The repository publishes two Skills:
+
+- `nexbrowser` guides an Agent through complete MCP and Skill setup.
+- `nexbrowser-automation` teaches compatible agents how to select tools, use short-lived snapshot
+  references, and recover from common errors.
+
+Give an Agent this one command to install the setup Skill:
+
+```bash
+npx skills add https://github.com/nex-browser/nexbrowser-mcp --skill nexbrowser
+```
+
+After the Agent reloads the Skill, ask it to finish NexBrowser setup. The setup workflow registers
+MCP and installs `nexbrowser-automation`.
+
+To install only the automation Skill directly:
+
+```bash
+npx -y skills@latest add https://github.com/nex-browser/nexbrowser-mcp \
+  --skill nexbrowser-automation
+```
+
+For a non-interactive global Codex installation:
+
+```bash
+npx -y skills@latest add https://github.com/nex-browser/nexbrowser-mcp \
+  --skill nexbrowser-automation --agent codex --global --copy --yes
+```
 
 ## Privacy and security
 

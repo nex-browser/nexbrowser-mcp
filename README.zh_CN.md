@@ -145,9 +145,34 @@ Desktop 应用会校验它与当前选中团队是否一致。
 
 ## Skill 包
 
-npm 包同时包含 `skills/nexbrowser-automation`，用于指导支持 Skill 的 Agent 选择工具、
-使用短期 snapshot ref，并从常见错误中恢复。MCP 不会自动安装 Skill；需要时请通过 Agent
-自身的 Skill 安装机制安装或复制该目录。
+仓库发布两个 Skill：
+
+- `nexbrowser`：指导 Agent 完成 MCP 和配套 Skill 的完整配置。
+- `nexbrowser-automation`：指导支持 Skill 的 Agent 选择工具、使用短期 snapshot ref，
+  并从常见错误中恢复。
+
+将下面这一条命令交给 Agent，即可安装配置入口 Skill：
+
+```bash
+npx skills add https://github.com/nex-browser/nexbrowser-mcp --skill nexbrowser
+```
+
+Agent 重新加载 Skill 后，让它继续完成 NexBrowser 配置。该流程会注册 MCP，并安装
+`nexbrowser-automation`。
+
+如果只需直接安装自动化 Skill：
+
+```bash
+npx -y skills@latest add https://github.com/nex-browser/nexbrowser-mcp \
+  --skill nexbrowser-automation
+```
+
+如需无交互地全局安装到 Codex：
+
+```bash
+npx -y skills@latest add https://github.com/nex-browser/nexbrowser-mcp \
+  --skill nexbrowser-automation --agent codex --global --copy --yes
+```
 
 ## 隐私与安全
 

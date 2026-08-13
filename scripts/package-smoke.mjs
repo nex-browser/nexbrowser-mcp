@@ -68,6 +68,7 @@ assert.equal(typeof embeddedServer.close, 'function');
 await embeddedServer.close();
 const entry = fileURLToPath(import.meta.resolve('@nexbrowser/mcp'));
 await access(path.resolve(entry, '../../skills/nexbrowser-automation/SKILL.md'));
+await access(path.resolve(entry, '../../skills/nexbrowser/SKILL.md'));
 `;
   const cjsScript = `
 const assert = require('node:assert/strict');
@@ -84,6 +85,7 @@ assert.equal(typeof embeddedServer.connect, 'function');
 assert.equal(typeof embeddedServer.close, 'function');
 await embeddedServer.close();
 fs.accessSync(path.resolve(require.resolve('@nexbrowser/mcp'), '../../skills/nexbrowser-automation/SKILL.md'));
+fs.accessSync(path.resolve(require.resolve('@nexbrowser/mcp'), '../../skills/nexbrowser/SKILL.md'));
 })().catch((error) => { console.error(error); process.exitCode = 1; });
 `;
   await writeFile(path.join(consumerRoot, 'esm-smoke.mjs'), esmScript, 'utf8');

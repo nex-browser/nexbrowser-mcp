@@ -1,0 +1,4 @@
+interface:
+  display_name: 'NexBrowser Setup'
+  short_description: 'Install and configure NexBrowser MCP'
+  default_prompt: 'Use $nexbrowser to install and configure NexBrowser MCP safely.'

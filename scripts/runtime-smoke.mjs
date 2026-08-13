@@ -18,6 +18,7 @@ for (const loaded of [esm, cjs]) {
 }
 
 await access(path.join(root, 'skills/nexbrowser-automation/SKILL.md'));
+await access(path.join(root, 'skills/nexbrowser/SKILL.md'));
 const cli = spawnSync(process.execPath, ['lib/cli.js', '--version'], {
   cwd: root,
   encoding: 'utf8'
@@ -25,4 +26,4 @@ const cli = spawnSync(process.execPath, ['lib/cli.js', '--version'], {
 assert.equal(cli.status, 0, cli.stderr);
 assert.equal(cli.stdout.trim(), esm.PKG_VERSION);
 
-console.log(`Runtime smoke passed on Node ${process.version} for ESM, CommonJS, CLI, and Skill.`);
+console.log(`Runtime smoke passed on Node ${process.version} for ESM, CommonJS, CLI, and Skills.`);
