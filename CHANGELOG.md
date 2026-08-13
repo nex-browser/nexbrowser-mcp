@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.8.13-beta.1] - 2026-08-13
+
 ### Added
 
 - Add explicit literal username, password, and retrieved 2FA-code filling with redacted MCP results and agent-driven guidance for arbitrary 2FA retrieval websites.
@@ -104,7 +106,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13-beta.1...HEAD
+[2026.8.13-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13...v2026.8.13-beta.1
 [2026.8.13]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.12-beta.1...v2026.8.13
 [2026.8.12-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.9...v2026.8.12-beta.1
 [1.0.9]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.8...v1.0.9
