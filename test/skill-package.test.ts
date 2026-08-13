@@ -47,4 +47,13 @@ describe('bundled automation skill', () => {
     expect(skill).toContain('pass it explicitly to subsequent tools for that window');
     expect(toolSelection).toContain('call `nex_browser_open` once with all IDs');
   });
+
+  it('documents literal credential filling and cautious retrieval-code handling', () => {
+    const skill = readFileSync(SKILL_PATH, 'utf8');
+
+    expect(skill).toContain('nex_browser_fill_credentials');
+    expect(skill).toContain('examples/sign-in-with-literal-credentials.md');
+    expect(skill).toContain('recommend `nex_browser_fill_account` when available');
+    expect(skill).toMatch(/stop when a retrieval code is ambiguous/i);
+  });
 });

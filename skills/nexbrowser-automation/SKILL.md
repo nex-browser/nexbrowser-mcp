@@ -26,7 +26,7 @@ Use this skill whenever the user names NexBrowser or needs to manage or automate
 | Navigate to a URL       | `nex_browser_navigate`                                               | Use for an initial or explicitly supplied URL.                        |
 | Inspect elements        | `nex_browser_snapshot`                                               | Preferred over a screenshot for interaction.                          |
 | Click, type, or select  | `nex_browser_click`, `nex_browser_type`, `nex_browser_select_option` | Use snapshot `target` values.                                         |
-| Sign in to a platform   | `nex_browser_accounts`, `nex_browser_fill_account`                   | Use the window's bound account; never ask the user for a password.    |
+| Sign in to a platform   | `nex_browser_accounts`, `nex_browser_fill_account`, `nex_browser_fill_credentials` | Prefer the window's bound account; use literal values only when the user explicitly supplies or asks to use them. |
 | Wait for a page change  | `nex_browser_wait_for`                                               | Prefer `text` with `timeout` over fixed `time`.                       |
 | Read structured data    | `nex_browser_evaluate`                                               | Prefer UI tools for state-changing actions.                           |
 | Inspect visual state    | `nex_browser_take_screenshot`                                        | Use when layout or rendered media matters.                            |
@@ -44,7 +44,9 @@ Use this skill whenever the user names NexBrowser or needs to manage or automate
 - Snapshot refs are temporary. Re-snapshot after navigation, an action that changes the DOM, a substantial asynchronous update, or any stale-reference error.
 - Prefer visible controls: click links, buttons, filters, and pagination before using direct navigation or JavaScript.
 - For sensitive flows such as login, upload, checkout, or account changes, slow down: operate visible controls step by step, verify each result, and preserve confirmation steps (see `guides/human-like-interaction.md`).
-- To sign in, use the window's bound platform account: call `nex_browser_accounts` for the `accountId`, then `nex_browser_fill_account` with only the field targets visible right now. Desktop resolves the password and generates the 2FA code internally, so never ask the user for a credential, never type one with `nex_browser_type` or `nex_browser_fill_form`, and never repeat one back. `nex_browser_fill_account` does not submit; click the submit control yourself after verifying the filled state.
+- To sign in, recommend `nex_browser_fill_account` when available: call `nex_browser_accounts` for the `accountId`, then use `nex_browser_fill_account` with only the field targets visible right now. Desktop resolves the password and generates the 2FA code internally, so never ask the user for a credential, never type one with `nex_browser_type` or `nex_browser_fill_form`, and never repeat one back. `nex_browser_fill_account` does not submit; click the submit control yourself after verifying the filled state.
+- Use `nex_browser_fill_credentials` only when the user explicitly supplies literal credentials or explicitly asks you to use them. Those literal values enter the MCP request and model context: never store, log, or repeat them in a response. The tool fills only the current visible targets and never submits; snapshot each changed step, then click the visible submit control yourself after verifying the filled state.
+- If a sign-in requests a code that must be retrieved elsewhere, retain the login page ID, open a temporary tab with `nex_browser_tab_new` at the user-supplied retrieval URL, inspect it with snapshots, and interact only as its visible state requires. Retain a code only when one code is unambiguous; stop when a retrieval code is ambiguous, or when a CAPTCHA, human confirmation, device approval, or SMS challenge appears. Close the temporary tab, reselect the login tab, snapshot again, and fill the retrieved code only into the visible code target. See [Sign-in with literal credentials](examples/sign-in-with-literal-credentials.md).
 - Wait and verify after every state-changing action. Prefer observable text waits over fixed delays.
 - Treat `nex_browser_evaluate` as an inspection and extraction tool; use it to change page state only when the normal UI cannot be operated. `nex_browser_evaluate` and `nex_browser_run_code` are permission-gated by the NexBrowser Desktop app.
 
@@ -75,6 +77,7 @@ Do not invent tools for the following — they are outside this skill's scope; r
 
 - Deleting or editing existing browser environments/profiles, resetting fingerprints, or rebinding a proxy on a window — not available through this MCP server; direct the user to the NexBrowser app. Creating new environments is available through `nex_browser_create`.
 - Creating, editing, or reading platform-account credentials — `nex_browser_accounts` only reports which accounts a window is bound to, with masked usernames and no secrets. Managing the accounts themselves belongs in the NexBrowser app.
+- Creating, editing, or persisting credentials in Desktop is account management and remains out of scope. Literal credential filling is one-time form filling only; it does not create or manage an account.
 - Raw CDP or WebSocket connections — never pass a CDP endpoint to an automation tool; `nex_browser_connect` with a `windowId` is the only automation entry point. Environment-management tools redact CDP endpoints by default; the operator-only `NEX_EXPOSE_CDP=1` mode is outside this skill workflow.
 - Cookie export, UA queries, or profile sharing — not part of this tool set.
 - Environment lifecycle (`nex_browser_list`, `nex_browser_create`, `nex_browser_open`, `nex_browser_close`, `nex_browser_connection_info`, `nex_browser_accounts`) manages windows only; it cannot automate pages. Page automation always requires `nex_browser_connect` first.
@@ -92,6 +95,7 @@ Do not invent tools for the following — they are outside this skill's scope; r
 | [Error handling](guides/error-handling.md)                             | A tool returned an error and the hint is not enough.       |
 | [Examples](examples/connect-and-navigate.md)                           | Full workflow templates for common tasks.                  |
 | [Sign-in with a bound account](examples/sign-in-with-bound-account.md) | The task needs a platform login for a window.              |
+| [Sign-in with literal credentials](examples/sign-in-with-literal-credentials.md) | The user explicitly provides credentials and a one-time retrieval-code flow is needed. |
 
 ## NexBrowser Integration
 

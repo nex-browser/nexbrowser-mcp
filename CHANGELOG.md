@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+### Added
+
+- Add explicit literal username, password, and retrieved 2FA-code filling with redacted MCP results and agent-driven guidance for arbitrary 2FA retrieval websites.
+
 ## [2026.8.13] - 2026-08-13
 
 ### Changed

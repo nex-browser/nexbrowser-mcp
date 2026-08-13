@@ -64,5 +64,22 @@ describe('tool safety metadata', () => {
   it('states that credential-bearing tools do not submit the login form', () => {
     expect(tool('nex_browser_fill_account').description).toMatch(/never submits/i);
     expect(tool('nex_browser_fill_account').annotations?.readOnlyHint).not.toBe(true);
+
+    const literalProperties = Object.keys(
+      (tool('nex_browser_fill_credentials').inputSchema as { properties?: object }).properties ?? {}
+    );
+    expect(literalProperties).toEqual([
+      'sessionId',
+      'pageId',
+      'usernameTarget',
+      'username',
+      'passwordTarget',
+      'password',
+      'totpTarget',
+      'totpCode'
+    ]);
+    expect(tool('nex_browser_fill_credentials').description).toMatch(/never submits/i);
+    expect(tool('nex_browser_fill_credentials').description).toMatch(/MCP request/i);
+    expect(tool('nex_browser_fill_credentials').annotations?.readOnlyHint).not.toBe(true);
   });
 });
