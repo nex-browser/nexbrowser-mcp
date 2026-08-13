@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
-import { apiErrorResult, invalidArguments, successResult } from '../../shared/tool-result.js';
+import { apiErrorResult, errorResult, invalidArguments, successResult } from '../../shared/tool-result.js';
 import type { McpToolDefinition, McpToolResult } from '../../shared/types.js';
-import { accountFillRoute } from '../../transport/routes.js';
+import { accountFillRoute, actionsRoute } from '../../transport/routes.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
 import { callAction, sessionId } from './common.js';
 import { automationSchema, TARGET_PROPERTY } from './schema.js';
@@ -157,6 +157,60 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
         ].join('\n'),
         data
       );
+    }
+  }),
+  defineTool({
+    name: 'nex_browser_fill_credentials',
+    description:
+      'Fill literal login credentials into visible fields. Literal values cross the MCP request boundary, and this tool never submits the form.',
+    inputSchema: automationSchema({
+      usernameTarget: TARGET_PROPERTY.optional(),
+      username: z.string().optional(),
+      passwordTarget: TARGET_PROPERTY.optional(),
+      password: z.string().optional(),
+      totpTarget: TARGET_PROPERTY.optional(),
+      totpCode: z.string().optional()
+    }),
+    execute: async (args, ctx) => {
+      const credentialFields = [
+        { target: args.usernameTarget, value: args.username, label: 'username' },
+        { target: args.passwordTarget, value: args.password, label: 'password' },
+        { target: args.totpTarget, value: args.totpCode, label: '2FA code' }
+      ];
+      const mismatchedField = credentialFields.find(
+        (field) => (field.target !== undefined) !== (field.value !== undefined)
+      );
+      if (mismatchedField)
+        return invalidArguments(`${mismatchedField.label} target and value must be provided together`);
+      const fields = credentialFields.filter(
+        (field): field is { target: string; value: string; label: string } =>
+          field.target !== undefined && field.value !== undefined
+      );
+      if (!fields.length)
+        return invalidArguments('At least one credential target and value pair is required');
+
+      const resolvedSessionId = sessionId(args, ctx.sessions);
+      const filled: string[] = [];
+      for (const field of fields) {
+        const response = await ctx.api.request<any>(actionsRoute(resolvedSessionId), {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'fill',
+            ...(args.pageId ? { pageId: String(args.pageId) } : {}),
+            params: { target: field.target, value: field.value }
+          })
+        });
+        if (response.code !== 0)
+          return errorResult(`Failed to fill ${field.label}.`, {
+            code: response.code,
+            field: field.label
+          });
+        filled.push(field.label);
+      }
+      return successResult(`Filled ${filled.join(', ')}.\nThe form was not submitted.`, {
+        filled,
+        submitted: false
+      });
     }
   }),
   defineTool({

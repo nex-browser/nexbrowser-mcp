@@ -126,6 +126,125 @@ describe('nex_browser_fill_account', () => {
   });
 });
 
+describe('nex_browser_fill_credentials', () => {
+  it('fills literal credentials in order and redacts them from its result', async () => {
+    const request = vi.fn(async () => ({
+      code: 0,
+      msg: 'alice@example.com secret-password 123456',
+      data: { value: 'alice@example.com secret-password 123456' }
+    }));
+    const client = { request, getActiveSessionId: () => 'session-1' } as unknown as NexApiClient;
+    const tool = createBrowserAutomationTools(client).find(
+      (candidate) => candidate.name === 'nex_browser_fill_credentials'
+    )!;
+
+    const result = await tool.execute({
+      pageId: 'page-1',
+      usernameTarget: 'e12',
+      username: 'alice@example.com',
+      passwordTarget: 'e13',
+      password: 'secret-password',
+      totpTarget: 'e14',
+      totpCode: '123456'
+    });
+
+    expect(request).toHaveBeenNthCalledWith(
+      1,
+      '/automation/sessions/session-1/actions',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'fill',
+          pageId: 'page-1',
+          params: { target: 'e12', value: 'alice@example.com' }
+        })
+      })
+    );
+    expect(request).toHaveBeenNthCalledWith(
+      2,
+      '/automation/sessions/session-1/actions',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'fill',
+          pageId: 'page-1',
+          params: { target: 'e13', value: 'secret-password' }
+        })
+      })
+    );
+    expect(request).toHaveBeenNthCalledWith(
+      3,
+      '/automation/sessions/session-1/actions',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'fill',
+          pageId: 'page-1',
+          params: { target: 'e14', value: '123456' }
+        })
+      })
+    );
+    expect(result.structuredContent).toEqual({
+      filled: ['username', 'password', '2FA code'],
+      submitted: false
+    });
+    expect(String((result.content[0] as { text: string }).text)).toContain(
+      'The form was not submitted.'
+    );
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain('alice@example.com');
+    expect(serialized).not.toContain('secret-password');
+    expect(serialized).not.toContain('123456');
+  });
+
+  it.each([
+    {},
+    { username: 'alice@example.com' },
+    { usernameTarget: 'e12' },
+    { password: 'secret-password' },
+    { passwordTarget: 'e13' },
+    { totpCode: '123456' },
+    { totpTarget: 'e14' }
+  ])('rejects invalid credential arguments locally without calling the API', async (args) => {
+    const { request, tool } = toolWith('nex_browser_fill_credentials', {});
+
+    const result = await tool.execute(args);
+
+    expect(result.isError).toBe(true);
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it('stops after a failed password fill and redacts its secret', async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce({ code: 0, msg: 'ok', data: {} })
+      .mockResolvedValueOnce({
+        code: 'ACTION_TIMEOUT',
+        msg: 'secret-password',
+        data: { value: 'secret-password' }
+      });
+    const client = { request, getActiveSessionId: () => 'session-1' } as unknown as NexApiClient;
+    const tool = createBrowserAutomationTools(client).find(
+      (candidate) => candidate.name === 'nex_browser_fill_credentials'
+    )!;
+
+    const result = await tool.execute({
+      usernameTarget: 'e12',
+      username: 'alice@example.com',
+      passwordTarget: 'e13',
+      password: 'secret-password',
+      totpTarget: 'e14',
+      totpCode: '123456'
+    });
+
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toEqual({ code: 'ACTION_TIMEOUT', field: 'password' });
+    expect(String((result.content[0] as { text: string }).text)).toContain('Failed to fill password.');
+    expect(JSON.stringify(result)).not.toContain('secret-password');
+  });
+});
+
 describe('nex_browser_create', () => {
   it('forwards a normalized count with the caller overrides', async () => {
     const { request, tool } = toolWith('nex_browser_create', {
