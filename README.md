@@ -71,6 +71,7 @@ npx skills add https://github.com/nex-browser/nexbrowser-mcp --skill nexbrowser-
 ## Capabilities
 
 - Manage environments: list, open, close, and inspect NexBrowser environments.
+- Organize windows: list groups with their window counts, create and delete groups, and move windows in or out of a group.
 - Automate pages: connect, navigate, click, type, upload files, and manage tabs.
 - Inspect pages: snapshots, screenshots, visible text, console messages, and network requests.
 - Isolate sessions: each MCP process owns its browser sessions and active-tab state.

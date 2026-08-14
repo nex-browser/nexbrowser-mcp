@@ -24,6 +24,17 @@
         },
         "keyword": {
           "type": "string"
+        },
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Filter by window group from nex_browser_group_list; 0 lists ungrouped windows"
         }
       },
       "additionalProperties": {}
@@ -245,6 +256,125 @@
     },
     "annotations": {
       "destructiveHint": true
+    }
+  },
+  {
+    "name": "nex_browser_group_list",
+    "description": "List the window groups of the active NexBrowser workspace with the window count of each, so a groupId can be selected for window creation, moving, or deletion. The first row is always the ungrouped bucket with groupId 0.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_browser_group_create",
+    "description": "Create one window group in the active NexBrowser workspace. Group names must be unique inside the team; a duplicate name is rejected. Use nex_browser_move_to_group afterwards to put windows into the new group.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Group name; it must be unique inside the active team"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991,
+          "description": "Sort order; defaults to the end of the list"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_browser_group_delete",
+    "description": "Delete one custom window group from the active NexBrowser workspace. The windows inside it are not deleted; they become ungrouped. The ungrouped bucket (groupId 0) cannot be deleted.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Custom group ID to delete; the ungrouped bucket 0 is rejected"
+        }
+      },
+      "required": [
+        "groupId"
+      ],
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "nex_browser_move_to_group",
+    "description": "Move one or more NexBrowser windows into a window group. Pass groupId=0 to move them out of any group. Groups are window metadata, so running windows can be moved without closing them first.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "One window ID or a list of window IDs"
+        },
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Target group ID from nex_browser_group_list; 0 moves the windows out of any group"
+        }
+      },
+      "required": [
+        "windowId",
+        "groupId"
+      ],
+      "additionalProperties": {}
     }
   },
   {

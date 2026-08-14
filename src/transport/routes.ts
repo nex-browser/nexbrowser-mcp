@@ -34,12 +34,14 @@ export const accountFillRoute = (sessionId: string): string =>
 
 // Environment management endpoints. 环境管理端点。
 
-/** Paginated window/environment listing. 分页的窗口/环境列表。 */
-export const SCREEN_LOAD_ROUTE = '/screen_load';
+/** Paginated window/environment listing; parameters go in the query string. 分页的窗口/环境列表；参数经 query string 传递。 */
+export const BROWSER_LIST_ROUTE = '/browser/list';
 /** Creates windows from the Desktop app's own create-window defaults. 按 Desktop 客户端「创建窗口」的默认值建窗。 */
 export const BROWSER_CREATE_ROUTE = '/browser/create';
 /** Binds one proxy resource to closed windows; proxyId=0 removes it. 为已关闭窗口绑定代理；proxyId=0 解绑。 */
 export const BROWSER_PROXY_ROUTE = '/browser/proxy';
+/** Moves windows into one window group; groupId=0 moves them out of any group. 把窗口移动到指定分组；groupId=0 移出分组。 */
+export const BROWSER_GROUP_ROUTE = '/browser/group';
 /** Platform accounts bound to a window; secrets are never returned. 窗口绑定的平台账号；不返回任何密钥。 */
 export const BROWSER_ACCOUNTS_ROUTE = '/browser/accounts';
 /** Starts browser windows by teamId + windowId. 按 teamId + windowId 启动浏览器窗口。 */
@@ -50,3 +52,9 @@ export const BROWSER_CLOSE_ROUTE = '/browser/close';
 export const BROWSER_CONNECTION_INFO_ROUTE = '/browser/connection_info';
 /** Paginated proxy resources safe for selection by ID. 可按 ID 选择的代理资源分页。 */
 export const PROXY_LIST_ROUTE = '/proxy/list';
+/** Window groups of the active team, including the synthetic ungrouped bucket. 当前团队的窗口分组，含服务端合成的「未分组」。 */
+export const GROUP_LIST_ROUTE = '/group/list';
+/** Creates one window group in the active team. 在当前团队下新建一个窗口分组。 */
+export const GROUP_CREATE_ROUTE = '/group/create';
+/** Deletes one custom window group; its windows become ungrouped. 删除一个自建窗口分组，组内窗口转为未分组。 */
+export const GROUP_DELETE_ROUTE = '/group/delete';

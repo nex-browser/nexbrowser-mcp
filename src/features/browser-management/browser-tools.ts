@@ -13,10 +13,14 @@ import {
   BROWSER_CLOSE_ROUTE,
   BROWSER_CONNECTION_INFO_ROUTE,
   BROWSER_CREATE_ROUTE,
+  BROWSER_GROUP_ROUTE,
+  BROWSER_LIST_ROUTE,
   BROWSER_OPEN_ROUTE,
   BROWSER_PROXY_ROUTE,
-  PROXY_LIST_ROUTE,
-  SCREEN_LOAD_ROUTE
+  GROUP_CREATE_ROUTE,
+  GROUP_DELETE_ROUTE,
+  GROUP_LIST_ROUTE,
+  PROXY_LIST_ROUTE
 } from '../../transport/routes.js';
 
 const browserIdSchema = z.union([z.string(), z.number()]);
@@ -26,7 +30,10 @@ const listBrowsersInputSchema = z
     teamId: browserIdSchema.optional(),
     page: z.number().optional(),
     size: z.number().optional(),
-    keyword: z.string().optional()
+    keyword: z.string().optional(),
+    groupId: browserIdSchema
+      .describe('Filter by window group from nex_browser_group_list; 0 lists ungrouped windows')
+      .optional()
   })
   .passthrough();
 
@@ -66,6 +73,27 @@ const bindProxyInputSchema = z
   .object({
     windowId: browserIdsSchema.describe('One window ID or a list of closed window IDs'),
     proxyId: browserIdSchema.describe('Proxy resource ID to bind; 0 removes the proxy binding')
+  })
+  .passthrough();
+const createGroupInputSchema = z
+  .object({
+    name: z.string().describe('Group name; it must be unique inside the active team'),
+    seq: z.number().int().describe('Sort order; defaults to the end of the list').optional()
+  })
+  .passthrough();
+const deleteGroupInputSchema = z
+  .object({
+    groupId: browserIdSchema.describe(
+      'Custom group ID to delete; the ungrouped bucket 0 is rejected'
+    )
+  })
+  .passthrough();
+const moveToGroupInputSchema = z
+  .object({
+    windowId: browserIdsSchema.describe('One window ID or a list of window IDs'),
+    groupId: browserIdSchema.describe(
+      'Target group ID from nex_browser_group_list; 0 moves the windows out of any group'
+    )
   })
   .passthrough();
 
@@ -182,6 +210,31 @@ function proxySummary(proxy: ReturnType<typeof safeProxy>): string {
   ].join('\n');
 }
 
+/**
+ * Formats one window group row for selection by ID. Group 0 is the synthetic
+ * ungrouped bucket Desktop always returns first; it cannot be renamed or deleted.
+ * 格式化单个窗口分组行供按 ID 选择。分组 0 是 Desktop 恒定返回在首位的合成「未分组」，不可改名或删除。
+ */
+function groupSummary(group: any): string {
+  const id = group?.id ?? 'Unknown';
+  return [
+    `GroupId ${id} — **${group?.name || 'Unnamed group'}**${String(id) === '0' ? ' (ungrouped, not editable)' : ''}`,
+    `  - Windows: ${Number(group?.screenCount || 0)}`,
+    `  - Sort order: ${group?.seq ?? 'Unknown'}`
+  ].join('\n');
+}
+
+/** Summarizes a per-window batch result shared by the proxy-bind and group-move tools. */
+function batchOutcomeLines(data: any, rows: any[]): string[] {
+  return [
+    `Success: ${data.success ?? rows.filter((row: any) => row?.success).length}`,
+    `Failed: ${data.failed ?? rows.filter((row: any) => !row?.success).length}`,
+    ...rows
+      .filter((row: any) => !row?.success)
+      .map((row: any) => `  - Window ${row.windowId}: ${row.error || 'Unknown error'}`)
+  ];
+}
+
 /** Lists proxy resources without exposing credentials or refresh URLs to the model. */
 async function listProxyResources(args: z.output<typeof listProxiesInputSchema>, ctx: ToolContext) {
   const query = new URLSearchParams({
@@ -221,15 +274,11 @@ async function listBrowserEnvironments(
 ) {
   const page = Number(args.page) > 0 ? Number(args.page) : 1;
   const size = Number(args.size) > 0 ? Number(args.size) : 100;
-  const response = await ctx.api.request<any>(SCREEN_LOAD_ROUTE, {
-    method: 'POST',
-    body: JSON.stringify({
-      page,
-      size,
-      ...(args.teamId ? { teamId: args.teamId } : {}),
-      ...(args.keyword ? { keyword: String(args.keyword) } : {})
-    })
-  });
+  const query = new URLSearchParams({ page: String(page), size: String(size) });
+  if (args.teamId) query.set('teamId', String(args.teamId));
+  if (args.keyword) query.set('keyword', String(args.keyword));
+  if (args.groupId !== undefined) query.set('groupId', String(args.groupId));
+  const response = await ctx.api.request<any>(`${BROWSER_LIST_ROUTE}?${query}`, { method: 'GET' });
   if (response.code !== 0) return apiErrorResult('Failed to list browsers', response);
   const rows = Array.isArray(response.data?.data) ? response.data.data : [];
   const total = Number(response.data?.count ?? response.data?.total ?? rows.length);
@@ -315,15 +364,109 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
           Number(args.proxyId) === 0
             ? 'Proxy binding removed.'
             : `Proxy ${args.proxyId} binding requested.`,
-          `Success: ${data.success ?? rows.filter((row: any) => row?.success).length}`,
-          `Failed: ${data.failed ?? rows.filter((row: any) => !row?.success).length}`,
-          ...rows
-            .filter((row: any) => !row?.success)
-            .map((row: any) => `  - Window ${row.windowId}: ${row.error || 'Unknown error'}`)
+          ...batchOutcomeLines(data, rows)
         ].join('\n'),
         {
           rows,
           proxyId: args.proxyId,
+          success: data.success,
+          failed: data.failed,
+          total: data.total
+        }
+      );
+    }
+  }),
+  defineTool({
+    name: 'nex_browser_group_list',
+    description:
+      'List the window groups of the active NexBrowser workspace with the window count of each, so a groupId can be selected for window creation, moving, or deletion. The first row is always the ungrouped bucket with groupId 0.',
+    annotations: { readOnlyHint: true },
+    inputSchema: z.object({}).passthrough(),
+    execute: async (_args, ctx) => {
+      const response = await ctx.api.request<any>(GROUP_LIST_ROUTE, { method: 'GET' });
+      if (response.code !== 0) return apiErrorResult('Failed to list window groups', response);
+      const rows = Array.isArray(response.data) ? response.data : [];
+      return successResult(
+        rows.length
+          ? [`Found ${rows.length} window group(s):`, '', rows.map(groupSummary).join('\n\n')].join(
+              '\n'
+            )
+          : 'No window groups found.',
+        { rows }
+      );
+    }
+  }),
+  defineTool({
+    name: 'nex_browser_group_create',
+    description:
+      'Create one window group in the active NexBrowser workspace. Group names must be unique inside the team; a duplicate name is rejected. Use nex_browser_move_to_group afterwards to put windows into the new group.',
+    inputSchema: createGroupInputSchema,
+    execute: async (args, ctx) => {
+      const name = args.name.trim();
+      if (!name) return errorResult('Failed to create window group: name is required');
+      const response = await ctx.api.request<any>(GROUP_CREATE_ROUTE, {
+        method: 'POST',
+        body: JSON.stringify({ name, ...(args.seq === undefined ? {} : { seq: args.seq }) })
+      });
+      if (response.code !== 0) return apiErrorResult('Failed to create window group', response);
+      const rows = Array.isArray(response.data) ? response.data : [];
+      const created = rows[0];
+      return successResult(
+        created
+          ? [`Created window group **${created.name || name}** with groupId ${created.id}.`].join(
+              '\n'
+            )
+          : `Created window group **${name}**.`,
+        { rows }
+      );
+    }
+  }),
+  defineTool({
+    name: 'nex_browser_group_delete',
+    description:
+      'Delete one custom window group from the active NexBrowser workspace. The windows inside it are not deleted; they become ungrouped. The ungrouped bucket (groupId 0) cannot be deleted.',
+    annotations: { destructiveHint: true },
+    inputSchema: deleteGroupInputSchema,
+    execute: async (args, ctx) => {
+      if (Number(args.groupId) === 0) {
+        return errorResult('Failed to delete window group: the ungrouped bucket cannot be deleted');
+      }
+      const response = await ctx.api.request<unknown>(GROUP_DELETE_ROUTE, {
+        method: 'POST',
+        body: JSON.stringify({ id: args.groupId })
+      });
+      if (response.code !== 0) return apiErrorResult('Failed to delete window group', response);
+      return successResult(
+        `Deleted window group ${args.groupId}. Its windows were moved to the ungrouped bucket.`,
+        { groupId: args.groupId }
+      );
+    }
+  }),
+  defineTool({
+    name: 'nex_browser_move_to_group',
+    description:
+      'Move one or more NexBrowser windows into a window group. Pass groupId=0 to move them out of any group. Groups are window metadata, so running windows can be moved without closing them first.',
+    inputSchema: moveToGroupInputSchema,
+    execute: async (args, ctx) => {
+      const ids = windowIds(args.windowId);
+      if (!ids.length) return errorResult('Failed to move windows: windowId is required');
+      const response = await ctx.api.request<any>(BROWSER_GROUP_ROUTE, {
+        method: 'POST',
+        body: JSON.stringify({ windowId: ids.length === 1 ? ids[0] : ids, groupId: args.groupId })
+      });
+      if (response.code !== 0) return apiErrorResult('Failed to move windows', response);
+      const data = response.data || {};
+      const rows = Array.isArray(data.rows) ? data.rows : [];
+      return successResult(
+        [
+          Number(args.groupId) === 0
+            ? 'Windows moved out of any group.'
+            : `Move to group ${args.groupId} requested.`,
+          ...batchOutcomeLines(data, rows)
+        ].join('\n'),
+        {
+          rows,
+          groupId: args.groupId,
           success: data.success,
           failed: data.failed,
           total: data.total

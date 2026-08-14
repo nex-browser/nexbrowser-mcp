@@ -18,7 +18,7 @@ const config = {
  */
 describe('tool catalog golden baseline', () => {
   it('keeps the TOOLS preview surface stable', async () => {
-    expect(TOOLS).toHaveLength(47);
+    expect(TOOLS).toHaveLength(51);
     await expect(JSON.stringify(TOOLS, null, 2)).toMatchFileSnapshot(
       '__snapshots__/tools-preview.json'
     );
@@ -34,7 +34,7 @@ describe('tool catalog golden baseline', () => {
         inputSchema: tool.inputSchema,
         ...(tool.annotations ? { annotations: tool.annotations } : {})
       }));
-      expect(catalog).toHaveLength(47);
+      expect(catalog).toHaveLength(51);
       await expect(JSON.stringify(catalog, null, 2)).toMatchFileSnapshot(
         '__snapshots__/tools-registered.json'
       );

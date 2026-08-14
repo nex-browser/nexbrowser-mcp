@@ -45,7 +45,7 @@ describe('NexBrowser MCP protocol', () => {
     try {
       const listed = await session.client.listTools();
       const names = listed.tools.map((tool) => tool.name);
-      expect(names).toHaveLength(47);
+      expect(names).toHaveLength(51);
       expect(
         names.every((name) => name.startsWith('nex_browser_') || name === 'nex_proxy_list')
       ).toBe(true);
@@ -79,11 +79,11 @@ describe('NexBrowser MCP protocol', () => {
           })
         ])
       );
-      // The preferred branded tool forwards to the NexBrowser OpenAPI screen-list endpoint.
+      // The preferred branded tool forwards to the NexBrowser OpenAPI window-list endpoint.
       // 首选品牌化工具转发到 NexBrowser OpenAPI 的环境列表端点。
       expect(fetchMock).toHaveBeenCalledWith(
-        'http://127.0.0.1:45536/screen_load',
-        expect.objectContaining({ method: 'POST' })
+        'http://127.0.0.1:45536/browser/list?page=1&size=100&teamId=team-1',
+        expect.objectContaining({ method: 'GET' })
       );
     } finally {
       await session.close();
