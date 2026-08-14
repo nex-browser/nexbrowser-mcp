@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.8.14] - 2026-08-14
+
+### Added
+
+- Add window group tools: list groups with their window counts, create a group, delete a custom group, and move windows into or out of a group.
+- Add a `groupId` filter to `nex_browser_list` so windows can be listed per group, with `0` listing ungrouped windows.
+
+### Changed
+
+- **Breaking:** `nex_browser_list` now calls `GET /browser/list` instead of `POST /screen_load`. The last bare backend-command path was retired from NexBrowser OpenAPI, so this release requires a NexBrowser Desktop build that serves `/browser/list`.
+
 ## [2026.8.13-beta.1] - 2026-08-13
 
 ### Added
