@@ -120,36 +120,19 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_fill_account',
     description:
-      "Fill the login fields of the session window's bound platform account. Desktop resolves the stored password and generates the current 2FA code itself, so no credential is exposed here. Call nex_browser_accounts first for the accountId, pass only the field targets that are visible right now (call again for a later step of a multi-step sign-in), and submit the form yourself afterwards — this tool never submits.",
+      'Ask the NexBrowser vault plugin to autofill the current login page with a stored credential. Call nex_browser_accounts first and pass only an accountId returned for this open window; the plugin chooses the visible fields and keeps passwords and 2FA secrets outside MCP. Call again after each navigation in a multi-step sign-in. This tool never submits the form.',
     inputSchema: automationSchema({
       accountId: z
         .union([z.string(), z.number()])
-        .describe('Bound account to use; optional when the window has exactly one')
-        .optional(),
-      usernameTarget: TARGET_PROPERTY.describe(
-        'Target of the currently visible username field'
-      ).optional(),
-      passwordTarget: TARGET_PROPERTY.describe(
-        'Target of the currently visible password field'
-      ).optional(),
-      totpTarget: TARGET_PROPERTY.describe(
-        'Target of the currently visible 2FA code field'
-      ).optional()
+        .describe('Vault credential to use; optional when the open window has exactly one')
+        .optional()
     }),
     execute: async (args, ctx) => {
-      if (!args.usernameTarget && !args.passwordTarget && !args.totpTarget) {
-        return invalidArguments(
-          'At least one of usernameTarget, passwordTarget, totpTarget is required'
-        );
-      }
       const response = await ctx.api.request<any>(accountFillRoute(sessionId(args, ctx.sessions)), {
         method: 'POST',
         body: JSON.stringify({
           ...(args.pageId ? { pageId: String(args.pageId) } : {}),
-          ...(args.accountId === undefined ? {} : { accountId: String(args.accountId) }),
-          ...(args.usernameTarget ? { usernameTarget: args.usernameTarget } : {}),
-          ...(args.passwordTarget ? { passwordTarget: args.passwordTarget } : {}),
-          ...(args.totpTarget ? { totpTarget: args.totpTarget } : {})
+          ...(args.accountId === undefined ? {} : { accountId: String(args.accountId) })
         })
       });
       if (response.code !== 0) return apiErrorResult('Failed to fill account', response);
@@ -167,7 +150,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_fill_credentials',
     description:
-      'Fill literal login credentials into visible fields. Prefer nex_browser_fill_account when a stored or bound account is available, because literal values cross the MCP request boundary. This tool never submits the form.',
+      'Fill literal login credentials that the user explicitly supplied in the current request into visible fields. Prefer nex_browser_fill_account when a stored vault credential is available, because literal values cross the model and MCP request boundary. Never store or repeat these values. This tool never submits the form.',
     inputSchema: automationSchema({
       usernameTarget: TARGET_PROPERTY.optional(),
       username: z.string().optional(),

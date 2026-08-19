@@ -23,7 +23,7 @@ Stateless `nex_*` tools that manage NexBrowser environments; no automation sessi
 - `nex_browser_open` — Start NexBrowser environments and return per-window status. For multi-window tasks, pass every window ID in one windowId array so Desktop can batch-start and tile them before creating automation sessions. Inputs: `teamId` (required), `windowId` (required).
 - `nex_browser_connection_info` — Inspect the status of running NexBrowser environments. Read-only. Inputs: `teamId` (required), `windowId` (required).
 - `nex_browser_close` — Close one or more NexBrowser environments. Inputs: `teamId`, `windowId` (required).
-- `nex_browser_accounts` — List the platform accounts bound to NexBrowser environments. Usernames come back masked and passwords and 2FA secrets are never returned; call nex_browser_fill_account with an accountId from here to sign in. Read-only. Inputs: `windowId` (required).
+- `nex_browser_accounts` — List autofill-capable credentials in the vault plugin of open NexBrowser environments, including bound platform accounts and user-saved passwords. Usernames are masked and secrets are never returned; call nex_browser_fill_account with an accountId from this result. Read-only. Inputs: `windowId` (required).
 
 ## Connection
 
@@ -47,8 +47,8 @@ Stateless `nex_*` tools that manage NexBrowser environments; no automation sessi
 - `nex_browser_hover` — Hover over an element. Inputs: `target` (required).
 - `nex_browser_type` — Type text into an element using sequential key events. Inputs: `target` (required), `text` (required), `delay`.
 - `nex_browser_fill_form` — Fill one or more form controls in order. Inputs: `fields` (required).
-- `nex_browser_fill_account` — Fill the login fields of the session window's bound platform account. Desktop resolves the stored password and generates the current 2FA code itself, so no credential is exposed here. Call nex_browser_accounts first for the accountId, pass only the field targets that are visible right now (call again for a later step of a multi-step sign-in), and submit the form yourself afterwards — this tool never submits. Inputs: `accountId`, `usernameTarget`, `passwordTarget`, `totpTarget`.
-- `nex_browser_fill_credentials` — Fill literal login credentials into visible fields. Prefer nex_browser_fill_account when a stored or bound account is available, because literal values cross the MCP request boundary. This tool never submits the form. Inputs: `usernameTarget`, `username`, `passwordTarget`, `password`, `totpTarget`, `totpCode`.
+- `nex_browser_fill_account` — Ask the NexBrowser vault plugin to autofill the current login page with a stored credential. Call nex_browser_accounts first and pass only an accountId returned for this open window; the plugin chooses the visible fields and keeps passwords and 2FA secrets outside MCP. Call again after each navigation in a multi-step sign-in. This tool never submits the form. Inputs: `accountId`.
+- `nex_browser_fill_credentials` — Fill literal login credentials that the user explicitly supplied in the current request into visible fields. Prefer nex_browser_fill_account when a stored vault credential is available, because literal values cross the model and MCP request boundary. Never store or repeat these values. This tool never submits the form. Inputs: `usernameTarget`, `username`, `passwordTarget`, `password`, `totpTarget`, `totpCode`.
 - `nex_browser_select_option` — Select one or more values in a select control. Inputs: `target` (required), `values` (required).
 - `nex_browser_check` — Check a checkbox or radio control. Inputs: `target` (required).
 - `nex_browser_uncheck` — Uncheck a checkbox or radio control. Inputs: `target` (required).

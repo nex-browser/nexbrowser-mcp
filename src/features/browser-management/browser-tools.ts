@@ -147,9 +147,9 @@ function createdSummary(row: any): string {
 }
 
 /**
- * Formats one bound platform account. Usernames arrive masked and secrets are
+ * Formats one vault credential. Usernames arrive masked and secrets are
  * never present; hasPassword/has2fa only report what nex_browser_fill_account can use.
- * 格式化单个绑定平台账号。用户名已由服务端遮蔽且不含任何密钥；
+ * 格式化单个保险库凭据。用户名已由服务端遮蔽且不含任何密钥；
  * hasPassword/has2fa 仅说明 nex_browser_fill_account 能填哪几项。
  */
 function accountSummary(account: any): string {
@@ -581,17 +581,17 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_accounts',
     description:
-      'List the platform accounts bound to NexBrowser environments. Usernames come back masked and passwords and 2FA secrets are never returned; call nex_browser_fill_account with an accountId from here to sign in.',
+      'List autofill-capable credentials in the vault plugin of open NexBrowser environments, including bound platform accounts and user-saved passwords. Usernames are masked and secrets are never returned; call nex_browser_fill_account with an accountId from this result.',
     annotations: { readOnlyHint: true },
     inputSchema: z.object({ windowId: browserIdsSchema }).passthrough(),
     execute: async (args, ctx) => {
       const ids = windowIds(args.windowId);
-      if (!ids.length) return errorResult('Failed to get bound accounts: windowId is required');
+      if (!ids.length) return errorResult('Failed to get vault credentials: windowId is required');
       const query = new URLSearchParams({ windowId: ids.join(',') });
       const response = await ctx.api.request<any[]>(`${BROWSER_ACCOUNTS_ROUTE}?${query}`, {
         method: 'GET'
       });
-      if (response.code !== 0) return apiErrorResult('Failed to get bound accounts', response);
+      if (response.code !== 0) return apiErrorResult('Failed to get vault credentials', response);
       const rows = Array.isArray(response.data) ? response.data : [];
       return successResult(
         rows
@@ -600,7 +600,7 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
               `**${row?.windowName || 'Unnamed'}** (${row?.windowId ?? 'Unknown'})`,
               ...(row?.accounts?.length
                 ? row.accounts.map(accountSummary)
-                : ['  - No platform account is bound to this window.'])
+                : ['  - No autofill-capable credential is available in this window vault.'])
             ].join('\n')
           )
           .join('\n\n') || 'No windows matched.',

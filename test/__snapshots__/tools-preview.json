@@ -541,7 +541,7 @@
   },
   {
     "name": "nex_browser_accounts",
-    "description": "List the platform accounts bound to NexBrowser environments. Usernames come back masked and passwords and 2FA secrets are never returned; call nex_browser_fill_account with an accountId from here to sign in.",
+    "description": "List autofill-capable credentials in the vault plugin of open NexBrowser environments, including bound platform accounts and user-saved passwords. Usernames are masked and secrets are never returned; call nex_browser_fill_account with an accountId from this result.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -948,7 +948,7 @@
   },
   {
     "name": "nex_browser_fill_account",
-    "description": "Fill the login fields of the session window's bound platform account. Desktop resolves the stored password and generates the current 2FA code itself, so no credential is exposed here. Call nex_browser_accounts first for the accountId, pass only the field targets that are visible right now (call again for a later step of a multi-step sign-in), and submit the form yourself afterwards — this tool never submits.",
+    "description": "Ask the NexBrowser vault plugin to autofill the current login page with a stored credential. Call nex_browser_accounts first and pass only an accountId returned for this open window; the plugin chooses the visible fields and keeps passwords and 2FA secrets outside MCP. Call again after each navigation in a multi-step sign-in. This tool never submits the form.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -970,19 +970,7 @@
               "type": "number"
             }
           ],
-          "description": "Bound account to use; optional when the window has exactly one"
-        },
-        "usernameTarget": {
-          "type": "string",
-          "description": "Target of the currently visible username field"
-        },
-        "passwordTarget": {
-          "type": "string",
-          "description": "Target of the currently visible password field"
-        },
-        "totpTarget": {
-          "type": "string",
-          "description": "Target of the currently visible 2FA code field"
+          "description": "Vault credential to use; optional when the open window has exactly one"
         }
       },
       "additionalProperties": false
@@ -990,7 +978,7 @@
   },
   {
     "name": "nex_browser_fill_credentials",
-    "description": "Fill literal login credentials into visible fields. Prefer nex_browser_fill_account when a stored or bound account is available, because literal values cross the MCP request boundary. This tool never submits the form.",
+    "description": "Fill literal login credentials that the user explicitly supplied in the current request into visible fields. Prefer nex_browser_fill_account when a stored vault credential is available, because literal values cross the model and MCP request boundary. Never store or repeat these values. This tool never submits the form.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",

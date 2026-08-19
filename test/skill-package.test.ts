@@ -57,16 +57,19 @@ describe('bundled automation skill', () => {
 
     expect(skill).toContain('nex_browser_fill_credentials');
     expect(skill).toContain('examples/sign-in-with-literal-credentials.md');
-    expect(skill).toContain('recommend `nex_browser_fill_account` when available');
-    expect(skill).toMatch(/stop when a retrieval code is ambiguous/i);
-    expect(skill).toMatch(/retrieval site.*secret.*`passwordTarget`.*`password`/i);
-    expect(skill).toMatch(/never use `nex_browser_type` or `nex_browser_fill_form`.*secret/i);
-    expect(skill).toMatch(/inaccessible.*cannot safely resolve/i);
+    expect(skill).toMatch(/sign in with a stored credential.*`nex_browser_fill_account`/i);
+    expect(skill).toMatch(/current request.*ephemeral credential bundle/i);
+    expect(skill).toMatch(/multiple bundles.*mapping is explicit/i);
+    expect(skill).toMatch(/recovery-email code.*email login URL/i);
+    expect(skill).toMatch(/stop on CAPTCHA.*ambiguous code.*inaccessible/i);
     expect(example.match(/nex_browser_tab_list/g)).toHaveLength(2);
     expect(example).toMatch(/retain.*LOGIN_PAGE_ID/i);
     expect(example).toMatch(/retain.*RETRIEVAL_PAGE_ID/i);
     expect(example).toMatch(/retrieval site.*secret.*passwordTarget.*password/i);
     expect(example).toMatch(/never use `nex_browser_type` or `nex_browser_fill_form`.*secret/i);
     expect(example).toMatch(/inaccessible.*cannot safely resolve/i);
+    expect(example).toContain('recovery-email code');
+    expect(example).toContain('email login URL');
+    expect(example).toMatch(/ephemeral bundle.*browser window/i);
   });
 });

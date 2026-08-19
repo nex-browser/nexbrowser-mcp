@@ -37,7 +37,7 @@ const ACCOUNT_ROWS = [
 ];
 
 describe('nex_browser_accounts', () => {
-  it('reads bound accounts for the requested windows', async () => {
+  it('reads vault credentials for the requested windows', async () => {
     const { request, tool } = toolWith('nex_browser_accounts', ACCOUNT_ROWS);
     const result = await tool.execute({ windowId: ['22448', '22449'] });
 
@@ -49,14 +49,14 @@ describe('nex_browser_accounts', () => {
     expect(String((result.content[0] as { text: string }).text)).toContain('accountId 55');
   });
 
-  it('reports windows without any bound account instead of returning an empty result', async () => {
+  it('reports windows without any vault credential instead of returning an empty result', async () => {
     const { tool } = toolWith('nex_browser_accounts', [
       { windowId: '22448', windowName: 'Solo', success: true, accounts: [] }
     ]);
     const result = await tool.execute({ windowId: '22448' });
 
     expect(String((result.content[0] as { text: string }).text)).toContain(
-      'No platform account is bound'
+      'No autofill-capable credential is available'
     );
   });
 
@@ -70,7 +70,7 @@ describe('nex_browser_accounts', () => {
 });
 
 describe('nex_browser_fill_account', () => {
-  it('sends only field targets, never a credential value', async () => {
+  it('sends only the selected vault credential and page, never field targets or values', async () => {
     const { request, tool } = toolWith('nex_browser_fill_account', {
       windowId: '22448',
       accountId: '55',
@@ -81,8 +81,7 @@ describe('nex_browser_fill_account', () => {
     });
     await tool.execute({
       accountId: 55,
-      usernameTarget: 'e12',
-      passwordTarget: 'e13'
+      pageId: 'page-1'
     });
 
     expect(request).toHaveBeenLastCalledWith(
@@ -90,20 +89,22 @@ describe('nex_browser_fill_account', () => {
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({
-          accountId: '55',
-          usernameTarget: 'e12',
-          passwordTarget: 'e13'
+          pageId: 'page-1',
+          accountId: '55'
         })
       })
     );
   });
 
-  it('requires at least one visible field target before calling Desktop', async () => {
+  it('allows Desktop to select the only vault credential when accountId is omitted', async () => {
     const { request, tool } = toolWith('nex_browser_fill_account', {});
-    const result = await tool.execute({ accountId: '55' });
+    const result = await tool.execute({});
 
-    expect(result.isError).toBe(true);
-    expect(request).not.toHaveBeenCalled();
+    expect(result.isError).not.toBe(true);
+    expect(request).toHaveBeenCalledWith(
+      '/automation/sessions/session-1/account_fill',
+      expect.objectContaining({ method: 'POST', body: '{}' })
+    );
   });
 
   it('keeps credentials out of the result text and structured content', async () => {
@@ -115,11 +116,7 @@ describe('nex_browser_fill_account', () => {
       filled: ['username', 'password', 'totp'],
       submitted: false
     });
-    const result = await tool.execute({
-      usernameTarget: 'e12',
-      passwordTarget: 'e13',
-      totpTarget: 'e14'
-    });
+    const result = await tool.execute({ accountId: '55' });
 
     expect(JSON.stringify(result)).not.toContain('wKFWmqcbfq');
     expect(String((result.content[0] as { text: string }).text)).toContain('was not submitted');

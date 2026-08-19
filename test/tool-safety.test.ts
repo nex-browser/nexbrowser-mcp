@@ -46,19 +46,12 @@ describe('tool safety metadata', () => {
     expect(tool('nex_browser_run_code').description).toMatch(/permission/i);
   });
 
-  it('never accepts a credential value as a credential-fill argument', () => {
-    // 凭据只允许由 Desktop 在服务端解析；一旦 schema 收下明文，密码就会经模型上下文回流。
+  it('accepts only a vault credential selector for stored-account filling', () => {
+    // 保险库填充不接收字段目标或明文，字段选择和密钥解析都留在插件内。
     const properties = Object.keys(
       (tool('nex_browser_fill_account').inputSchema as { properties?: object }).properties ?? {}
     );
-    expect(properties).toEqual([
-      'sessionId',
-      'pageId',
-      'accountId',
-      'usernameTarget',
-      'passwordTarget',
-      'totpTarget'
-    ]);
+    expect(properties).toEqual(['sessionId', 'pageId', 'accountId']);
   });
 
   it('states that credential-bearing tools do not submit the login form', () => {

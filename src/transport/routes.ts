@@ -25,9 +25,9 @@ export const tabOperationRoute = (sessionId: string, operation: 'select' | 'clos
   `${tabsRoute(sessionId)}/${operation}`;
 
 /**
- * Credential-fill endpoint of one session; Desktop resolves the bound account
- * server-side so no secret ever crosses this transport.
- * 单个会话的凭据填充端点；绑定账号由 Desktop 在服务端解析，密钥不经过本传输层。
+ * Credential-fill endpoint of one session; the vault plugin resolves and fills
+ * the stored credential so no secret ever crosses this transport.
+ * 单个会话的凭据填充端点；保险库插件解析并填充凭据，密钥不经过本传输层。
  */
 export const accountFillRoute = (sessionId: string): string =>
   `${sessionRoute(sessionId)}/account_fill`;
