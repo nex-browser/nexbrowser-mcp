@@ -4,7 +4,7 @@
  */
 
 /** Package version surfaced by the CLI. Must match package.json. 包版本，由 CLI 输出，必须与 package.json 一致。 */
-export const PKG_VERSION = '2026.8.14';
+export const PKG_VERSION = '2026.8.19';
 
 /** MCP serverInfo version. MCP serverInfo 版本。 */
 export const MCP_SERVER_VERSION = PKG_VERSION;

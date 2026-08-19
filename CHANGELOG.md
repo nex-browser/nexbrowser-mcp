@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.8.19] - 2026-08-19
+
+### Changed
+
+- **Breaking:** `nex_browser_fill_account` now asks the vault plugin to autofill the current login page. Callers pass only `accountId` (optional when the window has exactly one vault credential); `usernameTarget`, `passwordTarget`, and `totpTarget` are removed.
+- `nex_browser_accounts` lists autofill-capable credentials from the open-window vault plugin, including bound platform accounts and user-saved passwords.
+- Restrict `nex_browser_fill_credentials` to literal values the user supplied in the current request, and document recovery-email code retrieval.
+
 ## [2026.8.14] - 2026-08-14
 
 ### Added
@@ -117,7 +125,9 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13-beta.1...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.19...HEAD
+[2026.8.19]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.14...v2026.8.19
+[2026.8.14]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13-beta.1...v2026.8.14
 [2026.8.13-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13...v2026.8.13-beta.1
 [2026.8.13]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.12-beta.1...v2026.8.13
 [2026.8.12-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v1.0.9...v2026.8.12-beta.1
