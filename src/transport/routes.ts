@@ -52,6 +52,8 @@ export const BROWSER_CLOSE_ROUTE = '/browser/close';
 export const BROWSER_CONNECTION_INFO_ROUTE = '/browser/connection_info';
 /** Paginated proxy resources safe for selection by ID. 可按 ID 选择的代理资源分页。 */
 export const PROXY_LIST_ROUTE = '/proxy/list';
+/** Imports custom proxies from Desktop-compatible text lines. 按桌面端相同行格式导入自定义代理。 */
+export const PROXY_IMPORT_ROUTE = '/proxy/import';
 /** Window groups of the active team, including the synthetic ungrouped bucket. 当前团队的窗口分组，含服务端合成的「未分组」。 */
 export const GROUP_LIST_ROUTE = '/group/list';
 /** Creates one window group in the active team. 在当前团队下新建一个窗口分组。 */

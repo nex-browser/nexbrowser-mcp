@@ -41,6 +41,68 @@ describe('nex_proxy_list', () => {
   });
 });
 
+describe('nex_proxy_import', () => {
+  it('forwards Desktop-compatible text and strips credentials from the result', async () => {
+    const { request, tool } = toolWith('nex_proxy_import', {
+      items: [
+        {
+          id: 9,
+          protocol: 'SOCKS5',
+          host: '1.2.3.4',
+          port: 1080,
+          username: 'agent-user',
+          password: 'do-not-expose',
+          remark: 'JP primary'
+        }
+      ],
+      imported: 1,
+      invalid: [
+        { line: 'ftp://1.2.3.4:1080', error: '不支持的代理协议，仅支持 HTTP、HTTPS、SOCKS5' }
+      ],
+      duplicateCount: 0
+    });
+
+    const result = await tool.execute({
+      text: 'socks5://agent-user:do-not-expose@1.2.3.4:1080 {JP primary}\nftp://1.2.3.4:1080'
+    });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/proxy/import',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          text: 'socks5://agent-user:do-not-expose@1.2.3.4:1080 {JP primary}\nftp://1.2.3.4:1080'
+        })
+      })
+    );
+    const payload = JSON.stringify(result);
+    expect(payload).toContain('Imported 1 proxy resource');
+    expect(payload).toContain('JP primary');
+    expect(payload).not.toContain('agent-user');
+    expect(payload).not.toContain('do-not-expose');
+    expect(payload).not.toContain('ftp://');
+  });
+
+  it('accepts a lines array when text is omitted', async () => {
+    const { request, tool } = toolWith('nex_proxy_import', {
+      items: [{ id: 9, protocol: 'HTTP', host: '10.0.0.8', port: 8080 }],
+      imported: 1,
+      invalid: [],
+      duplicateCount: 0
+    });
+
+    await tool.execute({ lines: ['http://10.0.0.8:8080'] });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/proxy/import',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ lines: ['http://10.0.0.8:8080'] })
+      })
+    );
+  });
+});
+
 describe('nex_browser_bind_proxy', () => {
   it('binds one proxy to multiple closed windows', async () => {
     const { request, tool } = toolWith('nex_browser_bind_proxy', {

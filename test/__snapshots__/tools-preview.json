@@ -74,6 +74,28 @@
     }
   },
   {
+    "name": "nex_proxy_import",
+    "description": "Import custom proxy resources from Desktop-compatible text lines the user supplied in the current request. Supported protocols are HTTP, HTTPS, and SOCKS5. Credentials are never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "One proxy per line, copied from the current user request. Formats: protocol://user:pass@host:port {remark}, protocol://host:port:user:pass {remark}, user:pass@host:port, host:port:user:pass. Protocols: HTTP, HTTPS, SOCKS5; omitted protocol defaults to SOCKS5. IPv6 hosts use [address]:port."
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Alternative to text: each entry is one Desktop-compatible proxy import line"
+        }
+      },
+      "additionalProperties": {}
+    }
+  },
+  {
     "name": "nex_browser_create",
     "description": "Create NexBrowser environments in the desktop app's active workspace. Every unset field falls back to the desktop create-window defaults (fingerprint, preferences, layout, startup page), and each created window gets its own generated fingerprint, so pass only the fields that must differ.",
     "inputSchema": {

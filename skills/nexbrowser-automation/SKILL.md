@@ -20,6 +20,9 @@ Use this skill whenever the user names NexBrowser or needs to manage or automate
 | User intent             | Tool                                                                               | Notes                                                                                                            |
 | ----------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | List/count environments | `nex_browser_list`                                                                 | NexBrowser managed windows only; never OS windows or tabs.                                                       |
+| Import custom proxies   | `nex_proxy_import`                                                                 | Only with proxy lines the user pasted in the current request; credentials are never returned.                    |
+| List proxies            | `nex_proxy_list`                                                                   | Select a proxyId for create or bind; credentials are never returned.                                             |
+| Bind a proxy            | `nex_browser_bind_proxy`                                                           | Closed windows only; `proxyId=0` removes the binding.                                                            |
 | Create environments     | `nex_browser_create`                                                               | Desktop defaults fill every field you omit; only override on request.                                            |
 | Open environments       | `nex_browser_open`                                                                 | Pass all target IDs in one array when opening multiple windows.                                                  |
 | Connect to NexBrowser   | `nex_browser_connect`                                                              | Requires a managed window ID; the active team is used by default.                                                |
@@ -76,7 +79,7 @@ Multiple windows:
 
 Do not invent tools for the following — they are outside this skill's scope; route the user instead:
 
-- Deleting or editing existing browser environments/profiles, resetting fingerprints, or rebinding a proxy on a window — not available through this MCP server; direct the user to the NexBrowser app. Creating new environments is available through `nex_browser_create`.
+- Deleting or editing existing browser environments/profiles or resetting fingerprints — not available through this MCP server; direct the user to the NexBrowser app. Creating new environments is available through `nex_browser_create`. Importing user-supplied proxy lines uses `nex_proxy_import`; binding or removing a proxy on a closed window uses `nex_browser_bind_proxy`.
 - Creating, editing, or reading credential secrets — `nex_browser_accounts` only reports autofill-capable vault entries for an open window, with masked usernames and no secrets. Managing the entries themselves belongs in the NexBrowser app.
 - Creating, editing, or persisting credentials in Desktop is account management and remains out of scope. Literal credential filling is one-time form filling only; it does not create or manage an account.
 - Raw CDP or WebSocket connections — never pass a CDP endpoint to an automation tool; `nex_browser_connect` with a `windowId` is the only automation entry point. Environment-management tools redact CDP endpoints by default; the operator-only `NEX_EXPOSE_CDP=1` mode is outside this skill workflow.

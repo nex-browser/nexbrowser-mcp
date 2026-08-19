@@ -8,6 +8,10 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [2026.8.19] - 2026-08-19
 
+### Added
+
+- Add `nex_proxy_import` to create custom proxy resources from the same HTTP/HTTPS/SOCKS5 line formats as the NexBrowser Desktop proxy import box. Credentials are never returned.
+
 ### Changed
 
 - **Breaking:** `nex_browser_fill_account` now asks the vault plugin to autofill the current login page. Callers pass only `accountId` (optional when the window has exactly one vault credential); `usernameTarget`, `passwordTarget`, and `totpTarget` are removed.

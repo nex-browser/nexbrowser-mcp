@@ -15,7 +15,10 @@ describe('tool safety metadata', () => {
       'nex_browser_open',
       'nex_browser_connection_info',
       'nex_browser_close',
-      'nex_browser_accounts'
+      'nex_browser_accounts',
+      'nex_proxy_list',
+      'nex_proxy_import',
+      'nex_browser_bind_proxy'
     ]) {
       expect(tool(name).description, name).not.toMatch(/[\u3400-\u9fff]/u);
     }

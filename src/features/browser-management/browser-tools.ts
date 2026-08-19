@@ -20,6 +20,7 @@ import {
   GROUP_CREATE_ROUTE,
   GROUP_DELETE_ROUTE,
   GROUP_LIST_ROUTE,
+  PROXY_IMPORT_ROUTE,
   PROXY_LIST_ROUTE
 } from '../../transport/routes.js';
 
@@ -67,6 +68,20 @@ const listProxiesInputSchema = z
     size: z.number().int().min(1).max(200).optional(),
     keyword: z.string().optional(),
     source: z.string().optional()
+  })
+  .passthrough();
+const importProxiesInputSchema = z
+  .object({
+    text: z
+      .string()
+      .describe(
+        'One proxy per line, copied from the current user request. Formats: protocol://user:pass@host:port {remark}, protocol://host:port:user:pass {remark}, user:pass@host:port, host:port:user:pass. Protocols: HTTP, HTTPS, SOCKS5; omitted protocol defaults to SOCKS5. IPv6 hosts use [address]:port.'
+      )
+      .optional(),
+    lines: z
+      .array(z.string())
+      .describe('Alternative to text: each entry is one Desktop-compatible proxy import line')
+      .optional()
   })
   .passthrough();
 const bindProxyInputSchema = z
@@ -196,6 +211,22 @@ function safeProxy(proxy: any) {
   };
 }
 
+/** Reads Desktop-compatible import text from either `text` or `lines`. 从 text 或 lines 读取桌面端兼容的导入文本。 */
+function proxyImportText(args: { text?: string; lines?: string[] }): string {
+  if (typeof args.text === 'string' && args.text.trim()) return args.text;
+  if (Array.isArray(args.lines) && args.lines.length) return args.lines.join('\n');
+  return '';
+}
+
+/** Drops original import lines so credentials never leave the MCP boundary. 去掉原始导入行，避免凭据离开 MCP 边界。 */
+function safeImportInvalid(invalid: unknown): Array<{ index: number; error: string }> {
+  if (!Array.isArray(invalid)) return [];
+  return invalid.map((row: any, index: number) => ({
+    index: index + 1,
+    error: String(row?.error || 'Unrecognized proxy line')
+  }));
+}
+
 /** Formats one secret-free proxy selection row. */
 function proxySummary(proxy: ReturnType<typeof safeProxy>): string {
   const endpoint = [proxy.host, proxy.port]
@@ -315,6 +346,47 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
     annotations: { readOnlyHint: true },
     inputSchema: listProxiesInputSchema,
     execute: listProxyResources
+  }),
+  defineTool({
+    name: 'nex_proxy_import',
+    description:
+      'Import custom proxy resources from Desktop-compatible text lines the user supplied in the current request. Supported protocols are HTTP, HTTPS, and SOCKS5. Credentials are never returned.',
+    inputSchema: importProxiesInputSchema,
+    execute: async (args, ctx) => {
+      const text = proxyImportText(args);
+      if (!text.trim()) {
+        return errorResult('Failed to import proxies: text or lines is required');
+      }
+      const response = await ctx.api.request<any>(PROXY_IMPORT_ROUTE, {
+        method: 'POST',
+        body: JSON.stringify(
+          typeof args.text === 'string' && args.text.trim() ? { text } : { lines: args.lines }
+        )
+      });
+      if (response.code !== 0) return apiErrorResult('Failed to import proxies', response);
+      const data = response.data || {};
+      const rawItems = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : [];
+      const rows = rawItems.map(safeProxy);
+      const invalid = safeImportInvalid(data.invalid);
+      const lines = [`Imported ${Number(data.imported ?? rows.length)} proxy resource(s).`];
+      if (Number(data.duplicateCount) > 0) {
+        lines.push(`Duplicates skipped: ${data.duplicateCount}`);
+      }
+      if (rows.length) lines.push('', ...rows.map(proxySummary));
+      if (invalid.length) {
+        lines.push(
+          '',
+          `Unrecognized lines: ${invalid.length}`,
+          ...invalid.map((row) => `  - Line ${row.index}: ${row.error}`)
+        );
+      }
+      return successResult(lines.join('\n'), {
+        rows,
+        imported: data.imported ?? rows.length,
+        duplicateCount: data.duplicateCount ?? 0,
+        invalid
+      });
+    }
   }),
   defineTool({
     name: 'nex_browser_create',
