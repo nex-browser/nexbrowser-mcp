@@ -1,6 +1,6 @@
 {
   "name": "@nexbrowser/mcp",
-  "version": "2026.8.19",
+  "version": "2026.8.20",
   "description": "Model Context Protocol server for NexBrowser environment management and browser automation",
   "type": "module",
   "main": "lib/index.cjs",

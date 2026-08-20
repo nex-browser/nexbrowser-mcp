@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.8.20] - 2026-08-20
+
 ### Added
 
 - Add workspace catalog tools for platform accounts: `nex_account_list`, `nex_account_create`, `nex_account_batch_create`, `nex_account_modify`, and `nex_account_delete`. Secrets are never returned.
@@ -140,7 +142,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.19...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.20...HEAD
+[2026.8.20]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.19...v2026.8.20
 [2026.8.19]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.14...v2026.8.19
 [2026.8.14]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13-beta.1...v2026.8.14
 [2026.8.13-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.13...v2026.8.13-beta.1
