@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+### Added
+
+- Add workspace catalog tools for platform accounts: `nex_account_list`, `nex_account_create`, `nex_account_batch_create`, `nex_account_modify`, and `nex_account_delete`. Secrets are never returned.
+- Add custom proxy lifecycle tools: `nex_proxy_create`, `nex_proxy_batch_create`, `nex_proxy_modify`, `nex_proxy_delete`, and `nex_proxy_detect`. Credentials are never returned.
+- Add `nex_browser_group_modify` to rename or reorder a custom window group. Group 0 remains read-only.
+- Add `nex_browser_bind_account` to bind workspace catalog accounts to closed windows, or remove the binding with `accountIds=[]`.
+
+### Changed
+
+- Accept documented OpenAPI field aliases (`id`, `ids`, `items`, `windowIds`, `accountIds`, `proxyIds`) and make `nex_browser_connection_info` match `GET /browser/connection_info` (windowId optional).
+
 ## [2026.8.19] - 2026-08-19
 
 ### Added

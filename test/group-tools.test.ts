@@ -57,6 +57,50 @@ describe('nex_browser_group_create', () => {
   });
 });
 
+describe('nex_browser_group_modify', () => {
+  it('renames a custom group', async () => {
+    const { request, tool } = toolWith('nex_browser_group_modify', [
+      { id: 5002, name: 'Ecommerce US', seq: 2 }
+    ]);
+
+    const result = await tool.execute({ groupId: 5002, name: 'Ecommerce US' });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/group/modify',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ id: 5002, name: 'Ecommerce US' })
+      })
+    );
+    expect(String((result.content[0] as { text: string }).text)).toContain(
+      'Updated window group 5002'
+    );
+  });
+
+  it('accepts the documented id field', async () => {
+    const { request, tool } = toolWith('nex_browser_group_modify', [{ id: 5002, seq: 4 }]);
+
+    await tool.execute({ id: 5002, seq: 4 });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/group/modify',
+      expect.objectContaining({
+        body: JSON.stringify({ id: 5002, seq: 4 })
+      })
+    );
+  });
+
+  it('refuses to change the ungrouped bucket without calling the API', async () => {
+    const { request, tool } = toolWith('nex_browser_group_modify', null);
+
+    const result = await tool.execute({ groupId: 0, name: 'Nope' });
+
+    expect(request).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(String((result.content[0] as { text: string }).text)).toContain('cannot be changed');
+  });
+});
+
 describe('nex_browser_group_delete', () => {
   it('deletes a custom group and states that its windows survive', async () => {
     const { request, tool } = toolWith('nex_browser_group_delete', null);
@@ -101,7 +145,7 @@ describe('nex_browser_move_to_group', () => {
       '/browser/group',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ windowId: ['22', '23'], groupId: 5002 })
+        body: JSON.stringify({ windowIds: ['22', '23'], groupId: 5002 })
       })
     );
     expect(String((result.content[0] as { text: string }).text)).toContain('Success: 2');

@@ -45,9 +45,14 @@ describe('NexBrowser MCP protocol', () => {
     try {
       const listed = await session.client.listTools();
       const names = listed.tools.map((tool) => tool.name);
-      expect(names).toHaveLength(52);
+      expect(names).toHaveLength(64);
       expect(
-        names.every((name) => name.startsWith('nex_browser_') || name.startsWith('nex_proxy_'))
+        names.every(
+          (name) =>
+            name.startsWith('nex_browser_') ||
+            name.startsWith('nex_proxy_') ||
+            name.startsWith('nex_account_')
+        )
       ).toBe(true);
       expect(names).not.toEqual(
         expect.arrayContaining([

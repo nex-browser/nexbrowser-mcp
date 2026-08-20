@@ -44,6 +44,8 @@ export const BROWSER_PROXY_ROUTE = '/browser/proxy';
 export const BROWSER_GROUP_ROUTE = '/browser/group';
 /** Platform accounts bound to a window; secrets are never returned. 窗口绑定的平台账号；不返回任何密钥。 */
 export const BROWSER_ACCOUNTS_ROUTE = '/browser/accounts';
+/** Binds catalog platform accounts to closed windows; accountIds=[] removes the binding. 给已关闭窗口绑定目录账号；accountIds=[] 解绑。 */
+export const BROWSER_ACCOUNT_ROUTE = '/browser/account';
 /** Starts browser windows by teamId + windowId. 按 teamId + windowId 启动浏览器窗口。 */
 export const BROWSER_OPEN_ROUTE = '/browser/open';
 /** Closes running browser windows. 关闭正在运行的浏览器窗口。 */
@@ -54,9 +56,31 @@ export const BROWSER_CONNECTION_INFO_ROUTE = '/browser/connection_info';
 export const PROXY_LIST_ROUTE = '/proxy/list';
 /** Imports custom proxies from Desktop-compatible text lines. 按桌面端相同行格式导入自定义代理。 */
 export const PROXY_IMPORT_ROUTE = '/proxy/import';
+/** Creates one custom proxy resource. 新建一条自定义代理。 */
+export const PROXY_CREATE_ROUTE = '/proxy/create';
+/** Creates multiple custom proxy resources from an items array. 按 items 批量新建自定义代理。 */
+export const PROXY_BATCH_CREATE_ROUTE = '/proxy/batch_create';
+/** Updates one existing custom proxy resource. 修改一条已有自定义代理。 */
+export const PROXY_MODIFY_ROUTE = '/proxy/modify';
+/** Deletes one or more custom proxy resources. 删除一条或多条自定义代理。 */
+export const PROXY_DELETE_ROUTE = '/proxy/delete';
+/** Probes a proxy's exit IP and location. 检测代理出口 IP 与归属地。 */
+export const PROXY_DETECT_ROUTE = '/proxy/detect';
 /** Window groups of the active team, including the synthetic ungrouped bucket. 当前团队的窗口分组，含服务端合成的「未分组」。 */
 export const GROUP_LIST_ROUTE = '/group/list';
 /** Creates one window group in the active team. 在当前团队下新建一个窗口分组。 */
 export const GROUP_CREATE_ROUTE = '/group/create';
+/** Renames or reorders one custom window group. 重命名或调整一个自建窗口分组。 */
+export const GROUP_MODIFY_ROUTE = '/group/modify';
 /** Deletes one custom window group; its windows become ungrouped. 删除一个自建窗口分组，组内窗口转为未分组。 */
 export const GROUP_DELETE_ROUTE = '/group/delete';
+/** Paginated platform-account catalog; secrets must be stripped before they leave MCP. 平台账号目录分页；离开 MCP 前必须去掉密钥。 */
+export const ACCOUNT_LIST_ROUTE = '/account/list';
+/** Creates one platform account in the workspace catalog. 在工作区目录中新建一条平台账号。 */
+export const ACCOUNT_CREATE_ROUTE = '/account/create';
+/** Creates multiple platform accounts from an items array. 按 items 批量新建平台账号。 */
+export const ACCOUNT_BATCH_CREATE_ROUTE = '/account/batch_create';
+/** Updates one platform account in the workspace catalog. 修改工作区目录中的一条平台账号。 */
+export const ACCOUNT_MODIFY_ROUTE = '/account/modify';
+/** Deletes one or more platform accounts from the workspace catalog. 从工作区目录删除一条或多条平台账号。 */
+export const ACCOUNT_DELETE_ROUTE = '/account/delete';

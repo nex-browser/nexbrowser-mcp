@@ -38,11 +38,46 @@ describe('tool result mapping', () => {
         method: 'POST',
         body: JSON.stringify({
           teamId: 'team-1',
-          id: ['window-1', 'window-2']
+          ids: ['window-1', 'window-2']
         })
       })
     );
     expect(result.structuredContent).toMatchObject({ success: 2, failed: 0, total: 2 });
+  });
+
+  it('accepts documented ids when opening browsers', async () => {
+    const request = vi.fn(async () => ({
+      code: 0,
+      msg: 'ok',
+      data: { windowId: 'window-1', success: true }
+    }));
+    const client = { request } as unknown as NexApiClient;
+    const tool = createBrowserManagementTools(client).find(
+      (candidate) => candidate.name === 'nex_browser_open'
+    );
+
+    await tool!.execute({ teamId: 'team-1', ids: 'window-1' });
+    expect(request).toHaveBeenCalledWith(
+      '/browser/open',
+      expect.objectContaining({
+        body: JSON.stringify({ teamId: 'team-1', ids: ['window-1'] })
+      })
+    );
+  });
+
+  it('lists every running window when connection_info omits windowId', async () => {
+    const request = vi.fn(async () => ({ code: 0, msg: 'ok', data: [] }));
+    const client = { request } as unknown as NexApiClient;
+    const tool = createBrowserManagementTools(client).find(
+      (candidate) => candidate.name === 'nex_browser_connection_info'
+    );
+
+    const result = await tool!.execute({});
+    expect(result.isError).not.toBe(true);
+    expect(request).toHaveBeenCalledWith(
+      '/browser/connection_info',
+      expect.objectContaining({ method: 'GET' })
+    );
   });
 
   it('connects with the active NexBrowser team when teamId is omitted', async () => {

@@ -18,7 +18,19 @@ describe('tool safety metadata', () => {
       'nex_browser_accounts',
       'nex_proxy_list',
       'nex_proxy_import',
-      'nex_browser_bind_proxy'
+      'nex_proxy_create',
+      'nex_proxy_batch_create',
+      'nex_proxy_modify',
+      'nex_proxy_delete',
+      'nex_proxy_detect',
+      'nex_browser_bind_proxy',
+      'nex_browser_bind_account',
+      'nex_browser_group_modify',
+      'nex_account_list',
+      'nex_account_create',
+      'nex_account_batch_create',
+      'nex_account_modify',
+      'nex_account_delete'
     ]) {
       expect(tool(name).description, name).not.toMatch(/[\u3400-\u9fff]/u);
     }
@@ -27,6 +39,10 @@ describe('tool safety metadata', () => {
   it('marks operations that directly close user-visible state as destructive', () => {
     expect(tool('nex_browser_close').annotations?.destructiveHint).toBe(true);
     expect(tool('nex_browser_tab_close').annotations?.destructiveHint).toBe(true);
+    expect(tool('nex_browser_group_delete').annotations?.destructiveHint).toBe(true);
+    expect(tool('nex_proxy_delete').annotations?.destructiveHint).toBe(true);
+    expect(tool('nex_account_delete').annotations?.destructiveHint).toBe(true);
+    expect(tool('nex_browser_bind_account').annotations?.destructiveHint).toBe(true);
   });
 
   it('does not advertise conditional or state-changing tools as read-only', () => {

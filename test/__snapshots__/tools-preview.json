@@ -58,13 +58,31 @@
         "size": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 200
+          "maximum": 1000
         },
         "keyword": {
           "type": "string"
         },
         "source": {
           "type": "string"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            }
+          ],
+          "description": "Status filter; repeat as state=1&state=0. 0 unchecked, 1 ok, 2 deleted"
         }
       },
       "additionalProperties": {}
@@ -90,6 +108,395 @@
             "type": "string"
           },
           "description": "Alternative to text: each entry is one Desktop-compatible proxy import line"
+        }
+      },
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_proxy_create",
+    "description": "Create one custom proxy resource from protocol, host, and port, or pass items to create several. Prefer nex_proxy_import when the user pasted Desktop-compatible lines. Credentials are never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "description": "SOCKS5, HTTP, or HTTPS; omitted create defaults to SOCKS5"
+        },
+        "host": {
+          "type": "string",
+          "description": "Proxy host or IP; required unless items is set"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Proxy port"
+        },
+        "ipVersion": {
+          "type": "string",
+          "description": "IPv4 or IPv6"
+        },
+        "username": {
+          "type": "string",
+          "description": "Write-only; never returned"
+        },
+        "password": {
+          "type": "string",
+          "description": "Write-only; never returned"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "protocol": {
+                "type": "string",
+                "description": "SOCKS5, HTTP, or HTTPS; omitted create defaults to SOCKS5"
+              },
+              "host": {
+                "type": "string",
+                "description": "Proxy host or IP"
+              },
+              "port": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "description": "Proxy port"
+              },
+              "ipVersion": {
+                "type": "string",
+                "description": "IPv4 or IPv6"
+              },
+              "username": {
+                "type": "string",
+                "description": "Write-only; never returned"
+              },
+              "password": {
+                "type": "string",
+                "description": "Write-only; never returned"
+              },
+              "remark": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "host",
+              "port"
+            ],
+            "additionalProperties": {}
+          },
+          "description": "Create several proxies in one call; each item needs host and port"
+        }
+      },
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_proxy_batch_create",
+    "description": "Create multiple custom proxy resources from an items array. Each item needs host and port. Credentials are never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "protocol": {
+                "type": "string",
+                "description": "SOCKS5, HTTP, or HTTPS; omitted create defaults to SOCKS5"
+              },
+              "host": {
+                "type": "string",
+                "description": "Proxy host or IP"
+              },
+              "port": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "description": "Proxy port"
+              },
+              "ipVersion": {
+                "type": "string",
+                "description": "IPv4 or IPv6"
+              },
+              "username": {
+                "type": "string",
+                "description": "Write-only; never returned"
+              },
+              "password": {
+                "type": "string",
+                "description": "Write-only; never returned"
+              },
+              "remark": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "host",
+              "port"
+            ],
+            "additionalProperties": {}
+          },
+          "description": "Proxy objects; each item needs host and port. Also accepts proxies or proxyList"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_proxy_modify",
+    "description": "Update one existing custom proxy resource. Pass only the fields that must change. Credentials are never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "proxyId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Existing proxy resource ID from nex_proxy_list"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Documented alias of proxyId"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "SOCKS5, HTTP, or HTTPS; omitted create defaults to SOCKS5"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Proxy port"
+        },
+        "ipVersion": {
+          "type": "string",
+          "description": "IPv4 or IPv6"
+        },
+        "username": {
+          "type": "string",
+          "description": "Write-only; never returned"
+        },
+        "password": {
+          "type": "string",
+          "description": "Write-only; never returned"
+        },
+        "remark": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_proxy_delete",
+    "description": "Delete one or more custom proxy resources. Bought channel proxies may be rejected by Desktop. Credentials are never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "proxyId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "One proxy ID or a list of proxy IDs to delete"
+        },
+        "proxyIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Alias of proxyId"
+        },
+        "items": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Documented alias of proxyId"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Single-ID alias of proxyId"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "nex_proxy_detect",
+    "description": "Probe a proxy resource or an unsaved host:port for exit IP, location, and timezone. Credentials are never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "proxyId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Saved proxy ID to detect; omit when passing host and port"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Documented alias of proxyId"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "SOCKS5, HTTP, or HTTPS; omitted create defaults to SOCKS5"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Proxy port"
+        },
+        "username": {
+          "type": "string",
+          "description": "Write-only; never returned"
+        },
+        "password": {
+          "type": "string",
+          "description": "Write-only; never returned"
         }
       },
       "additionalProperties": {}
@@ -256,7 +663,35 @@
               }
             }
           ],
-          "description": "One window ID or a list of closed window IDs"
+          "description": "One window ID or a list of closed window IDs; alias of windowIds"
+        },
+        "windowIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Documented alias of windowId"
         },
         "proxyId": {
           "anyOf": [
@@ -271,8 +706,108 @@
         }
       },
       "required": [
-        "windowId",
         "proxyId"
+      ],
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "nex_browser_bind_account",
+    "description": "Bind one or more workspace catalog platform accounts to one or more closed NexBrowser windows. This replaces the existing window binding. Pass accountIds=[] to remove it. Running windows are rejected and must be closed first. After opening, use nex_browser_accounts to fill.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "windowId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "One window ID or a list of closed window IDs; alias of windowIds"
+        },
+        "windowIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Documented alias of windowId"
+        },
+        "accountIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Catalog account IDs that replace the window binding; [] or 0 removes all bound accounts"
+        }
+      },
+      "required": [
+        "accountIds"
       ],
       "additionalProperties": {}
     },
@@ -295,7 +830,7 @@
   },
   {
     "name": "nex_browser_group_create",
-    "description": "Create one window group in the active NexBrowser workspace. Group names must be unique inside the team; a duplicate name is rejected. Use nex_browser_move_to_group afterwards to put windows into the new group.",
+    "description": "Create one window group in the active NexBrowser workspace. Group names must be unique inside the team; a duplicate name is rejected. Use nex_browser_group_modify to rename it, or nex_browser_move_to_group to put windows into the new group.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -318,6 +853,49 @@
     }
   },
   {
+    "name": "nex_browser_group_modify",
+    "description": "Rename or reorder one custom window group in the active NexBrowser workspace. Group names must stay unique inside the team. The ungrouped bucket (groupId 0) cannot be changed.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Custom group ID to rename or reorder; the ungrouped bucket 0 is rejected"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Documented alias of groupId"
+        },
+        "name": {
+          "type": "string",
+          "description": "New unique group name"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991,
+          "description": "New sort order"
+        }
+      },
+      "additionalProperties": {}
+    }
+  },
+  {
     "name": "nex_browser_group_delete",
     "description": "Delete one custom window group from the active NexBrowser workspace. The windows inside it are not deleted; they become ungrouped. The ungrouped bucket (groupId 0) cannot be deleted.",
     "inputSchema": {
@@ -334,11 +912,19 @@
             }
           ],
           "description": "Custom group ID to delete; the ungrouped bucket 0 is rejected"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Documented alias of groupId"
         }
       },
-      "required": [
-        "groupId"
-      ],
       "additionalProperties": {}
     },
     "annotations": {
@@ -378,7 +964,35 @@
               }
             }
           ],
-          "description": "One window ID or a list of window IDs"
+          "description": "One window ID or a list of window IDs; alias of windowIds"
+        },
+        "windowIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Documented alias of windowId"
         },
         "groupId": {
           "anyOf": [
@@ -393,7 +1007,6 @@
         }
       },
       "required": [
-        "windowId",
         "groupId"
       ],
       "additionalProperties": {}
@@ -443,18 +1056,45 @@
             }
           ],
           "description": "One window ID, or all target window IDs in one array for a single batch-start request."
+        },
+        "ids": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Documented alias of windowId"
         }
       },
       "required": [
-        "teamId",
-        "windowId"
+        "teamId"
       ],
       "additionalProperties": {}
     }
   },
   {
     "name": "nex_browser_connection_info",
-    "description": "Inspect the status of running NexBrowser environments.",
+    "description": "Inspect the status of running NexBrowser environments. Omit windowId to list every running window.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -467,7 +1107,8 @@
             {
               "type": "number"
             }
-          ]
+          ],
+          "description": "Optional team filter; OpenAPI uses the active team"
         },
         "windowId": {
           "anyOf": [
@@ -494,13 +1135,38 @@
                 ]
               }
             }
-          ]
+          ],
+          "description": "One window ID or a list; omit to list every running window"
+        },
+        "ids": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Alias of windowId"
         }
       },
-      "required": [
-        "teamId",
-        "windowId"
-      ],
       "additionalProperties": {}
     },
     "annotations": {
@@ -549,12 +1215,38 @@
                 ]
               }
             }
-          ]
+          ],
+          "description": "One window ID or a list; alias of ids"
+        },
+        "ids": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Documented alias of windowId"
         }
       },
-      "required": [
-        "windowId"
-      ],
       "additionalProperties": {}
     },
     "annotations": {
@@ -593,16 +1285,404 @@
                 ]
               }
             }
-          ]
+          ],
+          "description": "One window ID or a list"
+        },
+        "windowIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Alias of windowId"
         }
       },
-      "required": [
-        "windowId"
-      ],
       "additionalProperties": {}
     },
     "annotations": {
       "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_account_list",
+    "description": "List platform accounts in the workspace catalog so an accountId can be selected for window creation or later vault fill. This is not the open-window vault; use nex_browser_accounts after a window is running. Secrets are never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "keyword": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_account_create",
+    "description": "Create one platform account in the workspace catalog, or pass items to create several. Pass platformUrl; username, password, and 2FA secret are optional and write-only. This does not fill a login form.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "platformUrl": {
+          "type": "string",
+          "description": "Platform website URL, for example https://www.tiktok.com"
+        },
+        "platformName": {
+          "type": "string",
+          "description": "Display name for the platform"
+        },
+        "username": {
+          "type": "string",
+          "description": "Login username or email"
+        },
+        "password": {
+          "type": "string",
+          "description": "Write-only; never returned"
+        },
+        "key2fa": {
+          "type": "string",
+          "description": "Write-only authenticator secret; never returned"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "teamId": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "platformUrl": {
+                "type": "string",
+                "description": "Platform website URL, for example https://www.tiktok.com"
+              },
+              "platformName": {
+                "type": "string",
+                "description": "Display name for the platform"
+              },
+              "username": {
+                "type": "string",
+                "description": "Login username or email"
+              },
+              "password": {
+                "type": "string",
+                "description": "Write-only; never returned"
+              },
+              "key2fa": {
+                "type": "string",
+                "description": "Write-only authenticator secret; never returned"
+              },
+              "remark": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "platformUrl"
+            ],
+            "additionalProperties": {}
+          },
+          "description": "Create several accounts in one call; each item needs platformUrl"
+        }
+      },
+      "required": [
+        "platformUrl"
+      ],
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_account_batch_create",
+    "description": "Create multiple platform accounts from an items array. Each item needs platformUrl. Secrets are write-only and never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "teamId": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "platformUrl": {
+                "type": "string",
+                "description": "Platform website URL, for example https://www.tiktok.com"
+              },
+              "platformName": {
+                "type": "string",
+                "description": "Display name for the platform"
+              },
+              "username": {
+                "type": "string",
+                "description": "Login username or email"
+              },
+              "password": {
+                "type": "string",
+                "description": "Write-only; never returned"
+              },
+              "key2fa": {
+                "type": "string",
+                "description": "Write-only authenticator secret; never returned"
+              },
+              "remark": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "platformUrl"
+            ],
+            "additionalProperties": {}
+          },
+          "description": "Account objects; each item needs platformUrl. Also accepts accounts or accountList"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_account_modify",
+    "description": "Update one platform account in the workspace catalog. Pass only the fields that must change. Password and 2FA secret are write-only and never returned.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Platform account ID from nex_account_list"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Documented alias of accountId"
+        },
+        "teamId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "platformUrl": {
+          "type": "string"
+        },
+        "platformName": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string",
+          "description": "Write-only; never returned"
+        },
+        "key2fa": {
+          "type": "string",
+          "description": "Write-only authenticator secret; never returned"
+        },
+        "remark": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    }
+  },
+  {
+    "name": "nex_account_delete",
+    "description": "Delete one or more platform accounts from the workspace catalog. This does not close windows or remove vault copies already stored in an open window.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "One account ID or a list of account IDs to delete"
+        },
+        "accountIds": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Alias of accountId"
+        },
+        "items": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "Documented alias of accountId"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Single-ID alias of accountId"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "destructiveHint": true
     }
   },
   {

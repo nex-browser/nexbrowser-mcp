@@ -78,7 +78,7 @@ import { fileURLToPath } from 'node:url';
 import * as mcp from '@nexbrowser/mcp';
 assert.equal(mcp.MCP_SERVER_NAME, 'nexbrowser-mcp');
 assert.equal(mcp.MCP_SERVER_VERSION, mcp.PKG_VERSION);
-assert.equal(mcp.TOOLS.length, 52);
+assert.equal(mcp.TOOLS.length, 64);
 assert.equal(typeof mcp.NexBrowserMCPServer, 'function');
 const embeddedServer = new mcp.NexBrowserMCPServer();
 assert.equal(typeof embeddedServer.connect, 'function');
@@ -95,7 +95,7 @@ const mcp = require('@nexbrowser/mcp');
 void (async () => {
 assert.equal(mcp.MCP_SERVER_NAME, 'nexbrowser-mcp');
 assert.equal(mcp.MCP_SERVER_VERSION, mcp.PKG_VERSION);
-assert.equal(mcp.TOOLS.length, 52);
+assert.equal(mcp.TOOLS.length, 64);
 assert.equal(typeof mcp.NexBrowserMCPServer, 'function');
 const embeddedServer = new mcp.NexBrowserMCPServer();
 assert.equal(typeof embeddedServer.connect, 'function');
