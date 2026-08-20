@@ -85,7 +85,9 @@ describe('nex_account_create', () => {
 
 describe('nex_account_modify', () => {
   it('updates an account and omits blank secrets from the request', async () => {
-    const { request, tool } = toolWith('nex_account_modify', [{ id: 56, username: 'new@example.com' }]);
+    const { request, tool } = toolWith('nex_account_modify', [
+      { id: 56, username: 'new@example.com' }
+    ]);
 
     const result = await tool.execute({
       accountId: 56,

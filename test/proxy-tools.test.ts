@@ -153,7 +153,9 @@ describe('nex_proxy_create', () => {
 
     expect(request).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
-    expect(String((result.content[0] as { text: string }).text)).toContain('SOCKS5, HTTP, or HTTPS');
+    expect(String((result.content[0] as { text: string }).text)).toContain(
+      'SOCKS5, HTTP, or HTTPS'
+    );
   });
 });
 

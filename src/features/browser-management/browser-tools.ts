@@ -243,7 +243,9 @@ const batchCreateAccountInputSchema = z
   .object({
     items: z
       .array(accountItemInputSchema)
-      .describe('Account objects; each item needs platformUrl. Also accepts accounts or accountList')
+      .describe(
+        'Account objects; each item needs platformUrl. Also accepts accounts or accountList'
+      )
   })
   .passthrough();
 const modifyAccountInputSchema = z
@@ -261,7 +263,9 @@ const modifyAccountInputSchema = z
   .passthrough();
 const deleteAccountInputSchema = z
   .object({
-    accountId: browserIdsSchema.describe('One account ID or a list of account IDs to delete').optional(),
+    accountId: browserIdsSchema
+      .describe('One account ID or a list of account IDs to delete')
+      .optional(),
     accountIds: browserIdsSchema.describe('Alias of accountId').optional(),
     items: browserIdsSchema.describe('Documented alias of accountId').optional(),
     id: browserIdSchema.describe('Single-ID alias of accountId').optional()
@@ -763,7 +767,9 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
       }
       const built = proxyWriteFields(args, { defaultProtocol: 'SOCKS5' });
       if (built.error || !built.item) {
-        return errorResult(`Failed to create proxy: ${built.error || 'host and port are required'}`);
+        return errorResult(
+          `Failed to create proxy: ${built.error || 'host and port are required'}`
+        );
       }
       const response = await ctx.api.request<any>(PROXY_CREATE_ROUTE, {
         method: 'POST',
@@ -1183,7 +1189,9 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
     annotations: { readOnlyHint: true },
     inputSchema: z
       .object({
-        teamId: browserIdSchema.describe('Optional team filter; OpenAPI uses the active team').optional(),
+        teamId: browserIdSchema
+          .describe('Optional team filter; OpenAPI uses the active team')
+          .optional(),
         windowId: browserIdsSchema
           .describe('One window ID or a list; omit to list every running window')
           .optional(),
@@ -1305,9 +1313,11 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
       const total = Number(payload?.count ?? payload?.total ?? rows.length);
       return successResult(
         rows.length
-          ? [`Found ${total} platform account(s):`, '', rows.map(accountCatalogSummary).join('\n\n')].join(
-              '\n'
-            )
+          ? [
+              `Found ${total} platform account(s):`,
+              '',
+              rows.map(accountCatalogSummary).join('\n\n')
+            ].join('\n')
           : 'No platform accounts found.',
         { rows, total, page: args.page ?? 1, size: args.size ?? 100 }
       );
@@ -1338,7 +1348,8 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
           method: 'POST',
           body: JSON.stringify({ items: normalized })
         });
-        if (response.code !== 0) return apiErrorResult('Failed to create platform account', response);
+        if (response.code !== 0)
+          return apiErrorResult('Failed to create platform account', response);
         return createdAccountResult(payloadRows(response.data).map(safeAccount));
       }
       const platformUrl = String(args.platformUrl || '').trim();
@@ -1361,7 +1372,8 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
     inputSchema: batchCreateAccountInputSchema,
     execute: async (args, ctx) => {
       const items = writeItems(args, ['items', 'accounts', 'accountList']);
-      if (!items.length) return errorResult('Failed to create platform accounts: items is required');
+      if (!items.length)
+        return errorResult('Failed to create platform accounts: items is required');
       const normalized = [];
       for (const raw of items) {
         const item = accountWriteFields(raw as Record<string, any>);
@@ -1374,7 +1386,8 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
         method: 'POST',
         body: JSON.stringify({ items: normalized })
       });
-      if (response.code !== 0) return apiErrorResult('Failed to create platform accounts', response);
+      if (response.code !== 0)
+        return apiErrorResult('Failed to create platform accounts', response);
       return createdAccountResult(payloadRows(response.data).map(safeAccount));
     }
   }),
@@ -1408,7 +1421,8 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
     inputSchema: deleteAccountInputSchema,
     execute: async (args, ctx) => {
       const ids = firstIds(args, ['items', 'accountId', 'accountIds', 'id']);
-      if (!ids.length) return errorResult('Failed to delete platform account: accountId is required');
+      if (!ids.length)
+        return errorResult('Failed to delete platform account: accountId is required');
       const response = await ctx.api.request<unknown>(ACCOUNT_DELETE_ROUTE, {
         method: 'POST',
         body: JSON.stringify({ items: ids })
