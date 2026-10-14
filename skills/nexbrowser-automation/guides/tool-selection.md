@@ -15,6 +15,7 @@ Use this guide when several MCP tools appear applicable.
 ## Common Choices
 
 - Inspect controls and text: `nex_browser_snapshot`; use `nex_browser_take_screenshot` only for visual layout, canvas, video, or image state.
+- Image grids or page-injected extension overlays without refs: capture a target/clip screenshot, then `nex_browser_mouse_click_xy`. Use the returned image origin/scale to convert to viewport CSS coordinates. See [Image grids and extension overlays](../examples/image-grid-and-extension-overlay.md).
 - Follow in-page links, pagination, tabs, or filters: `nex_browser_click` first; only navigate directly if the UI path fails or is impractical.
 - Enter text: `nex_browser_type(target="e12", text="...")`; call `nex_browser_press_key(key="Enter")` when Enter is the intended submission.
 - Native select: `nex_browser_select_option`; custom listbox: click the visible option.

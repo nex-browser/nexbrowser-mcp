@@ -1939,6 +1939,55 @@
     }
   },
   {
+    "name": "nex_browser_mouse_click_xy",
+    "description": "Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "x": {
+          "type": "number",
+          "minimum": 0
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0
+        },
+        "button": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right",
+            "middle"
+          ]
+        },
+        "clickCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5000
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
     "name": "nex_browser_hover",
     "description": "Hover over an element.",
     "inputSchema": {
@@ -2673,7 +2722,7 @@
   },
   {
     "name": "nex_browser_take_screenshot",
-    "description": "Capture a screenshot and return MCP image content when it is small enough.",
+    "description": "Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2685,6 +2734,45 @@
         "pageId": {
           "type": "string",
           "description": "Stable page ID; defaults to the session active page"
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "clip": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "scale": {
+          "type": "string",
+          "enum": [
+            "css",
+            "device"
+          ]
         },
         "filename": {
           "type": "string"

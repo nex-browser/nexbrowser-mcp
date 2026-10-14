@@ -92,6 +92,8 @@ Do not invent tools for the following — they are outside this skill's scope; r
 
 ## Progressive Disclosure
 
+For image grids, canvas controls or page-injected extension dropdowns without snapshot refs, use `nex_browser_take_screenshot` with `target` or `clip`, then `nex_browser_mouse_click_xy`. Coordinates are viewport CSS pixels; use the screenshot's returned origin and scale. See [Image grids and extension overlays](examples/image-grid-and-extension-overlay.md).
+
 | Reference                                                                        | When to use                                                                            |
 | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | [Tool catalog](references/tool-catalog.md)                                       | Confirm a tool's exact name, inputs, and read-only status.                             |

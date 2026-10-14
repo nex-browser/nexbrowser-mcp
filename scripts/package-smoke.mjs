@@ -78,7 +78,9 @@ import { fileURLToPath } from 'node:url';
 import * as mcp from '@nexbrowser/mcp';
 assert.equal(mcp.MCP_SERVER_NAME, 'nexbrowser-mcp');
 assert.equal(mcp.MCP_SERVER_VERSION, mcp.PKG_VERSION);
-assert.equal(mcp.TOOLS.length, 64);
+assert.equal(mcp.TOOLS.length, 65);
+assert.ok(mcp.TOOLS.some(tool => tool.name === 'nex_browser_mouse_click_xy'));
+assert.ok(mcp.TOOLS.find(tool => tool.name === 'nex_browser_take_screenshot').inputSchema.properties.clip);
 assert.equal(typeof mcp.NexBrowserMCPServer, 'function');
 const embeddedServer = new mcp.NexBrowserMCPServer();
 assert.equal(typeof embeddedServer.connect, 'function');
@@ -95,7 +97,9 @@ const mcp = require('@nexbrowser/mcp');
 void (async () => {
 assert.equal(mcp.MCP_SERVER_NAME, 'nexbrowser-mcp');
 assert.equal(mcp.MCP_SERVER_VERSION, mcp.PKG_VERSION);
-assert.equal(mcp.TOOLS.length, 64);
+assert.equal(mcp.TOOLS.length, 65);
+assert.ok(mcp.TOOLS.some(tool => tool.name === 'nex_browser_mouse_click_xy'));
+assert.ok(mcp.TOOLS.find(tool => tool.name === 'nex_browser_take_screenshot').inputSchema.properties.clip);
 assert.equal(typeof mcp.NexBrowserMCPServer, 'function');
 const embeddedServer = new mcp.NexBrowserMCPServer();
 assert.equal(typeof embeddedServer.connect, 'function');
@@ -129,5 +133,7 @@ fs.accessSync(path.resolve(require.resolve('@nexbrowser/mcp'), '../../skills/nex
     `Packed tarball smoke passed with ${installerLabel} for temporary install, ESM, CommonJS, CLI, and Skill.`
   );
 } finally {
+  assert.equal(path.dirname(path.resolve(temporaryRoot)), path.resolve(tmpdir()));
+  assert.ok(path.basename(temporaryRoot).startsWith('nexbrowser-mcp-package-smoke-'));
   await rm(temporaryRoot, { recursive: true, force: true });
 }

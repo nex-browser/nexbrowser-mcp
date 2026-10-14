@@ -12,8 +12,20 @@ import { automationSchema, TARGET_PROPERTY } from './schema.js';
 export const ARTIFACT_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_take_screenshot',
-    description: 'Capture a screenshot and return MCP image content when it is small enough.',
+    description:
+      'Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays.',
     inputSchema: automationSchema({
+      target: TARGET_PROPERTY.optional(),
+      clip: z
+        .object({
+          x: z.number().min(0),
+          y: z.number().min(0),
+          width: z.number().positive(),
+          height: z.number().positive()
+        })
+        .strict()
+        .optional(),
+      scale: z.enum(['css', 'device']).optional(),
       filename: z.string().optional(),
       type: z.enum(['png', 'jpeg']).optional(),
       fullPage: z.boolean().optional(),
@@ -25,6 +37,9 @@ export const ARTIFACT_TOOL_SPECS: readonly McpToolSpec[] = [
         args,
         'screenshot',
         {
+          target: args.target,
+          clip: args.clip,
+          scale: args.scale,
           filename: args.filename,
           type: args.type,
           fullPage: args.fullPage,

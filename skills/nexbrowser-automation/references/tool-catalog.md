@@ -57,6 +57,7 @@ Stateless `nex_*` tools that manage NexBrowser environments; no automation sessi
 - `nex_browser_go_back` — Navigated back.
 - `nex_browser_go_forward` — Navigated forward.
 - `nex_browser_click` — Click or double-click an element from the latest snapshot or a CSS selector. Inputs: `target` (required), `doubleClick`, `button`.
+- `nex_browser_mouse_click_xy` — Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport. Inputs: `x` (required), `y` (required), `button`, `clickCount`, `delay`.
 - `nex_browser_hover` — Hover over an element. Inputs: `target` (required).
 - `nex_browser_type` — Type text into an element using sequential key events. Inputs: `target` (required), `text` (required), `delay`.
 - `nex_browser_fill_form` — Fill one or more form controls in order. Inputs: `fields` (required).
@@ -88,7 +89,7 @@ Stateless `nex_*` tools that manage NexBrowser environments; no automation sessi
 
 ## Artifacts
 
-- `nex_browser_take_screenshot` — Capture a screenshot and return MCP image content when it is small enough. Inputs: `filename`, `type`, `fullPage`, `quality`.
+- `nex_browser_take_screenshot` — Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays. Inputs: `target`, `clip`, `scale`, `filename`, `type`, `fullPage`, `quality`.
 - `nex_browser_file_upload` — Upload approved local files through a file input target. Inputs: `target` (required), `files` (required).
 - `nex_browser_drop` — Drop approved files or MIME-typed text data onto a target. Inputs: `target` (required), `paths`, `data`.
 

@@ -66,6 +66,32 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   }),
   defineTool({
+    name: 'nex_browser_mouse_click_xy',
+    description:
+      'Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport.',
+    inputSchema: automationSchema({
+      x: z.number().min(0),
+      y: z.number().min(0),
+      button: z.enum(['left', 'right', 'middle']).optional(),
+      clickCount: z.number().int().min(1).max(2).optional(),
+      delay: z.number().min(0).max(5_000).optional()
+    }),
+    execute: (args, ctx) =>
+      callAction(
+        ctx,
+        args,
+        'click',
+        {
+          x: args.x,
+          y: args.y,
+          button: args.button,
+          clickCount: args.clickCount,
+          delay: args.delay
+        },
+        'Viewport position clicked.'
+      )
+  }),
+  defineTool({
     name: 'nex_browser_hover',
     description: 'Hover over an element.',
     inputSchema: automationSchema({ target: TARGET_PROPERTY }),
