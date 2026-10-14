@@ -37,9 +37,13 @@ Use this skill whenever the user names NexBrowser or needs to manage or automate
 | Wait for a page change   | `nex_browser_wait_for`                                                                                           | Prefer `text` with `timeout` over fixed `time`.                                                                  |
 | Read structured data     | `nex_browser_evaluate`                                                                                           | Prefer UI tools for state-changing actions.                                                                      |
 | Inspect visual state     | `nex_browser_take_screenshot`                                                                                    | Use when layout or rendered media matters.                                                                       |
+| Click without a ref      | `nex_browser_take_screenshot`, `nex_browser_mouse_click_xy`                                                      | Image grids, canvas, extension overlays; map image coordinates with the returned origin and scale.               |
+| Verify by SMS            | `nex_sms_project_list`, `nex_sms_buy`, `nex_sms_code_fill`, `nex_sms_release`                                    | `nex_sms_buy` charges the balance: quote the price and get an explicit yes first.                                |
 | Debug failures           | `nex_browser_console_messages`, `nex_browser_network_requests`                                                   | Inspect after reproducing the issue.                                                                             |
 
 ## Critical Rules
+
+### Routing and sessions
 
 - Treat the NexBrowser product name as an explicit routing request for this MCP server. Never substitute generic Browser/Chrome plugins, computer-use, shell commands, or process enumeration.
 - For one window, connect with `nex_browser_connect`; set `startIfNeeded=true` only when the user also wants the stopped window opened.
@@ -47,18 +51,32 @@ Use this skill whenever the user names NexBrowser or needs to manage or automate
 - Retain every returned `sessionId` and pass it explicitly to subsequent tools for that window. The implicit active session only identifies the most recently connected window.
 - If Desktop reports a per-client session-limit error, process windows in bounded waves: connect only up to the allowed limit, finish and disconnect those sessions, then continue with the next wave. Do not reopen windows between waves.
 - Pass `teamId` only when it is already known. Never pass a raw CDP endpoint.
+
+### Snapshots and interaction
+
 - Call `nex_browser_snapshot` before the first target-based interaction and use its ref, such as `target: "e48"`; a unique CSS selector is a fallback. Multiple actions may reuse the same snapshot only while the page structure remains stable.
 - Snapshot refs are temporary. Re-snapshot after navigation, an action that changes the DOM, a substantial asynchronous update, or any stale-reference error.
 - Prefer visible controls: click links, buttons, filters, and pagination before using direct navigation or JavaScript.
 - For sensitive flows such as login, upload, checkout, or account changes, slow down: operate visible controls step by step, verify each result, and preserve confirmation steps (see `guides/human-like-interaction.md`).
+- Wait and verify after every state-changing action. Prefer observable text waits over fixed delays.
+- Treat `nex_browser_evaluate` as an inspection and extraction tool; use it to change page state only when the normal UI cannot be operated. `nex_browser_evaluate` and `nex_browser_run_code` are permission-gated by the NexBrowser Desktop app.
+
+### Sign-in and credentials
+
+Order of preference: `nex_browser_fill_account` for a bound vault credential; `nex_browser_fill_credentials` only for literal values the user supplied. If `nex_browser_fill_account` fills nothing, snapshot the form to see where the fields are and retry once; then stop and ask the user. Never fall back to clicking the vault extension's dropdown or typing a stored secret.
+
 - To sign in with a stored credential, open and connect the window, call `nex_browser_accounts` for an `accountId`, then call `nex_browser_fill_account` with that ID only. The vault plugin chooses visible fields and keeps passwords and 2FA secrets outside MCP. Call it again after each navigation in a multi-step sign-in. Never type a stored credential with `nex_browser_type` or `nex_browser_fill_form`, and never repeat one back. The tool does not submit; click the visible submit control yourself after verifying the filled state.
 - Use `nex_browser_fill_credentials` only when the user explicitly supplies literal credentials in the current request or explicitly asks you to use them. Treat a login account, password, TOTP retrieval URL, recovery email, recovery-email password, and email login URL supplied together as one ephemeral credential bundle. Do not persist a bundle, and do not assign multiple bundles to windows unless the mapping is explicit. Literal values enter the model and MCP request boundary: never store, log, or repeat them in a response. The tool fills only current visible targets and never submits; snapshot each changed step before filling.
 - If a sign-in requests a code available at a user-supplied retrieval URL, retain the login page ID, open the URL in a temporary tab, and accept a code only when exactly one current code is unambiguous. Close the temporary tab, reselect the login page, snapshot again, and fill the code with `nex_browser_fill_credentials`. A user-supplied retrieval URL is the only allowed URL exception for embedded secret material; never copy it into prose or logs.
 - If a sign-in requires a recovery-email code, open the explicitly supplied email login URL in a temporary tab and fill the explicitly supplied email address and password only with `nex_browser_fill_credentials`. Accept only one message/code that is clearly tied to the current sign-in. Stop on CAPTCHA, human confirmation, device approval, an SMS challenge to a number that is not a NexBrowser cloud number, an ambiguous code, or an inaccessible page. Close the email tab before returning to the retained login page. See [Sign-in with literal credentials](examples/sign-in-with-literal-credentials.md).
+
+### Paid actions
+
 - When the user asks to verify a site with a NexBrowser cloud phone number, quote the price from `nex_sms_project_list` and get an explicit yes before `nex_sms_buy` (it charges the account balance; pass the agreed total as `maxTotalPrice`). After triggering the site's send-code control, fill the code with `nex_sms_code_fill` so it goes straight into the page. Release unusable numbers with `nex_sms_release`. See [SMS verification code](examples/sms-verification-code.md).
+
+### Finishing a task
+
 - When the task is finished (or abandoned), call `nex_browser_disconnect` for every session you opened. It clears the in-window "Nex Agent is operating" overlay and keeps the window open. Skip it only when the user says more steps will follow right away.
-- Wait and verify after every state-changing action. Prefer observable text waits over fixed delays.
-- Treat `nex_browser_evaluate` as an inspection and extraction tool; use it to change page state only when the normal UI cannot be operated. `nex_browser_evaluate` and `nex_browser_run_code` are permission-gated by the NexBrowser Desktop app.
 
 ## Starter Workflow
 
@@ -94,20 +112,19 @@ Do not invent tools for the following — they are outside this skill's scope; r
 
 ## Progressive Disclosure
 
-For image grids, canvas controls or page-injected extension dropdowns without snapshot refs, use `nex_browser_take_screenshot` with `target` or `clip`, then `nex_browser_mouse_click_xy`. Coordinates are viewport CSS pixels; use the screenshot's returned origin and scale. See [Image grids and extension overlays](examples/image-grid-and-extension-overlay.md).
-
-| Reference                                                                        | When to use                                                                            |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [Tool catalog](references/tool-catalog.md)                                       | Confirm a tool's exact name, inputs, and read-only status.                             |
-| [Tool selection](guides/tool-selection.md)                                       | Unsure which interaction tool fits the intent.                                         |
-| [Snapshot modes](guides/snapshot-modes.md)                                       | Targets are stale or snapshots are too large.                                          |
-| [Waiting and timing](guides/waiting-and-timing.md)                               | Flaky results after navigation or slow pages.                                          |
-| [Human-like interaction](guides/human-like-interaction.md)                       | Sensitive flows needing cautious pacing.                                               |
-| [Error handling](guides/error-handling.md)                                       | A tool returned an error and the hint is not enough.                                   |
-| [Examples](examples/connect-and-navigate.md)                                     | Full workflow templates for common tasks.                                              |
-| [Sign-in with a bound account](examples/sign-in-with-bound-account.md)           | The task needs a platform login for a window.                                          |
-| [Sign-in with literal credentials](examples/sign-in-with-literal-credentials.md) | The user explicitly provides credentials and a one-time retrieval-code flow is needed. |
-| [SMS verification code](examples/sms-verification-code.md)                       | A site needs a phone number and SMS code from a NexBrowser cloud number.               |
+| Reference                                                                          | When to use                                                                            |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [Tool catalog](references/tool-catalog.md)                                         | Confirm a tool's exact name, inputs, and read-only status.                             |
+| [Tool selection](guides/tool-selection.md)                                         | Unsure which interaction tool fits the intent.                                         |
+| [Snapshot modes](guides/snapshot-modes.md)                                         | Targets are stale or snapshots are too large.                                          |
+| [Waiting and timing](guides/waiting-and-timing.md)                                 | Flaky results after navigation or slow pages.                                          |
+| [Human-like interaction](guides/human-like-interaction.md)                         | Sensitive flows needing cautious pacing.                                               |
+| [Error handling](guides/error-handling.md)                                         | A tool returned an error and the hint is not enough.                                   |
+| [Examples](examples/connect-and-navigate.md)                                       | Full workflow templates for common tasks.                                              |
+| [Sign-in with a bound account](examples/sign-in-with-bound-account.md)             | The task needs a platform login for a window.                                          |
+| [Sign-in with literal credentials](examples/sign-in-with-literal-credentials.md)   | The user explicitly provides credentials and a one-time retrieval-code flow is needed. |
+| [SMS verification code](examples/sms-verification-code.md)                         | A site needs a phone number and SMS code from a NexBrowser cloud number.               |
+| [Image grids and extension overlays](examples/image-grid-and-extension-overlay.md) | Controls without snapshot refs: image grids, canvas, page-injected extension menus.    |
 
 ## NexBrowser Integration
 
