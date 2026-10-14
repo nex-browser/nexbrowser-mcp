@@ -72,6 +72,26 @@ describe('nex_sms_buy', () => {
   });
 });
 
+describe('nex_sms_record_list', () => {
+  it('returns a message count instead of full SMS bodies', async () => {
+    const message = JSON.stringify([{ code: '1111', sms: 'Your code is 1111' }]);
+    const { request, tool } = toolWith(
+      'nex_sms_record_list',
+      ok({ rows: [{ tel: '+15550001', state: 1, message }], total: 1 })
+    );
+
+    const result = await tool.execute({ keyword: ' tg ' });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/sms/records?page=1&size=20&keyword=tg',
+      expect.objectContaining({ method: 'GET' })
+    );
+    const row = (result.structuredContent?.rows as Record<string, unknown>[])[0];
+    expect(row).toMatchObject({ tel: '+15550001', code: '1111', messageCount: 1 });
+    expect(row).not.toHaveProperty('messages');
+  });
+});
+
 describe('nex_sms_code_get', () => {
   it('extracts the code from the double-encoded message field', async () => {
     const message = JSON.stringify(
