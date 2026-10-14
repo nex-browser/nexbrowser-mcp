@@ -84,3 +84,18 @@ export const ACCOUNT_BATCH_CREATE_ROUTE = '/account/batch_create';
 export const ACCOUNT_MODIFY_ROUTE = '/account/modify';
 /** Deletes one or more platform accounts from the workspace catalog. 从工作区目录删除一条或多条平台账号。 */
 export const ACCOUNT_DELETE_ROUTE = '/account/delete';
+
+// Cloud phone number (SMS verification) endpoints. 云手机号（接码）端点。
+
+/** Countries/regions that sell numbers. 可购买号码的国家/地区。 */
+export const SMS_COUNTRIES_ROUTE = '/sms/countries';
+/** Projects, live prices, and stock of one country; parameters go in the query string. 单个国家的项目、实时价格与库存；参数经 query string 传递。 */
+export const SMS_STOCKS_ROUTE = '/sms/stocks';
+/** Buys numbers; charges the account balance and is guarded by maxTotalPrice. 购买号码；扣减账户余额，受 maxTotalPrice 保护。 */
+export const SMS_BUY_ROUTE = '/sms/buy';
+/** Paginated purchased-number records; parameters go in the query string. 已购号码分页记录；参数经 query string 传递。 */
+export const SMS_RECORDS_ROUTE = '/sms/records';
+/** Pulls the latest SMS of one number. 拉取单个号码的最新短信。 */
+export const SMS_PULL_ROUTE = '/sms/pull';
+/** Releases one number and refunds it. 释放号码并退款。 */
+export const SMS_RECOVER_ROUTE = '/sms/recover';

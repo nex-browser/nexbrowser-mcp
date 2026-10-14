@@ -93,6 +93,18 @@ Stateless `nex_*` tools that manage NexBrowser environments; no automation sessi
 - `nex_browser_file_upload` — Upload approved local files through a file input target. Inputs: `target` (required), `files` (required).
 - `nex_browser_drop` — Drop approved files or MIME-typed text data onto a target. Inputs: `target` (required), `paths`, `data`.
 
+## Cloud Phone Numbers (SMS)
+
+Stateless `nex_sms_*` tools for buying numbers and reading SMS verification codes. `nex_sms_buy` charges the account balance.
+
+- `nex_sms_country_list` — List the countries/regions where NexBrowser cloud phone numbers (SMS verification numbers) can be bought. Use the countryId with nex_sms_project_list. Read-only.
+- `nex_sms_project_list` — List the projects (target apps/sites such as Telegram or WhatsApp) of one country with live unit price and stock. Call this before nex_sms_buy to pick a projectId and to quote the price to the user. Read-only. Inputs: `countryId` (required).
+- `nex_sms_buy` — Buy cloud phone numbers for receiving SMS verification codes. This CHARGES THE ACCOUNT BALANCE: quote the project, quantity, and total price from nex_sms_project_list to the user and get explicit confirmation before calling. maxTotalPrice is the most the user agreed to pay; the order is refused if the live total exceeds it. At most 10 numbers per call. Then use nex_sms_code_fill to type the code into the page. Inputs: `countryId` (required), `projectId` (required), `quantity` (required), `maxTotalPrice` (required).
+- `nex_sms_record_list` — List purchased cloud phone numbers with state, expiry, and the latest verification code. keyword filters by number or project. Read-only. Inputs: `page`, `size`, `keyword`.
+- `nex_sms_code_get` — Fetch the latest SMS and verification code of one purchased number. Set waitSeconds (max 120) to keep polling until a code arrives or the number stops waiting; onlyNew ignores codes already received. To type the code into a NexBrowser page, prefer nex_sms_code_fill. Read-only. Inputs: `tel` (required), `waitSeconds`, `onlyNew`.
+- `nex_sms_code_fill` — Wait for the SMS verification code of one purchased number and type it straight into the NexBrowser automation session, so the code never has to pass through the conversation. Typical flow: nex_sms_buy, type the number into the site, click its send-code button, take nex_browser_snapshot to get the code input ref, then call this. Set onlyNew after asking the site to resend a code. submit=true presses Enter after filling. Polls up to waitSeconds (max 120, default 90). Inputs: `tel` (required), `target` (required), `waitSeconds`, `onlyNew`, `submit`.
+- `nex_sms_release` — Release one purchased number that is still active and request a refund, e.g. when no code arrived (no_code) or the site rejected the number. The number cannot be used afterwards. Inputs: `tel` (required), `reason` (required).
+
 ## Safety
 
 Tools marked read-only only inspect state. Navigation, clicks, typing, uploads, tab closing, and JavaScript that changes page state are consequential: use them only for the user's intended outcome.

@@ -7,6 +7,7 @@ import {
   createBrowserManagementTools,
   MANAGEMENT_TOOL_SPECS
 } from './features/browser-management/browser-tools.js';
+import { createSmsTools, SMS_TOOL_SPECS } from './features/sms/sms-tools.js';
 import { toToolSchema, type NexApiConfig } from './shared/types.js';
 import {
   DEFAULT_NEX_API_HOST,
@@ -23,7 +24,9 @@ import {
  * 为宿主预览提供完整的管理和自动化 schema。
  * 纯规格映射——import 本模块零副作用。
  */
-export const TOOLS = [...MANAGEMENT_TOOL_SPECS, ...AUTOMATION_TOOL_SPECS].map(toToolSchema);
+export const TOOLS = [...MANAGEMENT_TOOL_SPECS, ...AUTOMATION_TOOL_SPECS, ...SMS_TOOL_SPECS].map(
+  toToolSchema
+);
 
 /** Embedded-server class used by NexBrowser Agent hosts. 供 NexBrowser Agent 宿主嵌入使用的服务类。 */
 export class NexBrowserMCPServer extends NexBrowserMcpServer {}
@@ -54,6 +57,7 @@ export {
   AUTOMATION_TOOL_SPECS,
   createBrowserAutomationTools,
   createBrowserManagementTools,
+  createSmsTools,
   DEFAULT_NEX_API_HOST,
   DEFAULT_NEX_TIMEOUT,
   MAX_NEX_RESPONSE_BYTES,
@@ -62,5 +66,6 @@ export {
   NexBrowserMcpServer,
   normalizeNexApiHost,
   resolveNexApiConfig,
-  runMcpServer
+  runMcpServer,
+  SMS_TOOL_SPECS
 };

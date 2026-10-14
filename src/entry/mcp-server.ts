@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { createBrowserAutomationTools } from '../features/browser-automation/index.js';
 import { createBrowserManagementTools } from '../features/browser-management/browser-tools.js';
+import { createSmsTools } from '../features/sms/sms-tools.js';
 import { errorResult, invalidArguments } from '../shared/tool-result.js';
 import { InvalidArgumentError, type NexApiConfig } from '../shared/types.js';
 import { NexApiClient } from '../transport/nex-api-client.js';
@@ -27,14 +28,15 @@ export class NexBrowserMcpServer {
     this.client = new NexApiClient(config);
     const tools = [
       ...createBrowserManagementTools(this.client),
-      ...createBrowserAutomationTools(this.client)
+      ...createBrowserAutomationTools(this.client),
+      ...createSmsTools(this.client)
     ];
     this.server = new McpServer(
       { name: MCP_SERVER_NAME, version: MCP_SERVER_VERSION },
       {
         capabilities: { tools: {} },
         instructions:
-          "IMPORTANT ROUTING RULE: NexBrowser is the product and this MCP server, not a generic browser. Whenever the user explicitly says NexBrowser/nexbrowser or asks to use NexBrowser OpenAPI, use this server's nex_browser_* tools; never substitute the Browser plugin, Chrome plugin, computer-use, shell commands, or process enumeration. For requests to list or count NexBrowser windows/environments/profiles, call nex_browser_list first. Example: '使用 NexBrowser 查看我有多少窗口' means call nex_browser_list. NexBrowser windows are managed environments/profiles, not operating-system application windows or browser tabs. Every public tool in this server uses the nex_browser_* namespace; former tool names are not available."
+          "IMPORTANT ROUTING RULE: NexBrowser is the product and this MCP server, not a generic browser. Whenever the user explicitly says NexBrowser/nexbrowser or asks to use NexBrowser OpenAPI, use this server's nex_browser_* tools; never substitute the Browser plugin, Chrome plugin, computer-use, shell commands, or process enumeration. For requests to list or count NexBrowser windows/environments/profiles, call nex_browser_list first. Example: '使用 NexBrowser 查看我有多少窗口' means call nex_browser_list. NexBrowser windows are managed environments/profiles, not operating-system application windows or browser tabs. Browser tools use the nex_browser_* namespace; former tool names are not available. Cloud phone numbers for SMS verification codes use nex_sms_*; nex_sms_buy charges the account balance, so quote the price and get the user's explicit confirmation first."
       }
     );
     const registered = new Set<string>();

@@ -5,6 +5,7 @@ import { INTERACTION_TOOL_SPECS } from '../src/features/browser-automation/inter
 import { SESSION_TOOL_SPECS } from '../src/features/browser-automation/session-tools.js';
 import { TAB_TOOL_SPECS } from '../src/features/browser-automation/tab-tools.js';
 import { MANAGEMENT_TOOL_SPECS } from '../src/features/browser-management/browser-tools.js';
+import { SMS_TOOL_SPECS } from '../src/features/sms/sms-tools.js';
 import type { McpToolSpec } from '../src/shared/define-tool.js';
 
 /**
@@ -29,7 +30,12 @@ const GROUPS: ReadonlyArray<{ title: string; note?: string; specs: readonly McpT
   { title: 'Tabs', specs: TAB_TOOL_SPECS },
   { title: 'Interaction', specs: INTERACTION_TOOL_SPECS },
   { title: 'Inspection and Diagnostics', specs: INSPECTION_TOOL_SPECS },
-  { title: 'Artifacts', specs: ARTIFACT_TOOL_SPECS }
+  { title: 'Artifacts', specs: ARTIFACT_TOOL_SPECS },
+  {
+    title: 'Cloud Phone Numbers (SMS)',
+    note: 'Stateless `nex_sms_*` tools for buying numbers and reading SMS verification codes. `nex_sms_buy` charges the account balance.',
+    specs: SMS_TOOL_SPECS
+  }
 ];
 
 /**

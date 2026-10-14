@@ -2870,5 +2870,210 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false
     }
+  },
+  {
+    "name": "nex_sms_country_list",
+    "description": "List the countries/regions where NexBrowser cloud phone numbers (SMS verification numbers) can be bought. Use the countryId with nex_sms_project_list.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_sms_project_list",
+    "description": "List the projects (target apps/sites such as Telegram or WhatsApp) of one country with live unit price and stock. Call this before nex_sms_buy to pick a projectId and to quote the price to the user.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "countryId": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "countryId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_sms_buy",
+    "description": "Buy cloud phone numbers for receiving SMS verification codes. This CHARGES THE ACCOUNT BALANCE: quote the project, quantity, and total price from nex_sms_project_list to the user and get explicit confirmation before calling. maxTotalPrice is the most the user agreed to pay; the order is refused if the live total exceeds it. At most 10 numbers per call. Then use nex_sms_code_fill to type the code into the page.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "countryId": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "projectId": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "quantity": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "maxTotalPrice": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "countryId",
+        "projectId",
+        "maxTotalPrice"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false
+    }
+  },
+  {
+    "name": "nex_sms_record_list",
+    "description": "List purchased cloud phone numbers with state, expiry, and the latest verification code. keyword filters by number or project.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "keyword": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_sms_code_get",
+    "description": "Fetch the latest SMS and verification code of one purchased number. Set waitSeconds (max 120) to keep polling until a code arrives or the number stops waiting; onlyNew ignores codes already received. To type the code into a NexBrowser page, prefer nex_sms_code_fill.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "waitSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120
+        },
+        "onlyNew": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "tel"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "nex_sms_code_fill",
+    "description": "Wait for the SMS verification code of one purchased number and type it straight into the NexBrowser automation session, so the code never has to pass through the conversation. Typical flow: nex_sms_buy, type the number into the site, click its send-code button, take nex_browser_snapshot to get the code input ref, then call this. Set onlyNew after asking the site to resend a code. submit=true presses Enter after filling. Polls up to waitSeconds (max 120, default 90).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session ID; defaults to this MCP client active session"
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Stable page ID; defaults to the session active page"
+        },
+        "tel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "description": "Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector"
+        },
+        "waitSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120
+        },
+        "onlyNew": {
+          "type": "boolean"
+        },
+        "submit": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "tel",
+        "target"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "nex_sms_release",
+    "description": "Release one purchased number that is still active and request a refund, e.g. when no code arrived (no_code) or the site rejected the number. The number cannot be used afterwards.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "no_code",
+            "rejected",
+            "already_registered",
+            "cannot_send_code",
+            "other"
+          ]
+        }
+      },
+      "required": [
+        "tel",
+        "reason"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "destructiveHint": true
+    }
   }
 ]
