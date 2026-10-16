@@ -20,6 +20,8 @@ Coordinates address the current viewport in CSS pixels, not the screen or browse
 
 ## Pair with 2Captcha
 
+For a page CAPTCHA, first use the [NexCaptcha page workflow](../guides/captcha.md). Only consider a separately authorized external solver when NexCaptcha cannot support the challenge. Quote and confirm its fee before submitting image data; never create a second task because the first timed out.
+
 The two MCP servers do not call each other. The agent coordinates NexBrowser screenshots, the external solver and subsequent clicks.
 
 - Capture only the challenge grid and read its instruction and row/column counts.

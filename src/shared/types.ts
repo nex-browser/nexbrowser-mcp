@@ -20,6 +20,8 @@ export interface NexApiConfig {
  * Nex 服务端统一响应包络。
  */
 export interface NexApiResponse<T = unknown> {
+  /** Opaque Desktop identity/team revision, used to pin multi-request service workflows. */
+  contextId?: string;
   /** Zero on success; failures may carry a numeric code or a stable AutomationErrorCode string. 成功为 0；失败时可能为数值码或稳定的 AutomationErrorCode 字符串。 */
   code: number | string;
   msg: string;
@@ -48,7 +50,7 @@ export interface McpToolDefinition {
   inputSchema: ZodType;
   /** MCP behavior hints (readOnlyHint/destructiveHint...). MCP 行为注解。 */
   annotations?: ToolAnnotations;
-  execute: (arguments_: Record<string, any>) => Promise<McpToolResult>;
+  execute: (arguments_: Record<string, any>, signal?: AbortSignal) => Promise<McpToolResult>;
 }
 
 /**

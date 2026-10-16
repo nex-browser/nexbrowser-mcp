@@ -76,6 +76,15 @@ npx skills add https://github.com/nex-browser/nexbrowser-mcp --skill nexbrowser-
 - Automate pages: connect, navigate, click, type, upload files, and manage tabs.
 - Inspect pages: snapshots, screenshots, visible text, console messages, and network requests.
 - Isolate sessions: each MCP process owns its browser sessions and active-tab state.
+- Buy and renew NexIP proxies, buy short-term quotas, and extract proxies with `nex_ip_*`.
+- Buy NexMail mailboxes and read email with `nex_mail_*`; create and query NexCaptcha solving tasks with `nex_captcha_*`.
+- Reconcile charges and refunds with `nex_billing_trade_list`.
+
+For page CAPTCHAs, `nex_browser_captcha_prepare` checks NexCaptcha and collects widget parameters without charging. Confirm the returned single-task fee and site callback scope before `nex_browser_captcha_submit`; `nex_browser_captcha_complete` queries and applies the result to the original widget. Supports captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile. See the [page CAPTCHA workflow](skills/nexbrowser-automation/guides/captcha.md) for fresh GeeTest challenges, existing-page limitations and timeout reconciliation.
+
+Service tools require a Desktop version exposing `/ip`, `/mail`, `/captcha`, and `/billing` OpenAPI routes, an active login, and the existing server permissions. Prices come from the backend. Before charging, quote the scope and total and obtain explicit user confirmation; pass the agreed ceiling as `maxTotalPrice`. The ceiling is a live preflight check, not an atomic backend price guarantee. Never automatically retry purchases, renewals, or quota extraction after an error or timeout: check records and billing first. Mailbox purchases have no refund/renewal API; CAPTCHA failures/expiry are refunded by the server, not by the MCP.
+
+Language defaults to the current Desktop setting; direct OpenAPI callers may pass `Accept-Language` (`zh-CN` or `en-US`). See the bundled [service workflow guide](skills/nexbrowser-automation/guides/services.md) for IDs, polling, and uncertain results.
 
 Common tools:
 

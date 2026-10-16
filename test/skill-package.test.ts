@@ -61,7 +61,9 @@ describe('bundled automation skill', () => {
     expect(skill).toMatch(/current request.*ephemeral credential bundle/i);
     expect(skill).toMatch(/multiple bundles.*mapping is explicit/i);
     expect(skill).toMatch(/recovery-email code.*email login URL/i);
-    expect(skill).toMatch(/stop on CAPTCHA.*ambiguous code.*inaccessible/i);
+    expect(skill).toMatch(
+      /On CAPTCHA.*NexCaptcha.*Stop on human confirmation.*ambiguous code.*inaccessible/i
+    );
     expect(example.match(/nex_browser_tab_list/g)).toHaveLength(2);
     expect(example).toMatch(/retain.*LOGIN_PAGE_ID/i);
     expect(example).toMatch(/retain.*RETRIEVAL_PAGE_ID/i);
@@ -71,5 +73,22 @@ describe('bundled automation skill', () => {
     expect(example).toContain('recovery-email code');
     expect(example).toContain('email login URL');
     expect(example).toMatch(/ephemeral bundle.*browser window/i);
+  });
+
+  it('routes page CAPTCHAs through NexCaptcha confirmation and result verification', () => {
+    const skill = readFileSync(SKILL_PATH, 'utf8');
+    const guide = readFileSync(resolve(SKILL_DIR, 'guides/captcha.md'), 'utf8');
+    for (const tool of [
+      'nex_browser_captcha_prepare',
+      'nex_browser_captcha_submit',
+      'nex_browser_captcha_complete'
+    ]) {
+      expect(skill).toContain(tool);
+      expect(guide).toContain(tool);
+    }
+    expect(guide).toContain('explicit confirmation');
+    expect(guide).toContain('websiteVerified=false');
+    expect(guide).toContain('fresh matching challenge');
+    expect(skill).not.toMatch(/Stop on CAPTCHA/);
   });
 });

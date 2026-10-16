@@ -92,8 +92,12 @@ export function payableUnitPrice(project: any): number | undefined {
 }
 
 /** Pulls the latest SMS of one number. 拉取单个号码的最新短信。 */
-async function pull(api: NexApiRequester, tel: string) {
-  return api.request<any>(SMS_PULL_ROUTE, { method: 'POST', body: JSON.stringify({ tel }) });
+async function pull(api: NexApiRequester, tel: string, contextId?: string) {
+  return api.request<any>(SMS_PULL_ROUTE, {
+    method: 'POST',
+    body: JSON.stringify({ tel }),
+    ...(contextId ? { headers: { 'X-Nex-Service-Context': contextId } } : {})
+  });
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -116,9 +120,19 @@ export async function waitForCode(
 ): Promise<CodeWaitResult> {
   const deadline = Date.now() + waitSeconds * 1000;
   let seen: Set<string> | undefined;
+  let contextId: string | undefined;
   for (;;) {
-    const response = await pull(api, tel);
+    const response = await pull(api, tel, contextId);
     if (response.code !== 0) return { ok: false, response };
+    if (contextId && response.contextId !== contextId)
+      return {
+        ok: false,
+        response: {
+          code: 'SESSION_CONTEXT_CHANGED',
+          msg: 'Session or team changed while waiting for SMS; discard the result and return to the original context.'
+        }
+      };
+    contextId ??= response.contextId;
     const view = recordView(response.data);
     const codes = view.messages.map((message) => message.code).filter(Boolean) as string[];
     seen ??= onlyNew ? new Set(codes) : new Set();

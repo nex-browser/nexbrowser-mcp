@@ -13,6 +13,112 @@ afterEach(() => {
 });
 
 describe('NexBrowser MCP protocol', () => {
+  it('propagates an MCP cancellation into the in-flight service HTTP request', async () => {
+    let started!: () => void, cancelled!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const stopped = new Promise<void>((resolve) => {
+      cancelled = resolve;
+    });
+    const fetchMock = installFetchMock(async (url, init) => {
+      if (!String(url).endsWith('/captcha/buy')) return new Response('{"code":0,"data":null}');
+      started();
+      return new Promise((_resolve, reject) => {
+        init!.signal!.addEventListener(
+          'abort',
+          () => {
+            cancelled();
+            reject(init!.signal!.reason);
+          },
+          { once: true }
+        );
+      });
+    });
+    const session = await createMcpSession(config);
+    const controller = new AbortController();
+    try {
+      const pending = session.client.callTool(
+        {
+          name: 'nex_captcha_buy',
+          arguments: { productCode: 'TEST', adapter: {}, maxTotalPrice: 1 }
+        },
+        undefined,
+        { signal: controller.signal }
+      );
+      const rejected = expect(pending).rejects.toThrow();
+      await ready;
+      controller.abort();
+      await rejected;
+      await stopped;
+      expect(
+        fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/captcha/buy'))
+      ).toHaveLength(1);
+    } finally {
+      await session.close();
+    }
+  });
+  it('publishes usable mailbox purchase properties through SDK tools/list', async () => {
+    const session = await createMcpSession(config);
+    try {
+      const listed = await session.client.listTools();
+      const buy = listed.tools.find((tool) => tool.name === 'nex_mail_buy')!;
+      expect(Object.keys(buy.inputSchema.properties ?? {})).toEqual([
+        'type',
+        'durationHours',
+        'maxTotalPrice',
+        'domainId',
+        'suffix'
+      ]);
+      expect(buy.inputSchema.required).toEqual(['type', 'durationHours', 'maxTotalPrice']);
+    } finally {
+      await session.close();
+    }
+  });
+  it.each([
+    [
+      'nex_ip_buy',
+      { productId: 'p1', quantity: 1, duration: 30, maxTotalPrice: '0.10' },
+      '/ip/buy'
+    ],
+    [
+      'nex_mail_buy',
+      { type: 'TEMPORARY', durationHours: 'DAY_1', maxTotalPrice: '0.005' },
+      '/mail/buy'
+    ],
+    [
+      'nex_mail_buy',
+      { type: 'MAINSTREAM', suffix: 'gmail.com', durationHours: 'DAY_1', maxTotalPrice: '0.005' },
+      '/mail/buy'
+    ],
+    ['nex_captcha_query', { id: 101 }, '/captcha/query']
+  ])(
+    'executes %s through SDK schema validation and authenticated transport',
+    async (name, args, path) => {
+      const fetchMock = installFetchMock(
+        async () =>
+          new Response(
+            JSON.stringify({ code: 0, msg: 'ok', data: { id: 101, state: 'PROCESSING' } })
+          )
+      );
+      const session = await createMcpSession(config);
+      try {
+        const result = await session.client.callTool({
+          name: name as string,
+          arguments: args as Record<string, unknown>
+        });
+        expect(result.isError).not.toBe(true);
+        expect(fetchMock).toHaveBeenCalledWith(
+          `http://127.0.0.1:45536${path}`,
+          expect.objectContaining({ method: 'POST' })
+        );
+        expect(JSON.parse(String(fetchMock.mock.calls[0]![1]?.body))).toEqual(args);
+      } finally {
+        await session.close();
+      }
+    }
+  );
+
   it('publishes routing guidance that distinguishes NexBrowser environments from OS windows', async () => {
     const session = await createMcpSession(config);
 
@@ -45,14 +151,18 @@ describe('NexBrowser MCP protocol', () => {
     try {
       const listed = await session.client.listTools();
       const names = listed.tools.map((tool) => tool.name);
-      expect(names).toHaveLength(72);
+      expect(names).toHaveLength(95);
       expect(
         names.every(
           (name) =>
             name.startsWith('nex_browser_') ||
             name.startsWith('nex_proxy_') ||
             name.startsWith('nex_account_') ||
-            name.startsWith('nex_sms_')
+            name.startsWith('nex_sms_') ||
+            name.startsWith('nex_ip_') ||
+            name.startsWith('nex_mail_') ||
+            name.startsWith('nex_captcha_') ||
+            name.startsWith('nex_billing_')
         )
       ).toBe(true);
       expect(names).not.toEqual(

@@ -60,6 +60,18 @@ export function bindTools(specs: readonly McpToolSpec[], ctx: ToolContext): McpT
     description: spec.description,
     inputSchema: spec.inputSchema,
     ...(spec.annotations ? { annotations: spec.annotations } : {}),
-    execute: (arguments_) => spec.execute(spec.inputSchema.parse(arguments_), ctx)
+    execute: (arguments_, signal) => {
+      const api: NexApiRequester = signal
+        ? {
+            clientId: ctx.api.clientId,
+            exposeCdp: ctx.api.exposeCdp,
+            request: (path, options) => {
+              signal.throwIfAborted();
+              return ctx.api.request(path, { ...options, signal });
+            }
+          }
+        : ctx.api;
+      return spec.execute(spec.inputSchema.parse(arguments_), { ...ctx, api });
+    }
   }));
 }

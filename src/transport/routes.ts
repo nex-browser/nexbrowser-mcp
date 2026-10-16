@@ -99,3 +99,25 @@ export const SMS_RECORDS_ROUTE = '/sms/records';
 export const SMS_PULL_ROUTE = '/sms/pull';
 /** Releases one number and refunds it. 释放号码并退款。 */
 export const SMS_RECOVER_ROUTE = '/sms/recover';
+
+// Service marketplace endpoints; these are Desktop OpenAPI paths, not backend command paths.
+export const IP_PRODUCTS_ROUTE = '/ip/products';
+export const IP_BUY_ROUTE = '/ip/buy';
+export const IP_ORDERS_ROUTE = '/ip/orders';
+export const IP_RENEW_CALC_ROUTE = '/ip/renew_calc';
+export const IP_RENEW_ROUTE = '/ip/renew';
+export const IP_SNAP_PLANS_ROUTE = '/ip/snap/plans';
+export const IP_SNAP_PRODUCTS_ROUTE = '/ip/snap/products';
+export const IP_SNAP_BUY_ROUTE = '/ip/snap/buy';
+export const IP_SNAP_PULL_ROUTE = '/ip/snap/pull';
+export const MAIL_PLANS_ROUTE = '/mail/plans';
+export const MAIL_DOMAINS_ROUTE = '/mail/domains';
+export const MAIL_BUY_ROUTE = '/mail/buy';
+export const MAIL_RECORDS_ROUTE = '/mail/records';
+export const MAIL_PULL_ROUTE = '/mail/pull';
+export const MAIL_DETAIL_ROUTE = '/mail/detail';
+export const CAPTCHA_PRODUCTS_ROUTE = '/captcha/products';
+export const CAPTCHA_BUY_ROUTE = '/captcha/buy';
+export const CAPTCHA_RECORDS_ROUTE = '/captcha/records';
+export const CAPTCHA_QUERY_ROUTE = '/captcha/query';
+export const BILLING_TRADES_ROUTE = '/billing/trades';

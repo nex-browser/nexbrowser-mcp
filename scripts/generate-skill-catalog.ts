@@ -6,6 +6,10 @@ import { SESSION_TOOL_SPECS } from '../src/features/browser-automation/session-t
 import { TAB_TOOL_SPECS } from '../src/features/browser-automation/tab-tools.js';
 import { MANAGEMENT_TOOL_SPECS } from '../src/features/browser-management/browser-tools.js';
 import { SMS_TOOL_SPECS } from '../src/features/sms/sms-tools.js';
+import { IP_TOOL_SPECS } from '../src/features/ip/ip-tools.js';
+import { MAIL_TOOL_SPECS } from '../src/features/mail/mail-tools.js';
+import { CAPTCHA_TOOL_SPECS } from '../src/features/captcha/captcha-tools.js';
+import { BILLING_TOOL_SPECS } from '../src/features/billing/billing-tools.js';
 import type { McpToolSpec } from '../src/shared/define-tool.js';
 
 /**
@@ -21,6 +25,10 @@ const SESSION_DEFAULT_FIELDS = new Set(['sessionId', 'pageId']);
  * 分组顺序与成员构成属于被钉死的目录输出；此处调整即改变仓库中的 markdown。
  */
 const GROUPS: ReadonlyArray<{ title: string; note?: string; specs: readonly McpToolSpec[] }> = [
+  { title: 'Proxy Marketplace', specs: IP_TOOL_SPECS },
+  { title: 'Mailboxes', specs: MAIL_TOOL_SPECS },
+  { title: 'CAPTCHA Solving', specs: CAPTCHA_TOOL_SPECS },
+  { title: 'Billing', specs: BILLING_TOOL_SPECS },
   {
     title: 'Environment Management',
     note: 'Stateless `nex_*` tools that manage NexBrowser environments; no automation session required.',

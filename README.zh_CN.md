@@ -1,5 +1,11 @@
 # NexBrowser MCP Server
 
+现已支持 `nex_ip_*` 代理市场、续费与短效额度，`nex_mail_*` 邮箱申请与收信，`nex_captcha_*` 识别任务，以及 `nex_billing_trade_list` 账单核对。需要同时更新提供 `/ip`、`/mail`、`/captcha`、`/billing` 路由的 Desktop 客户端，并保持登录及现有服务端权限。
+
+页面验证码先用 `nex_browser_captcha_prepare` 检查 NexCaptcha、采集参数并获取报价，不扣费。用户明确确认单次费用和站点回调范围后，用 `nex_browser_captcha_submit` 提交，再用 `nex_browser_captcha_complete` 查询并回填原控件。支持已捕获的 GeeTest v3/v4、显式渲染的 reCAPTCHA v2 和 Turnstile。新 challenge、已加载页面的限制及超时核对见[页面验证码流程](skills/nexbrowser-automation/guides/captcha.md)。
+
+所有扣费操作先报价并取得用户明确确认，再提交 `maxTotalPrice`。金额上限是实时预检，不是服务端原子锁价。购买、续费和短效提取遇到错误或超时后先核对记录、账单，禁止自动重提。语言默认使用 Desktop 设置。详见[业务服务接入指南](skills/nexbrowser-automation/guides/services.md)。
+
 [English](README.md) | 简体中文
 
 将 Codex、Claude Code、Claude Desktop、Cursor 等 MCP 客户端连接到 NexBrowser Desktop，

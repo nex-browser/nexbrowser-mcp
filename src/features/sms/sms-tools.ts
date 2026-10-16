@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
+import { maxTotalPrice } from '../../shared/service-tools.js';
 import type { McpToolDefinition } from '../../shared/types.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
 import {
@@ -84,31 +85,73 @@ export const SMS_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_sms_buy',
-    description: `Buy cloud phone numbers for receiving SMS verification codes. This CHARGES THE ACCOUNT BALANCE: quote the project, quantity, and total price from nex_sms_project_list to the user and get explicit confirmation before calling. maxTotalPrice is the most the user agreed to pay; the order is refused if the live total exceeds it. At most ${SMS_MAX_BUY_QUANTITY} numbers per call. Then use nex_sms_code_fill to type the code into the page.`,
+    description: `Buy cloud phone numbers for receiving SMS verification codes. This CHARGES THE ACCOUNT BALANCE: quote the project, quantity, and total price from nex_sms_project_list and get explicit user confirmation first. maxTotalPrice is a live preflight ceiling, not an atomic backend guarantee. At most ${SMS_MAX_BUY_QUANTITY} numbers per call. A null result requires record reconciliation; batch failures may have partially purchased numbers. Never automatically retry.`,
     annotations: { destructiveHint: true, idempotentHint: false },
     inputSchema: z
       .object({
         countryId: z.number().int().positive(),
         projectId: z.number().int().positive(),
         quantity: z.number().int().min(1).max(SMS_MAX_BUY_QUANTITY).default(1),
-        maxTotalPrice: z.number().nonnegative()
+        maxTotalPrice
       })
       .strict(),
     execute: async (args, ctx) => {
-      const response = await ctx.api.request<any>(SMS_BUY_ROUTE, {
-        method: 'POST',
-        body: JSON.stringify(args)
-      });
-      if (response.code !== 0) return apiErrorResult('Failed to buy phone numbers', response);
+      let response;
+      try {
+        response = await ctx.api.request<any>(SMS_BUY_ROUTE, {
+          method: 'POST',
+          body: JSON.stringify(args)
+        });
+      } catch {
+        return errorResult(
+          'Purchase outcome is unknown. Refresh nex_sms_record_list and nex_billing_trade_list; do not automatically repeat the purchase.'
+        );
+      }
+      if (response.code !== 0)
+        return apiErrorResult(
+          'Purchase may be partial; refresh records and billing before any further purchase',
+          response
+        );
       const rows = (Array.isArray(response.data) ? response.data : []).map(recordView);
+      if (!rows.length) {
+        // 空成功响应没有本次号码标识；刷新候选记录但不冒认历史号码属于本次订单。
+        const refreshed = await ctx.api
+          .request<any>(`${SMS_RECORDS_ROUTE}?page=1&size=100`, {
+            method: 'GET',
+            ...(response.contextId
+              ? { headers: { 'X-Nex-Service-Context': response.contextId } }
+              : {})
+          })
+          .catch(() => undefined);
+        const recordsRefreshed =
+          refreshed?.code === 0 &&
+          (!response.contextId || response.contextId === refreshed.contextId);
+        const data = recordsRefreshed ? refreshed?.data : undefined;
+        const records = Array.isArray(data) ? data : (data?.data ?? data?.rows ?? []);
+        const candidates = (Array.isArray(records) ? records : [])
+          .filter(
+            (row: any) =>
+              Number(row.countryId) === args.countryId && Number(row.projectId) === args.projectId
+          )
+          .map(recordSummary);
+        return successResult(
+          'Purchase request succeeded without number IDs. Recent matching records were refreshed but may include older purchases. Reconcile records and nex_billing_trade_list before selecting a number or purchasing again.',
+          {
+            requestedQuantity: args.quantity,
+            deliveryConfirmed: false,
+            recordsRefreshed,
+            candidateRecords: candidates
+          }
+        );
+      }
       return successResult(
         [
-          `Bought ${rows.length || args.quantity} phone number(s):`,
+          `Server returned ${rows.length} purchased phone number(s):`,
           ...rows.map(recordLine),
           '',
           'Use the number on the target site, then call nex_sms_code_fill (or nex_sms_code_get) with tel.'
         ].join('\n'),
-        { rows }
+        { rows, requestedQuantity: args.quantity, deliveryConfirmed: rows.length === args.quantity }
       );
     }
   }),
@@ -139,12 +182,12 @@ export const SMS_TOOL_SPECS: readonly McpToolSpec[] = [
         ? data
         : ([data.rows, data.records, data.list, data.items, data.data].find(Array.isArray) ?? []);
       const rows = list.map(recordSummary);
-      const total = Number(data.total ?? data.totalCount ?? data.count ?? rows.length);
+      const total = Number(data.count ?? data.totalCount ?? data.total ?? rows.length);
       return successResult(
         rows.length
           ? [`Found ${total} phone number(s):`, ...rows.map(recordLine)].join('\n')
           : 'No phone numbers found.',
-        { total, rows }
+        { total, totalPages: data.count === undefined ? undefined : data.total, rows }
       );
     }
   }),
@@ -234,20 +277,27 @@ export const SMS_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_sms_release',
     description:
-      'Release one purchased number that is still active and request a refund, e.g. when no code arrived (no_code) or the site rejected the number. The number cannot be used afterwards.',
-    annotations: { destructiveHint: true },
+      'Request release and refund of one waiting number. Obtain explicit approval of the number first. A null response or old state does not prove a new refund; refresh the number and billing. Refund eligibility and amount are decided by the server/upstream. Never automatically retry.',
+    annotations: { destructiveHint: true, idempotentHint: false },
     inputSchema: z.object({ tel: z.string().min(1), reason: z.enum(RECOVER_REASONS) }).strict(),
     execute: async (args, ctx) => {
       const tel = args.tel.trim();
-      const response = await ctx.api.request<any>(SMS_RECOVER_ROUTE, {
-        method: 'POST',
-        body: JSON.stringify({ tel, reason: args.reason })
-      });
+      let response;
+      try {
+        response = await ctx.api.request<any>(SMS_RECOVER_ROUTE, {
+          method: 'POST',
+          body: JSON.stringify({ tel, reason: args.reason })
+        });
+      } catch {
+        return errorResult(
+          'Release outcome is unknown. Refresh nex_sms_record_list and nex_billing_trade_list; do not automatically retry.'
+        );
+      }
       if (response.code !== 0) return apiErrorResult('Failed to release phone number', response);
       const view = response.data ? recordView(response.data) : undefined;
       return successResult(
-        `Released ${tel}${view?.stateLabel ? ` (${view.stateLabel})` : ''}.`,
-        view ? { record: view } : undefined
+        `Release request accepted for ${tel}${view?.stateLabel ? ` (returned state: ${view.stateLabel})` : ''}. Refresh nex_sms_record_list and nex_billing_trade_list to confirm the final state and any refund; this response does not establish a new refund.`,
+        { record: view ?? null, refundConfirmed: false }
       );
     }
   })

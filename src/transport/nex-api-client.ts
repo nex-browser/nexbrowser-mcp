@@ -137,12 +137,18 @@ export class NexApiClient {
       throw new NexConfigurationError('API key is required. Set NEX_API_KEY or pass --api-key.');
     }
     const controller = new AbortController();
+    // 合并调用方取消与单次 HTTP 超时，不能覆盖 MCP 取消信号。
+    const abort = () => controller.abort(options.signal?.reason);
+    options.signal?.addEventListener('abort', abort, { once: true });
+    if (options.signal?.aborted) abort();
     const timeout = setTimeout(() => controller.abort(), this.config.timeout);
     try {
+      controller.signal.throwIfAborted();
       const headers = new Headers(options.headers);
       if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
       headers.set('Authorization', `Bearer ${this.config.apiKey}`);
       headers.set('X-Nex-Client-Id', this.clientId);
+      headers.set('X-Nex-Request-Deadline', String(Math.ceil(Date.now() + this.config.timeout)));
       const response = await fetch(`${this.config.apiHost}${path}`, {
         ...options,
         headers,
@@ -150,15 +156,28 @@ export class NexApiClient {
         signal: controller.signal
       });
       const text = await readBoundedResponse(response);
+      controller.signal.throwIfAborted();
+      let result: NexApiResponse<T>;
       try {
-        return JSON.parse(text) as NexApiResponse<T>;
+        result = JSON.parse(text) as NexApiResponse<T>;
       } catch {
         throw new Error(
           `HTTP ${response.status}: ${response.statusText} returned a non-JSON response.`
         );
       }
+      if (
+        !result ||
+        !['number', 'string'].includes(typeof result.code) ||
+        (!response.ok && result.code === 0)
+      ) {
+        throw new Error(
+          `HTTP ${response.status}: invalid OpenAPI response envelope; reconcile submitted operations before retrying.`
+        );
+      }
+      return result;
     } finally {
       clearTimeout(timeout);
+      options.signal?.removeEventListener('abort', abort);
     }
   }
 

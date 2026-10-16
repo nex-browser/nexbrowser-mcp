@@ -14,6 +14,68 @@ afterEach(() => {
 });
 
 describe('NexApiClient', () => {
+  it('does not report success when cancellation arrives before a delayed response completes', async () => {
+    const controller = new AbortController();
+    installFetchMock(async () => {
+      controller.abort();
+      return new Response('{"code":0,"data":null}');
+    });
+    const client = new NexApiClient({
+      apiHost: 'http://127.0.0.1:45536',
+      apiKey: 'key',
+      timeout: 2000
+    });
+    await expect(
+      client.request('/captcha/buy', { signal: controller.signal })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+  });
+  it('does not send an already cancelled operation', async () => {
+    const fetchMock = installFetchMock(async () => new Response('{"code":0}'));
+    const client = new NexApiClient({
+      apiHost: 'http://127.0.0.1:45536',
+      apiKey: 'key',
+      timeout: 2000
+    });
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      client.request('/captcha/buy', { signal: controller.signal })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('combines caller cancellation with its timeout instead of replacing it', async () => {
+    const controller = new AbortController();
+    const fetchMock = installFetchMock(async (_url, init) => {
+      controller.abort();
+      expect(init?.signal?.aborted).toBe(true);
+      throw init?.signal?.reason;
+    });
+    const client = new NexApiClient({
+      apiHost: 'http://127.0.0.1:45536',
+      apiKey: 'key',
+      timeout: 2000
+    });
+    await expect(
+      client.request('/captcha/buy', { signal: controller.signal })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['{}', 200],
+    ['null', 200],
+    ['{"code":0}', 500]
+  ])('rejects invalid envelopes or HTTP failures without retrying', async (body, status) => {
+    const fetchMock = installFetchMock(async () => new Response(body, { status }));
+    const client = new NexApiClient({
+      apiHost: 'http://127.0.0.1:45536',
+      apiKey: 'key',
+      timeout: 2000
+    });
+    await expect(client.request('/captcha/buy')).rejects.toThrow('invalid OpenAPI response');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
   it('uses the default NexBrowser OpenAPI host', () => {
     expect(resolveNexApiConfig({})).toMatchObject({
       apiHost: 'http://127.0.0.1:45536',

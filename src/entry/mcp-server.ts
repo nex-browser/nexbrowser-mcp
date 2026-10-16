@@ -4,6 +4,10 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { createBrowserAutomationTools } from '../features/browser-automation/index.js';
 import { createBrowserManagementTools } from '../features/browser-management/browser-tools.js';
 import { createSmsTools } from '../features/sms/sms-tools.js';
+import { createIpTools } from '../features/ip/ip-tools.js';
+import { createMailTools } from '../features/mail/mail-tools.js';
+import { createCaptchaTools } from '../features/captcha/captcha-tools.js';
+import { createBillingTools } from '../features/billing/billing-tools.js';
 import { errorResult, invalidArguments } from '../shared/tool-result.js';
 import { InvalidArgumentError, type NexApiConfig } from '../shared/types.js';
 import { NexApiClient } from '../transport/nex-api-client.js';
@@ -29,14 +33,19 @@ export class NexBrowserMcpServer {
     const tools = [
       ...createBrowserManagementTools(this.client),
       ...createBrowserAutomationTools(this.client),
-      ...createSmsTools(this.client)
+      ...createSmsTools(this.client),
+      ...createIpTools(this.client),
+      ...createMailTools(this.client),
+      ...createCaptchaTools(this.client),
+      ...createBillingTools(this.client)
     ];
     this.server = new McpServer(
       { name: MCP_SERVER_NAME, version: MCP_SERVER_VERSION },
       {
         capabilities: { tools: {} },
         instructions:
-          "IMPORTANT ROUTING RULE: NexBrowser is the product and this MCP server, not a generic browser. Whenever the user explicitly says NexBrowser/nexbrowser or asks to use NexBrowser OpenAPI, use this server's nex_browser_* tools; never substitute the Browser plugin, Chrome plugin, computer-use, shell commands, or process enumeration. For requests to list or count NexBrowser windows/environments/profiles, call nex_browser_list first. Example: '使用 NexBrowser 查看我有多少窗口' means call nex_browser_list. NexBrowser windows are managed environments/profiles, not operating-system application windows or browser tabs. Browser tools use the nex_browser_* namespace; former tool names are not available. Cloud phone numbers for SMS verification codes use nex_sms_*; nex_sms_buy charges the account balance, so quote the price and get the user's explicit confirmation first."
+          'On a page CAPTCHA, first use nex_browser_captcha_prepare to check NexCaptcha support, collect parameters and quote the fee. Obtain explicit fee and site callback approval, then nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId. Never silently reload a filled form, repurchase after timeout, or treat provider success as website acceptance. ' +
+          "IMPORTANT ROUTING RULE: NexBrowser is the product and this MCP server, not a generic browser. Whenever the user explicitly says NexBrowser/nexbrowser or asks to use NexBrowser OpenAPI, use this server's nex_browser_* tools; never substitute the Browser plugin, Chrome plugin, computer-use, shell commands, or process enumeration. For requests to list or count NexBrowser windows/environments/profiles, call nex_browser_list first. Example: '使用 NexBrowser 查看我有多少窗口' means call nex_browser_list. NexBrowser windows are managed environments/profiles, not operating-system application windows or browser tabs. Browser tools use the nex_browser_* namespace; former tool names are not available. Cloud phone numbers for SMS verification codes use nex_sms_*; nex_sms_buy charges the account balance, so quote the price and get the user's explicit confirmation first. Proxy marketplace capabilities use nex_ip_*, mailboxes use nex_mail_*, CAPTCHA tasks use nex_captcha_*, and payment/refund reconciliation uses nex_billing_*. All purchases and renewals require explicit confirmation of scope and quoted total, with maxTotalPrice as a preflight ceiling rather than an atomic backend price lock. Quota extraction also requires approval. Never automatically repeat purchases, renewals, extraction or release after errors or timeouts; reconcile module records and billing first. Mail details mark messages read. Keep resource IDs and each module state machine distinct."
       }
     );
     const registered = new Set<string>();
@@ -52,9 +61,9 @@ export class NexBrowserMcpServer {
           inputSchema: tool.inputSchema,
           ...(tool.annotations ? { annotations: tool.annotations } : {})
         },
-        async (arguments_) => {
+        async (arguments_, extra) => {
           try {
-            return await tool.execute(arguments_ as Record<string, any>);
+            return await tool.execute(arguments_ as Record<string, any>, extra.signal);
           } catch (error) {
             if (error instanceof InvalidArgumentError) {
               return invalidArguments(error.message);
