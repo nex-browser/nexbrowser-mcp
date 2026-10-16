@@ -6,6 +6,27 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.16-beta.1] - 2026-10-16
+
+### Added
+
+- Add NexIP proxy purchases, renewals, short-term quotas and extraction with `nex_ip_*` tools.
+- Add NexMail mailbox purchases and message reading with `nex_mail_*`, NexCaptcha tasks with `nex_captcha_*`, and billing reconciliation with `nex_billing_trade_list`.
+- Add page CAPTCHA preparation, quotation, submission and result application for captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile widgets.
+- Add cloud phone number purchases, SMS code retrieval and page filling, and number release with `nex_sms_*` tools.
+- Add region screenshots and viewport coordinate clicks for browser automation.
+
+### Changed
+
+- Require explicit approval and live price ceilings for service purchases, and reconcile uncertain outcomes before repeating resource operations.
+- Pin related service requests to the Desktop login/team context and forward MCP cancellation signals to API requests.
+- Expand the bundled automation Skill, tool catalog and guides for service workflows, CAPTCHA handling and session cleanup.
+
+### Fixed
+
+- Upgrade the MCP SDK to 1.31.0 and refresh production dependencies to resolve the release audit findings.
+- Validate OpenAPI response envelopes and distinguish record counts from page counts in service results.
+
 ## [2026.8.20] - 2026-08-20
 
 ### Added
