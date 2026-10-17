@@ -6,6 +6,24 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.17-beta.1] - 2026-10-17
+
+### Added
+
+- Add the read-only `nex_captcha_product_schema` tool with the official parameter and result contracts for 50 NexCaptcha products, including input sources, prerequisites and mutually exclusive modes.
+- Add an offline catalog generator from the official NexCaptcha OpenAPI JSON.
+
+### Changed
+
+- Define each documented CAPTCHA adapter with native Zod schemas and validate fields, types and required inputs before submitting paid tasks; preserve pass-through compatibility for future product codes without forwarding platform authentication fields.
+- Publish product-specific CAPTCHA adapter constraints in `tools/list` and host previews from the same native Zod definitions, preserving the flat purchase arguments and legacy product codes.
+- Return only task metadata in ordinary CAPTCHA summaries, keeping raw challenges and credentials out of listings and purchase responses.
+
+### Fixed
+
+- Match legacy `TURNSTILE` and documented `CLOUDFLARE_TURNSTILE` products while preserving the exact live-quoted product code through purchase and result checks.
+- Include a complete serialized JSON text copy alongside structured tool results for clients that read only `content`; preserve summary text, rich content and error flags. Results exceeding either output limit use the same omission object in both channels.
+
 ## [2026.10.16-beta.1] - 2026-10-16
 
 ### Added

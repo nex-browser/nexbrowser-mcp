@@ -2,6 +2,8 @@
 
 现已支持 `nex_ip_*` 代理市场、续费与短效额度，`nex_mail_*` 邮箱申请与收信，`nex_captcha_*` 识别任务，以及 `nex_billing_trade_list` 账单核对。需要同时更新提供 `/ip`、`/mail`、`/captcha`、`/billing` 路由的 Desktop 客户端，并保持登录及现有服务端权限。
 
+独立 NexCaptcha 任务先用 `nex_captcha_product_schema()` 查看本地收录的 50 种产品参数目录，传入 `productCode` 可查看对应 `adapter` 的完整 JSON Schema、结果结构与示例、使用前提和参数来源。此工具只读、可离线使用、不扣费，也不需要浏览器会话。目录是[官方文档](https://app.nexcaptcha.net/openapi/docs.cgi?lang=zh-CN)快照，不代表产品当前启用或价格；先用 `nex_captcha_product_list` 获取 Desktop 当前在售产品和实时报价，再根据参数契约填写 `nex_captcha_buy` 的 `productCode`、`adapter`、`maxTotalPrice`，通过审批后提交。已知产品会在提交前校验文档字段、类型和必填条件；`SLIDER_CAPTCHA` 与 `CUSTOM` 未说明结果契约，不应自动付费购买。50 种独立产品参数支持不等于 50 种页面自动采集和回填，详见[NexCaptcha 流程](skills/nexbrowser-automation/guides/captcha.md)。
+
 页面验证码先用 `nex_browser_captcha_prepare` 检查 NexCaptcha、采集参数并获取报价，不扣费。用户明确确认单次费用和站点回调范围后，用 `nex_browser_captcha_submit` 提交，再用 `nex_browser_captcha_complete` 查询并回填原控件。支持已捕获的 GeeTest v3/v4、显式渲染的 reCAPTCHA v2 和 Turnstile。新 challenge、已加载页面的限制及超时核对见[页面验证码流程](skills/nexbrowser-automation/guides/captcha.md)。
 
 所有扣费操作先报价并取得用户明确确认，再提交 `maxTotalPrice`。金额上限是实时预检，不是服务端原子锁价。购买、续费和短效提取遇到错误或超时后先核对记录、账单，禁止自动重提。语言默认使用 Desktop 设置。详见[业务服务接入指南](skills/nexbrowser-automation/guides/services.md)。

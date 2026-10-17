@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { CAPTCHA_ADAPTER_SCHEMAS } from './captcha-adapters.js';
 import { defineTool, type ToolContext } from '../../shared/define-tool.js';
 import { maxTotalPrice, parseServiceJson } from '../../shared/service-tools.js';
 import { successResult } from '../../shared/tool-result.js';
@@ -29,6 +30,7 @@ interface Workflow {
   pageId: string;
   url: string;
   candidate: Candidate;
+  productCode: string;
   contextId: string;
   price: string;
   expiresAt: number;
@@ -65,6 +67,65 @@ function comparePrice(left: unknown, right: unknown) {
   const x = a.digits * 10n ** BigInt(scale - a.scale);
   const y = b.digits * 10n ** BigInt(scale - b.scale);
   return x < y ? -1 : x > y ? 1 : 0;
+}
+
+/** 仅兼容已支持的 Turnstile 旧产品码，优先使用目录中的精确匹配。 */
+function quotedProduct(catalog: unknown, productCode: string) {
+  if (!Array.isArray(catalog)) return undefined;
+  const exact = catalog.find((row: any) => row.productCode === productCode);
+  if (exact) return exact;
+  const alias =
+    productCode === 'TURNSTILE'
+      ? 'CLOUDFLARE_TURNSTILE'
+      : productCode === 'CLOUDFLARE_TURNSTILE'
+        ? 'TURNSTILE'
+        : undefined;
+  return alias ? catalog.find((row: any) => row.productCode === alias) : undefined;
+}
+
+/** 页面流程只接受现有四类桥接，规范旧字段后按原生产品契约校验。 */
+function browserAdapter(candidate: Candidate, awaitingFreshChallenge = false) {
+  const code =
+    candidate.productCode === 'TURNSTILE' ? 'CLOUDFLARE_TURNSTILE' : candidate.productCode;
+  if (!['GEETEST', 'GEETEST_V4', 'RECAPTCHA_V2', 'CLOUDFLARE_TURNSTILE'].includes(code))
+    return { reason: 'This product has no supported automatic browser CAPTCHA adapter.' };
+  const adapter = { ...candidate.adapter };
+  if (code === 'GEETEST' && Object.hasOwn(adapter, 'geetestApiServerSubdomain')) {
+    if (
+      adapter.apiServerSubdomain !== undefined &&
+      adapter.apiServerSubdomain !== adapter.geetestApiServerSubdomain
+    )
+      return {
+        reason: 'Conflicting GeeTest apiServerSubdomain fields; inspect the current widget.'
+      };
+    adapter.apiServerSubdomain = adapter.geetestApiServerSubdomain;
+    delete adapter.geetestApiServerSubdomain;
+  }
+  if (code === 'CLOUDFLARE_TURNSTILE') delete adapter.userAgent;
+  if (code === 'RECAPTCHA_V2' && Object.hasOwn(adapter, 'recaptchaDataSValue'))
+    return {
+      reason:
+        'This reCAPTCHA requires recaptchaDataSValue, which NexCaptcha does not currently expose. Do not purchase a task without support for this parameter.'
+    };
+  const parsed = CAPTCHA_ADAPTER_SCHEMAS[code]!.safeParse(adapter);
+  if (!parsed.success) {
+    const issues = parsed.error.issues.filter(
+      (issue) =>
+        !(
+          code === 'GEETEST' &&
+          awaitingFreshChallenge &&
+          issue.path.length === 1 &&
+          issue.path[0] === 'challenge'
+        )
+    );
+    if (issues.length)
+      return {
+        reason: `CAPTCHA adapter does not match the NexCaptcha ${code} contract (${[
+          ...new Set(issues.map((issue) => issue.path.join('.') || 'adapter'))
+        ].join(', ')}). Inspect nex_captcha_product_schema before purchasing.`
+      };
+  }
+  return { adapter };
 }
 
 /** 每一步服务读取都绑定报价时的用户和团队版本，禁止切团队后续用旧任务。 */
@@ -120,6 +181,7 @@ async function current(ctx: ToolContext, workflow: Workflow) {
     page.pageId !== workflow.pageId ||
     page.url !== workflow.url ||
     !row ||
+    row.productCode !== workflow.candidate.productCode ||
     row.documentId !== workflow.candidate.documentId ||
     row.frameIndex !== workflow.candidate.frameIndex ||
     row.frameUrl !== workflow.candidate.frameUrl
@@ -170,9 +232,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           'No unique captured CAPTCHA. Select challengeId or arm capture before navigation. Reinitializing an existing filled form requires user approval.',
           { ...page, products: catalog.data, ready: false }
         );
-      const product = Array.isArray(catalog.data)
-        ? catalog.data.find((row: any) => row.productCode === selected.productCode)
-        : undefined;
+      const product = quotedProduct(catalog.data, selected.productCode);
       const needsFreshChallenge =
         selected.productCode === 'GEETEST' &&
         selected.reason?.startsWith('Fresh challenge required');
@@ -184,6 +244,18 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           { ...page, ready: false, product }
         );
       }
+      const preparedAdapter = browserAdapter(
+        selected,
+        Boolean(needsFreshChallenge && args.challengeUrl)
+      );
+      if (preparedAdapter.reason)
+        return successResult(preparedAdapter.reason, {
+          pageId: page.pageId,
+          challengeId: selected.challengeId,
+          productCode: product.productCode,
+          ready: false,
+          reason: preparedAdapter.reason
+        });
       if (!page.pageId) throw new Error('Missing stable CAPTCHA page ID');
       if (!['https:', 'http:'].includes(new URL(String(selected.adapter.websiteURL)).protocol))
         throw new Error('CAPTCHA websiteURL must be an HTTP(S) site URL');
@@ -202,6 +274,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
         if (
           !previous.busy &&
           previous.url === page.url &&
+          previous.candidate.productCode === selected.productCode &&
           previous.candidate.frameUrl === selected.frameUrl
         ) {
           previous.sessionId = sid;
@@ -228,6 +301,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
         pageId: page.pageId,
         url: page.url,
         candidate: selected,
+        productCode: product.productCode,
         contextId: catalog.contextId,
         price: String(product.price),
         expiresAt: Date.now() + 120_000,
@@ -237,15 +311,15 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
       };
       store.set(workflow.prepareId, workflow);
       return successResult(
-        `NexCaptcha ${selected.productCode}: ${workflow.price} USDT for one task. Ask the user to explicitly approve this fee, sending the public CAPTCHA parameters to the service and dispatching the site callback, which may send verification requests or submit a site form.`,
+        `NexCaptcha ${workflow.productCode}: ${workflow.price} USDT for one task. Ask the user to explicitly approve this fee, sending the public CAPTCHA parameters to the service and dispatching the site callback, which may send verification requests or submit a site form.`,
         {
           prepareId: workflow.prepareId,
-          productCode: selected.productCode,
+          productCode: workflow.productCode,
           price: workflow.price,
           currency: 'USDT',
           ready: true,
           expiresAt: workflow.expiresAt,
-          adapter: selected.adapter,
+          adapter: preparedAdapter.adapter,
           requiresConfirmation: true
         }
       );
@@ -274,12 +348,15 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
         if (comparePrice(workflow.price, args.maxTotalPrice) > 0)
           throw new Error('Approved price ceiling is below the quote');
         const catalog = await service(ctx, CAPTCHA_PRODUCTS_ROUTE, workflow.contextId);
-        const product = catalog.data?.find(
-          (row: any) => row.productCode === workflow.candidate.productCode
-        );
+        const product = catalog.data?.find((row: any) => row.productCode === workflow.productCode);
         if (!product || comparePrice(product.price, workflow.price) !== 0)
           throw new Error('CAPTCHA price/product changed; obtain approval for a new quote');
         let candidate = await current(ctx, workflow);
+        const preflightAdapter = browserAdapter(
+          candidate,
+          candidate.productCode === 'GEETEST' && Boolean(workflow.challengeUrl)
+        );
+        if (preflightAdapter.reason) throw new Error(preflightAdapter.reason);
         if (candidate.productCode === 'GEETEST') {
           candidate = await action(
             ctx,
@@ -293,21 +370,27 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
             workflow.contextId
           );
         }
+        if (candidate.productCode !== workflow.candidate.productCode)
+          throw new Error(
+            'CAPTCHA refresh returned a different product; do not purchase this task'
+          );
         if (!candidate.ready) throw new Error(candidate.reason ?? 'CAPTCHA challenge is not ready');
+        const submittedAdapter = browserAdapter(candidate);
+        if (submittedAdapter.reason) throw new Error(submittedAdapter.reason);
         if (Date.now() > workflow.expiresAt)
           throw new Error('CAPTCHA quote expired during preflight; prepare again before buying');
         workflow.attempted = true;
         workflow.state = 'OUTCOME_UNKNOWN';
         const created = await service(ctx, CAPTCHA_BUY_ROUTE, workflow.contextId, {
-          productCode: candidate.productCode,
-          adapter: candidate.adapter,
+          productCode: workflow.productCode,
+          adapter: submittedAdapter.adapter,
           maxTotalPrice: workflow.price
         });
         const id = created.data?.id;
         if (
           !Number.isSafeInteger(id) ||
           id <= 0 ||
-          created.data.productCode !== candidate.productCode
+          created.data.productCode !== workflow.productCode
         )
           throw new Error(
             'Task creation did not return a matching local record; reconcile records/billing without retrying'
@@ -361,10 +444,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           id: workflow.localId
         });
         const record = queried.data;
-        if (
-          record?.id !== workflow.localId ||
-          record.productCode !== workflow.candidate.productCode
-        )
+        if (record?.id !== workflow.localId || record.productCode !== workflow.productCode)
           throw new Error('NexCaptcha task identity/product mismatch');
         workflow.state = record.state;
         if (record.state !== 'SUCCEEDED')

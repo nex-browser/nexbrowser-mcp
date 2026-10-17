@@ -12,13 +12,14 @@ function fixture() {
       websiteURL: 'https://site.test/register',
       captchaId: 'public-id',
       userAgent: 'Fixture'
-    },
+    } as Record<string, unknown>,
     ready: true,
     frameIndex: 0,
     frameUrl: 'https://site.test/register'
   };
   const page = { pageId: 'page-1', url: 'https://site.test/register', candidates: [candidate] };
   const catalog = { price: '0.005', productCode: 'GEETEST_V4' };
+  const products = [catalog];
   const record = { id: 42, productCode: 'GEETEST_V4', state: 'PROCESSING', solution: {} };
   let contextId = 'team-a-revision';
   const ok = (data: unknown) => ({ code: 0, msg: 'ok', data, contextId });
@@ -30,14 +31,14 @@ function fixture() {
     ) {
       return { code: 'SESSION_CONTEXT_CHANGED', msg: 'Changed', data: null, contextId };
     }
-    if (route === '/captcha/products') return ok([catalog]);
+    if (route === '/captcha/products') return ok(products);
     if (route === '/captcha/buy') return ok({ ...record });
     if (route === '/captcha/query') return ok({ ...record });
     const body = JSON.parse(String(options?.body));
     if (body.action === 'captchaInspect') return ok({ result: structuredClone(page) });
     if (body.action === 'captchaRefresh')
       return ok({
-        result: { ...candidate, ready: true, adapter: { gt: 'gt', challenge: 'fresh' } }
+        result: { ...candidate, ready: true, adapter: { ...candidate.adapter, challenge: 'fresh' } }
       });
     if (body.action === 'captchaApply')
       return ok({ result: { applied: true, guidance: 'Inspect website' } });
@@ -57,6 +58,7 @@ function fixture() {
     candidate,
     page,
     catalog,
+    products,
     record,
     request,
     call,
@@ -75,6 +77,226 @@ afterEach(() => {
 });
 
 describe('browser NexCaptcha workflow', () => {
+  it('normalizes the legacy GeeTest field before quoting and after challenge refresh', async () => {
+    const f = fixture();
+    f.candidate.productCode = 'GEETEST';
+    f.catalog.productCode = 'GEETEST';
+    f.record.productCode = 'GEETEST';
+    f.candidate.adapter = {
+      websiteURL: 'https://site.test/register',
+      gt: 'gt',
+      geetestApiServerSubdomain: 'api.geetest.test'
+    };
+    f.candidate.ready = false;
+    (f.candidate as any).reason = 'Fresh challenge required';
+    const quote = await f.prepare({ challengeUrl: 'https://site.test/challenge' });
+    expect(quote).toMatchObject({
+      ready: true,
+      adapter: { apiServerSubdomain: 'api.geetest.test' }
+    });
+    expect(quote.adapter).not.toHaveProperty('geetestApiServerSubdomain');
+    expect(f.buys()).toHaveLength(0);
+    await f.submit(quote.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body)).adapter).toEqual({
+      websiteURL: 'https://site.test/register',
+      gt: 'gt',
+      challenge: 'fresh',
+      apiServerSubdomain: 'api.geetest.test'
+    });
+  });
+
+  it('blocks conflicting GeeTest field aliases before preparation or purchase', async () => {
+    const f = fixture();
+    f.candidate.productCode = 'GEETEST';
+    f.catalog.productCode = 'GEETEST';
+    f.candidate.adapter = {
+      websiteURL: 'https://site.test/register',
+      gt: 'gt',
+      challenge: 'challenge',
+      apiServerSubdomain: 'api.example.test',
+      geetestApiServerSubdomain: 'different.example.test'
+    };
+    expect(await f.prepare()).toMatchObject({
+      ready: false,
+      reason: expect.stringContaining('Conflicting')
+    });
+    expect(f.buys()).toHaveLength(0);
+  });
+
+  it.each(['prepare', 'submit'])(
+    'blocks unsupported reCAPTCHA data-s during %s without discarding it or charging',
+    async (stage) => {
+      const f = fixture();
+      f.candidate.productCode = 'RECAPTCHA_V2';
+      f.catalog.productCode = 'RECAPTCHA_V2';
+      f.candidate.adapter = { websiteURL: 'https://site.test/register', websiteKey: 'public-key' };
+      const quote = stage === 'submit' ? await f.prepare() : undefined;
+      f.candidate.adapter.recaptchaDataSValue = 'private-challenge-parameter';
+      if (stage === 'prepare') {
+        const blocked = await f.prepare();
+        expect(blocked).toMatchObject({
+          ready: false,
+          reason: expect.stringContaining('recaptchaDataSValue')
+        });
+        expect(JSON.stringify(blocked)).not.toContain('private-challenge-parameter');
+      } else {
+        await expect(f.submit(quote.prepareId)).rejects.toThrow('recaptchaDataSValue');
+      }
+      expect(f.buys()).toHaveLength(0);
+    }
+  );
+
+  it.each([
+    ['GEETEST_V4', { websiteURL: 'https://site.test/register', captchaId: 5 }],
+    ['RECAPTCHA_V2', { websiteURL: 'https://site.test/register' }],
+    ['TURNSTILE', { websiteURL: 'https://site.test/register', websiteKey: 'key', action: false }],
+    ['GEETEST', { websiteURL: 'https://site.test/register', gt: 5, challenge: 'challenge' }]
+  ])(
+    'validates the existing %s bridge adapter before preparing a paid workflow',
+    async (code, adapter) => {
+      const f = fixture();
+      f.candidate.productCode = code as string;
+      f.catalog.productCode = code as string;
+      f.candidate.adapter = adapter as Record<string, unknown>;
+      expect(await f.prepare()).toMatchObject({
+        ready: false,
+        reason: expect.stringContaining('contract')
+      });
+      expect(f.buys()).toHaveLength(0);
+    }
+  );
+
+  it('validates recollected inputs again immediately before purchase', async () => {
+    const f = fixture();
+    const quote = await f.prepare();
+    f.candidate.adapter.apiKey = 'private-key-not-for-the-service';
+    let message = '';
+    try {
+      await f.submit(quote.prepareId);
+    } catch (error) {
+      message = String(error);
+    }
+    expect(message).toContain('contract');
+    expect(message).not.toContain('private-key-not-for-the-service');
+    expect(f.buys()).toHaveLength(0);
+  });
+
+  it.each(['RECAPTCHA_V3', 'CUSTOM', 'FUTURE_PRODUCT'])(
+    'does not expand automatic browser application to %s',
+    async (productCode) => {
+      const f = fixture();
+      f.candidate.productCode = productCode;
+      f.catalog.productCode = productCode;
+      expect(await f.prepare()).toMatchObject({
+        ready: false,
+        reason: expect.stringContaining('no supported automatic')
+      });
+      expect(f.buys()).toHaveLength(0);
+    }
+  );
+
+  it.each([
+    ['TURNSTILE', 'CLOUDFLARE_TURNSTILE'],
+    ['TURNSTILE', 'TURNSTILE'],
+    ['CLOUDFLARE_TURNSTILE', 'CLOUDFLARE_TURNSTILE'],
+    ['CLOUDFLARE_TURNSTILE', 'TURNSTILE']
+  ])('uses the quoted %s widget product code %s throughout the task', async (widget, product) => {
+    const f = fixture();
+    f.candidate.productCode = widget;
+    f.candidate.adapter = {
+      websiteURL: 'https://site.test/register',
+      websiteKey: 'public-key',
+      userAgent: 'Fixture'
+    };
+    f.catalog.productCode = product;
+    f.record.productCode = product;
+    const quote = await f.prepare();
+    expect(quote).toMatchObject({ productCode: product, ready: true, price: '0.005' });
+    expect(f.buys()).toHaveLength(0);
+    await f.submit(quote.prepareId);
+    await f.submit(quote.prepareId);
+    expect(f.buys()).toHaveLength(1);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body))).toEqual({
+      productCode: product,
+      adapter: { websiteURL: 'https://site.test/register', websiteKey: 'public-key' },
+      maxTotalPrice: '0.005'
+    });
+    f.record.state = 'SUCCEEDED';
+    f.record.solution = { token: 'private-token' };
+    const completed = await f.call('complete', { prepareId: quote.prepareId });
+    expect(completed.structuredContent).toMatchObject({ applied: true, websiteVerified: false });
+    expect(JSON.stringify(completed)).not.toContain('private-token');
+    expect(JSON.parse(String(f.applies()[0]![1]?.body)).params.productCode).toBe(widget);
+  });
+
+  it('prefers an exact Turnstile catalog code over its alias regardless of catalog order', async () => {
+    const f = fixture();
+    f.candidate.productCode = 'TURNSTILE';
+    f.candidate.adapter = { websiteURL: 'https://site.test/register', websiteKey: 'public-key' };
+    f.catalog.productCode = 'TURNSTILE';
+    f.products.unshift({ productCode: 'CLOUDFLARE_TURNSTILE', price: '0.009' });
+    f.record.productCode = 'TURNSTILE';
+    const quote = await f.prepare();
+    expect(quote).toMatchObject({ productCode: 'TURNSTILE', price: '0.005' });
+    await f.submit(quote.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body)).productCode).toBe('TURNSTILE');
+  });
+
+  it.each(['CLOUDFLARE_CHALLENGE', 'CLOUDFLARE_TURNSTILE_PROXY', 'RECAPTCHA_V2'])(
+    'does not match a Turnstile widget to an unrelated product %s',
+    async (productCode) => {
+      const f = fixture();
+      f.candidate.productCode = 'TURNSTILE';
+      f.catalog.productCode = productCode;
+      expect(await f.prepare()).toMatchObject({ ready: false });
+      expect(f.buys()).toHaveLength(0);
+    }
+  );
+
+  it('requires a new quote if the catalog switches between canonical and legacy product codes', async () => {
+    const f = fixture();
+    f.candidate.productCode = 'TURNSTILE';
+    f.candidate.adapter = { websiteURL: 'https://site.test/register', websiteKey: 'public-key' };
+    f.catalog.productCode = 'CLOUDFLARE_TURNSTILE';
+    const quote = await f.prepare();
+    f.catalog.productCode = 'TURNSTILE';
+    await expect(f.submit(quote.prepareId)).rejects.toThrow('price/product changed');
+    expect(f.buys()).toHaveLength(0);
+  });
+
+  it('rejects a page product change even when the challenge identity is unchanged', async () => {
+    const f = fixture();
+    const quote = await f.prepare();
+    f.candidate.productCode = 'TURNSTILE';
+    await expect(f.submit(quote.prepareId)).rejects.toThrow('page/document/challenge changed');
+    expect(f.buys()).toHaveLength(0);
+  });
+
+  it.each(['creation', 'query'])(
+    'rejects an alias-mismatched %s record rather than accepting a different quoted product',
+    async (phase) => {
+      const f = fixture();
+      f.candidate.productCode = 'TURNSTILE';
+      f.candidate.adapter = { websiteURL: 'https://site.test/register', websiteKey: 'public-key' };
+      f.catalog.productCode = 'CLOUDFLARE_TURNSTILE';
+      f.record.productCode = 'CLOUDFLARE_TURNSTILE';
+      const quote = await f.prepare();
+      if (phase === 'query') await f.submit(quote.prepareId);
+      f.record.productCode = 'TURNSTILE';
+      if (phase === 'creation') {
+        await expect(f.submit(quote.prepareId)).rejects.toThrow('outcome is unknown');
+        await f.submit(quote.prepareId);
+      } else {
+        f.record.state = 'SUCCEEDED';
+        await expect(f.call('complete', { prepareId: quote.prepareId })).rejects.toThrow(
+          'identity/product mismatch'
+        );
+      }
+      expect(f.buys()).toHaveLength(1);
+      expect(f.applies()).toHaveLength(0);
+    }
+  );
+
   it('runs prepare/submit/complete through the real MCP registration and transport', async () => {
     const f = fixture();
     installFetchMock(async (url, options) => {
@@ -275,6 +497,7 @@ describe('browser NexCaptcha workflow', () => {
   it('requires a fresh GeeTest v3 endpoint and refreshes only after confirmation', async () => {
     const f = fixture();
     f.candidate.productCode = 'GEETEST';
+    f.candidate.adapter = { websiteURL: 'https://site.test/register', gt: 'gt' };
     f.catalog.productCode = 'GEETEST';
     f.record.productCode = 'GEETEST';
     f.candidate.ready = false;

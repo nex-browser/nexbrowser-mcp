@@ -9,16 +9,45 @@ function boundedText(text: string): string {
     : `${text.slice(0, MAX_MCP_TEXT_CHARS)}\n[Output truncated at ${MAX_MCP_TEXT_CHARS} characters]`;
 }
 
+interface StructuredOutput {
+  data: Record<string, unknown>;
+  text: string;
+}
+
+function omittedStructuredContent(reason: string): StructuredOutput {
+  const data = { omitted: true, reason };
+  return { data, text: JSON.stringify(data) };
+}
+
 function boundedStructuredContent(
   value: Record<string, unknown> | undefined
-): Record<string, unknown> | undefined {
+): StructuredOutput | undefined {
   if (!value) return undefined;
   try {
-    if (Buffer.byteLength(JSON.stringify(value), 'utf8') <= MAX_MCP_STRUCTURED_BYTES) return value;
+    // Serialize once so custom toJSON methods cannot produce different values in the two channels.
+    // 只序列化一次，避免自定义 toJSON 在两个输出通道中产生不同的结果。
+    const text = JSON.stringify(value);
+    if (text === undefined) {
+      return omittedStructuredContent('Structured content is not JSON serializable.');
+    }
+    if (Buffer.byteLength(text, 'utf8') > MAX_MCP_STRUCTURED_BYTES) {
+      return omittedStructuredContent(
+        `Structured content exceeds ${MAX_MCP_STRUCTURED_BYTES} bytes.`
+      );
+    }
+    if (text.length > MAX_MCP_TEXT_CHARS) {
+      return omittedStructuredContent(
+        `Structured content exceeds ${MAX_MCP_TEXT_CHARS} characters for the JSON text copy.`
+      );
+    }
+    const data: unknown = JSON.parse(text);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return omittedStructuredContent('Structured content must serialize to a JSON object.');
+    }
+    return { data: data as Record<string, unknown>, text };
   } catch {
-    return { omitted: true, reason: 'Structured content is not JSON serializable.' };
+    return omittedStructuredContent('Structured content is not JSON serializable.');
   }
-  return { omitted: true, reason: `Structured content exceeds ${MAX_MCP_STRUCTURED_BYTES} bytes.` };
 }
 
 /**
@@ -32,8 +61,12 @@ export function successResult(
 ): McpToolResult {
   const bounded = boundedStructuredContent(structuredContent);
   return {
-    content: [{ type: 'text', text: boundedText(text) }, ...extraContent],
-    ...(bounded ? { structuredContent: bounded } : {})
+    content: [
+      { type: 'text', text: boundedText(text) },
+      ...extraContent,
+      ...(bounded ? [{ type: 'text' as const, text: bounded.text }] : [])
+    ],
+    ...(bounded ? { structuredContent: bounded.data } : {})
   };
 }
 
@@ -47,8 +80,11 @@ export function errorResult(
 ): McpToolResult {
   const bounded = boundedStructuredContent(structuredContent);
   return {
-    content: [{ type: 'text', text: boundedText(message) }],
-    ...(bounded ? { structuredContent: bounded } : {}),
+    content: [
+      { type: 'text', text: boundedText(message) },
+      ...(bounded ? [{ type: 'text' as const, text: bounded.text }] : [])
+    ],
+    ...(bounded ? { structuredContent: bounded.data } : {}),
     isError: true
   };
 }

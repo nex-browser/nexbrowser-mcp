@@ -3541,7 +3541,7 @@
   },
   {
     "name": "nex_captcha_product_list",
-    "description": "List enabled CAPTCHA solving products. Returned price is the single payable price, already rounded by the backend. Do not multiply or round it again. productCode must come from this list; adapter fields follow that product definition.",
+    "description": "List enabled CAPTCHA solving products. Returned price is the single payable price, already rounded by the backend. Do not multiply or round it again. productCode must come from this list. Before creating a task, call nex_captcha_product_schema(productCode) for required adapter fields, input modes and result usage; documentation alone does not confirm availability.",
     "inputSchema": {
       "type": "object",
       "properties": {},
@@ -3553,8 +3553,27 @@
     }
   },
   {
+    "name": "nex_captcha_product_schema",
+    "description": "Read the documented NexCaptcha product adapter and result contracts without network access or charges. Omit productCode to list all 50 documented products; pass a code for required/optional fields, types, mutually exclusive modes, result schema/examples, input sources and application requirements. Consult before nex_captcha_buy. These are standalone parameter contracts, not a promise that the browser can collect/apply every product. Use nex_captcha_product_list for live availability/prices. TURNSTILE is a legacy lookup alias for CLOUDFLARE_TURNSTILE; purchases retain the live catalog code.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "productCode": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true
+    }
+  },
+  {
     "name": "nex_captcha_buy",
-    "description": "Create a CAPTCHA solving task and precharge the balance once. Quote product and price and obtain explicit user confirmation first. Preflight maxTotalPrice is not atomic. adapter must be an object (possibly empty), never null. Creation is asynchronous; retain local id, not upstream taskId. Never automatically retry.",
+    "description": "Create a CAPTCHA solving task and precharge the balance once. Read nex_captcha_product_schema for the selected live product, collect actual challenge inputs and quote the product, price and intended result use. Obtain explicit user approval (the host approval panel may supply it) before execution. Known products reject missing, unsupported or mistyped adapter fields; unknown future products still require a verified contract. Preflight maxTotalPrice is not atomic. adapter must be an object, never null. Creation is asynchronous; retain local id, not upstream taskId. Never automatically retry or substitute GRID after a failure.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3565,7 +3584,10 @@
         "adapter": {
           "type": "object",
           "propertyNames": {
-            "type": "string"
+            "type": "string",
+            "not": {
+              "pattern": "^(?:[aA][pP][iI]|[cC][lL][iI][eE][nN][tT])[-_]?[kK][eE][yY]$"
+            }
           },
           "additionalProperties": {}
         },
@@ -3589,7 +3611,2390 @@
         "maxTotalPrice"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "NORMAL_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Base64 image from the actual challenge."
+                  },
+                  "phrase": {
+                    "type": "boolean"
+                  },
+                  "caseSensitive": {
+                    "type": "boolean"
+                  },
+                  "numeric": {
+                    "type": "boolean"
+                  },
+                  "math": {
+                    "type": "boolean"
+                  },
+                  "minLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "maxLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "imgInstructions": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "RECAPTCHA_V2"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "pageAction": {
+                    "type": "string"
+                  },
+                  "apiDomain": {
+                    "type": "string"
+                  },
+                  "isEnterprise": {
+                    "type": "boolean"
+                  },
+                  "minScore": {
+                    "type": "number"
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  },
+                  "isInvisible": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "RECAPTCHA_V3"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "pageAction": {
+                    "type": "string"
+                  },
+                  "apiDomain": {
+                    "type": "string"
+                  },
+                  "isEnterprise": {
+                    "type": "boolean"
+                  },
+                  "minScore": {
+                    "type": "number"
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey",
+                  "minScore"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "RECAPTCHA_V2_ENTERPRISE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "pageAction": {
+                    "type": "string"
+                  },
+                  "apiDomain": {
+                    "type": "string"
+                  },
+                  "isEnterprise": {
+                    "type": "boolean"
+                  },
+                  "minScore": {
+                    "type": "number"
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  },
+                  "isInvisible": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "RECAPTCHA_V3_ENTERPRISE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "pageAction": {
+                    "type": "string"
+                  },
+                  "apiDomain": {
+                    "type": "string"
+                  },
+                  "isEnterprise": {
+                    "type": "boolean"
+                  },
+                  "minScore": {
+                    "type": "number"
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey",
+                  "minScore"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "RECAPTCHA_ENTERPRISE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "pageAction": {
+                    "type": "string"
+                  },
+                  "apiDomain": {
+                    "type": "string"
+                  },
+                  "isEnterprise": {
+                    "type": "boolean"
+                  },
+                  "minScore": {
+                    "type": "number"
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  },
+                  "appId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "CLOUDFLARE_TURNSTILE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "action": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "string"
+                  },
+                  "pagedata": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "ARKOSE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websitePublicKey": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "funcaptchaApiJSSubdomain": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "string"
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websitePublicKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "GEETEST"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "gt": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "challenge": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "apiServerSubdomain": {
+                    "type": "string"
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "gt",
+                  "challenge"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "GEETEST_V4"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "captchaId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "captchaId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "CAPY_PUZZLE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  },
+                  "proxyType": {
+                    "type": "string"
+                  },
+                  "proxyAddress": {
+                    "type": "string"
+                  },
+                  "proxyPort": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "proxyLogin": {
+                    "type": "string"
+                  },
+                  "proxyPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "KEYCAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "s_s_c_user_id": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "s_s_c_session_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "s_s_c_web_server_sign": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "s_s_c_web_server_sign2": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "s_s_c_user_id",
+                  "s_s_c_session_id",
+                  "s_s_c_web_server_sign",
+                  "s_s_c_web_server_sign2"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "LEMIN"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "captchaId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "divId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "leminApiServerSubdomain": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "captchaId",
+                  "divId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "AMAZON"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "iv": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "IMAGE_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Base64 image from the actual challenge."
+                  },
+                  "phrase": {
+                    "type": "boolean"
+                  },
+                  "caseSensitive": {
+                    "type": "boolean"
+                  },
+                  "numeric": {
+                    "type": "boolean"
+                  },
+                  "math": {
+                    "type": "boolean"
+                  },
+                  "minLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "maxLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "imgInstructions": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "TEXT"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "comment": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "comment"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "AUDIO"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lang": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "ROTATE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "GRID"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "comment": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Original instructions for this grid challenge."
+                  }
+                },
+                "required": [
+                  "body",
+                  "comment"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "CLICK"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "COORDINATES"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "DRAW_AROUND"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "DRAG_AND_DROP"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "comment": {
+                    "type": "string"
+                  },
+                  "background": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "images": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "background",
+                  "images"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "BOUNDING_BOX"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "SLIDER_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "CYBERSIARA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "userAgent": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "SlideMasterUrlId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "userAgent",
+                  "SlideMasterUrlId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "MTCAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "DATADOME"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "captchaUrl": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "userAgent": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "proxyType": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "proxyAddress": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "proxyPort": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "proxyLogin": {
+                    "type": "string"
+                  },
+                  "proxyPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "captchaUrl",
+                  "userAgent",
+                  "proxyType",
+                  "proxyAddress",
+                  "proxyPort"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "FRIENDLY_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "moduleScript": {
+                    "type": "string"
+                  },
+                  "nomoduleScript": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "CUTCAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "ATBCAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "TENCENT"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "appId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "captchaScript": {
+                    "type": "string"
+                  },
+                  "proxyType": {
+                    "type": "string"
+                  },
+                  "proxyAddress": {
+                    "type": "string"
+                  },
+                  "proxyPort": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "proxyLogin": {
+                    "type": "string"
+                  },
+                  "proxyPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "appId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "PROSOPO"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "CAPTCHAFOX"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "VK_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "image": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "steps": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "userAgent": {
+                        "type": "string"
+                      },
+                      "proxyType": {
+                        "type": "string"
+                      },
+                      "proxyAddress": {
+                        "type": "string"
+                      },
+                      "proxyPort": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "proxyLogin": {
+                        "type": "string"
+                      },
+                      "proxyPassword": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "image",
+                      "steps"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "redirectUri": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "userAgent": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "proxyType": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "proxyAddress": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "proxyPort": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "proxyLogin": {
+                        "type": "string"
+                      },
+                      "proxyPassword": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "redirectUri",
+                      "userAgent",
+                      "proxyType",
+                      "proxyAddress",
+                      "proxyPort"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "TEMU"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "parts": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "image",
+                  "parts"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "ALTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "websiteURL": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Full target page URL."
+                      },
+                      "challengeURL": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "proxyType": {
+                        "type": "string"
+                      },
+                      "proxyAddress": {
+                        "type": "string"
+                      },
+                      "proxyPort": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "proxyLogin": {
+                        "type": "string"
+                      },
+                      "proxyPassword": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "websiteURL",
+                      "challengeURL"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "websiteURL": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Full target page URL."
+                      },
+                      "challengeJSON": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "proxyType": {
+                        "type": "string"
+                      },
+                      "proxyAddress": {
+                        "type": "string"
+                      },
+                      "proxyPort": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "proxyLogin": {
+                        "type": "string"
+                      },
+                      "proxyPassword": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "websiteURL",
+                      "challengeJSON"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "YIDUN_NE_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "BINANCE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "HUNT"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "TSPD"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  },
+                  "tspdCookie": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "htmlPageBase64": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "proxyType": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "proxyAddress": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "proxyPort": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "proxyLogin": {
+                    "type": "string"
+                  },
+                  "proxyPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "tspdCookie",
+                  "htmlPageBase64",
+                  "proxyType",
+                  "proxyAddress",
+                  "proxyPort"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "BASILISK"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "IMPERVA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "ALIBABA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "sceneId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "userId": {
+                    "type": "string"
+                  },
+                  "userUserId": {
+                    "type": "string"
+                  },
+                  "verifyType": {
+                    "type": "string"
+                  },
+                  "region": {
+                    "type": "string"
+                  },
+                  "userCertifyId": {
+                    "type": "string"
+                  },
+                  "apiGetLib": {
+                    "type": "string"
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "sceneId",
+                  "prefix"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "YANDEX_SMARTCAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "userAgent": {
+                    "type": "string"
+                  },
+                  "cookies": {
+                    "type": "string"
+                  },
+                  "proxyType": {
+                    "type": "string"
+                  },
+                  "proxyAddress": {
+                    "type": "string"
+                  },
+                  "proxyPort": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "proxyLogin": {
+                    "type": "string"
+                  },
+                  "proxyPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "RUSSIAN_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Base64 image from the actual challenge."
+                  },
+                  "phrase": {
+                    "type": "boolean"
+                  },
+                  "caseSensitive": {
+                    "type": "boolean"
+                  },
+                  "numeric": {
+                    "type": "boolean"
+                  },
+                  "math": {
+                    "type": "boolean"
+                  },
+                  "minLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "maxLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "imgInstructions": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "CHINESE_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Base64 image from the actual challenge."
+                  },
+                  "phrase": {
+                    "type": "boolean"
+                  },
+                  "caseSensitive": {
+                    "type": "boolean"
+                  },
+                  "numeric": {
+                    "type": "boolean"
+                  },
+                  "math": {
+                    "type": "boolean"
+                  },
+                  "minLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "maxLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "imgInstructions": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "NUMBER_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Base64 image from the actual challenge."
+                  },
+                  "phrase": {
+                    "type": "boolean"
+                  },
+                  "caseSensitive": {
+                    "type": "boolean"
+                  },
+                  "numeric": {
+                    "type": "boolean"
+                  },
+                  "math": {
+                    "type": "boolean"
+                  },
+                  "minLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "maxLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "imgInstructions": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "MATH_CAPTCHA"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Base64 image from the actual challenge."
+                  },
+                  "phrase": {
+                    "type": "boolean"
+                  },
+                  "caseSensitive": {
+                    "type": "boolean"
+                  },
+                  "numeric": {
+                    "type": "boolean"
+                  },
+                  "math": {
+                    "type": "boolean"
+                  },
+                  "minLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "maxLength": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "imgInstructions": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "CUSTOM"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string"
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "productCode": {
+                "const": "TURNSTILE"
+              }
+            },
+            "required": [
+              "productCode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "type": "object",
+                "properties": {
+                  "websiteURL": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full target page URL."
+                  },
+                  "websiteKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Public site key from the actual challenge."
+                  },
+                  "action": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "string"
+                  },
+                  "pagedata": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "websiteURL",
+                  "websiteKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
     },
     "annotations": {
       "destructiveHint": true,

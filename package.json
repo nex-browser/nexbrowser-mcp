@@ -1,6 +1,6 @@
 {
   "name": "@nexbrowser/mcp",
-  "version": "2026.10.16-beta.1",
+  "version": "2026.10.17-beta.1",
   "description": "Model Context Protocol server for NexBrowser environment management and browser automation",
   "type": "module",
   "main": "lib/index.cjs",
@@ -87,6 +87,7 @@
     "@arethetypeswrong/cli": "^0.18.5",
     "@modelcontextprotocol/inspector": "2.1.0",
     "@types/node": "^22.0.0",
+    "ajv": "8.20.0",
     "prettier": "^3.6.2",
     "publint": "^0.3.23",
     "rimraf": "^6.0.1",
