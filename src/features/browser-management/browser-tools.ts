@@ -391,11 +391,19 @@ function accountSummary(account: any): string {
  */
 function profileSummary(profile: any): string {
   const windowId = profile.id ?? 'Unknown';
+  const status =
+    profile.runtimeState === 'local_running'
+      ? 'Running locally'
+      : profile.runtimeState === 'occupied_by_other'
+        ? 'Occupied by another user'
+        : profile.runtimeState === 'closed'
+          ? 'Closed'
+          : 'Unknown (Desktop runtime state unavailable; update NexBrowser Desktop)';
   return [
     `Sequence: ${profile.seq ?? 'Unknown'}`,
     `  - WindowId: ${windowId}`,
     `  - Environment: **${profile.windowName || profile.name || `Window ${windowId}`}**`,
-    `  - Status: ${profile.opened === 'ON' ? 'Open' : 'Closed'}`
+    `  - Status: ${status}`
   ].join('\n');
 }
 
@@ -671,6 +679,7 @@ async function listBrowserEnvironments(
     rows.length
       ? [
           `Found ${total} NexBrowser managed windows/environments in workspace ${args.teamId ?? 'current'}:`,
+          'Status uses Desktop runtimeState; opened is the raw server record, not a live process check.',
           '',
           rows.map(profileSummary).join('\n\n')
         ].join('\n')
