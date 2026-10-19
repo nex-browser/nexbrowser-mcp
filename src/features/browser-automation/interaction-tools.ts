@@ -1,14 +1,13 @@
 import { z } from 'zod';
-import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
+import { defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import {
   apiErrorResult,
   errorResult,
   invalidArguments,
   successResult
 } from '../../shared/tool-result.js';
-import type { McpToolDefinition, McpToolResult } from '../../shared/types.js';
+import type { McpToolResult } from '../../shared/types.js';
 import { accountFillRoute, actionsRoute } from '../../transport/routes.js';
-import { NexApiClient } from '../../transport/nex-api-client.js';
 import { PAGE_CAPTCHA_POINTER } from '../captcha/routing-guidance.js';
 import { callAction, sessionId } from './common.js';
 import { automationSchema, TARGET_PROPERTY } from './schema.js';
@@ -349,11 +348,3 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   })
 ];
-
-/**
- * Creates navigation, element, keyboard, drag, scroll, wait, and viewport tools.
- * 创建导航、元素、键盘、拖拽、滚动、等待与视口工具。
- */
-export function createInteractionTools(client: NexApiClient): McpToolDefinition[] {
-  return bindTools(INTERACTION_TOOL_SPECS, { api: client, sessions: client });
-}

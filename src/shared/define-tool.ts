@@ -27,8 +27,6 @@ export interface McpToolSpec<S extends ZodType = ZodType> {
   name: string;
   description: string;
   inputSchema: S;
-  /** Reserved grouping hint; the catalog generator currently groups by spec arrays and ignores it. 预留的分组提示；目录生成器目前按规格数组分组，不读取该字段。 */
-  docGroup?: string;
   /**
    * MCP behavior hints surfaced to clients for permission tiering
    * (readOnlyHint for pure reads, destructiveHint for closers).

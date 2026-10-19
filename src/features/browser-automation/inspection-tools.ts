@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
-import type { McpToolDefinition } from '../../shared/types.js';
-import { NexApiClient } from '../../transport/nex-api-client.js';
+import { defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import { PAGE_CAPTCHA_POINTER } from '../captcha/routing-guidance.js';
 import { callAction } from './common.js';
 import { automationSchema, TARGET_PROPERTY } from './schema.js';
@@ -114,11 +112,3 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   RUN_CODE
 ];
-
-/**
- * Creates snapshot, page reading, buffered event, dialog, and permission-gated script tools.
- * 创建快照、页面读取、事件缓冲、对话框及权限受控脚本工具。
- */
-export function createInspectionTools(client: NexApiClient): McpToolDefinition[] {
-  return bindTools(INSPECTION_TOOL_SPECS, { api: client, sessions: client });
-}

@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
-import type { McpToolDefinition } from '../../shared/types.js';
-import { NexApiClient } from '../../transport/nex-api-client.js';
+import { defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import { tabOperationRoute, tabsRoute } from '../../transport/routes.js';
 import { callEndpoint, requiredText, sessionId } from './common.js';
 import { SESSION_PROPERTIES } from './schema.js';
@@ -58,8 +56,3 @@ export const TAB_TOOL_SPECS: readonly McpToolSpec[] = [
     })
   )
 ];
-
-/** Creates tab management tools. 创建标签页管理工具。 */
-export function createTabTools(client: NexApiClient): McpToolDefinition[] {
-  return bindTools(TAB_TOOL_SPECS, { api: client, sessions: client });
-}

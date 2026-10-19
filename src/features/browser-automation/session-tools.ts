@@ -1,8 +1,6 @@
 import { z } from 'zod';
-import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
+import { defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import { invalidArguments } from '../../shared/tool-result.js';
-import type { McpToolDefinition } from '../../shared/types.js';
-import { NexApiClient } from '../../transport/nex-api-client.js';
 import { SESSIONS_ROOT, sessionRoute } from '../../transport/routes.js';
 import { PAGE_CAPTCHA_GUIDANCE, PAGE_CAPTCHA_POINTER } from '../captcha/routing-guidance.js';
 import { callEndpoint, sessionId } from './common.js';
@@ -71,8 +69,3 @@ const DISCONNECT = defineTool({
 
 /** Session lifecycle tool specifications. 会话生命周期工具规格。 */
 export const SESSION_TOOL_SPECS: readonly McpToolSpec[] = [CONNECT, DISCONNECT];
-
-/** Creates session lifecycle tools. 创建会话生命周期工具。 */
-export function createSessionTools(client: NexApiClient): McpToolDefinition[] {
-  return bindTools(SESSION_TOOL_SPECS, { api: client, sessions: client });
-}

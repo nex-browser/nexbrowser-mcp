@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
-import type { McpToolDefinition } from '../../shared/types.js';
-import { NexApiClient } from '../../transport/nex-api-client.js';
+import { defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import { PAGE_CAPTCHA_POINTER } from '../captcha/routing-guidance.js';
 import { callAction } from './common.js';
 import { automationSchema, TARGET_PROPERTY } from './schema.js';
@@ -85,11 +83,3 @@ export const ARTIFACT_TOOL_SPECS: readonly McpToolSpec[] = [
       )
   })
 ];
-
-/**
- * Creates screenshot and file-transfer tools with managed artifact transport.
- * 创建带受管产物传输的截图与文件传输工具。
- */
-export function createArtifactTools(client: NexApiClient): McpToolDefinition[] {
-  return bindTools(ARTIFACT_TOOL_SPECS, { api: client, sessions: client });
-}
