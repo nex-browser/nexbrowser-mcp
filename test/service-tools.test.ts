@@ -224,6 +224,20 @@ describe('service tool contracts', () => {
     expect(request).toHaveBeenCalledTimes(2);
   });
 
+  it('classifies transport failures without echoing raw error text', async () => {
+    const { tool, request } = setup('nex_mail_plan_list', null);
+    request.mockImplementation(async () => {
+      throw Object.assign(new Error('aborted with secret header'), { name: 'AbortError' });
+    });
+    const result = await tool.execute({});
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toEqual({
+      code: 'REQUEST_FAILED',
+      reason: 'request timed out or was cancelled'
+    });
+    expect(JSON.stringify(result)).not.toContain('secret');
+  });
+
   it('preserves backend permission failures', async () => {
     const { tool } = setup('nex_mail_message_detail', {
       code: -1005,

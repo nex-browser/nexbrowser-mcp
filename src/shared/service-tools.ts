@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { defineTool, type McpToolSpec } from './define-tool.js';
 import { apiErrorResult, errorResult, successResult } from './tool-result.js';
+import { NexConfigurationError } from './types.js';
 
 export const serviceId = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 export const servicePager = z
@@ -37,6 +38,19 @@ export function servicePage(data: any, project: (row: any) => any = (row) => row
     size: data?.size ?? rows.length,
     totalPages: data?.total ?? 1
   };
+}
+
+/**
+ * 把传输异常归入固定类别：超时/取消、配置缺失、响应无效或网络失败。
+ * 只输出固定文案，不回显原始异常文本，避免传输细节进入模型上下文。
+ */
+function requestFailureReason(error: unknown): string {
+  if (error instanceof NexConfigurationError) return 'missing NexBrowser API configuration';
+  if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError'))
+    return 'request timed out or was cancelled';
+  if (error instanceof Error && /^HTTP \d+/.test(error.message))
+    return 'invalid response from NexBrowser Desktop';
+  return 'network error reaching NexBrowser Desktop';
 }
 
 /** 为独立业务工具复用传输和错误处理；资源模型、状态及展示仍由模块定义。 */
@@ -78,11 +92,13 @@ export function serviceTool<S extends z.ZodType>(options: {
             ...(method === 'POST' ? { body: JSON.stringify(args) } : {})
           }
         );
-      } catch {
+      } catch (error) {
+        const reason = requestFailureReason(error);
         return errorResult(
           options.reconcile
-            ? `Request outcome is unknown. ${options.reconcile} Do not automatically repeat this operation.`
-            : 'Service request failed. Check the connection and current login.'
+            ? `Request outcome is unknown (${reason}). ${options.reconcile} Do not automatically repeat this operation.`
+            : `Service request failed (${reason}). Check the connection and current login.`,
+          { code: options.reconcile ? 'OUTCOME_UNKNOWN' : 'REQUEST_FAILED', reason }
         );
       }
       if (response.code !== 0) {
