@@ -293,6 +293,21 @@ describe('nex_browser_create', () => {
     expect(String((result.content[0] as { text: string }).text)).toContain('windowId 22448');
   });
 
+  it('drops undeclared keys instead of forwarding them to Desktop', async () => {
+    const { request, tool } = toolWith('nex_browser_create', {
+      rows: [{ seq: 1, name: 'Shop', success: true, id: '1' }],
+      success: 1,
+      failed: 0,
+      total: 1
+    });
+    await tool.execute({ name: 'Shop', userId: 'other', isAdmin: true });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/browser/create',
+      expect.objectContaining({ body: JSON.stringify({ name: 'Shop', count: 1 }) })
+    );
+  });
+
   it('rejects a batch larger than the desktop create-window cap', () => {
     const { request, tool } = toolWith('nex_browser_create', {});
     // schema 校验在 execute 之前同步抛出，Desktop 收不到超额批量请求。

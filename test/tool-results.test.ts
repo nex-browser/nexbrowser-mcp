@@ -45,6 +45,26 @@ describe('tool result mapping', () => {
     expect(result.structuredContent).toMatchObject({ success: 2, failed: 0, total: 2 });
   });
 
+  it('reports a window with no returned row as failed instead of opened', async () => {
+    const request = vi.fn(async () => ({
+      code: 0,
+      msg: 'ok',
+      data: { rows: [{ id: 'window-2', success: true }] }
+    }));
+    const client = { request } as unknown as NexApiClient;
+    const tool = createBrowserManagementTools(client).find(
+      (candidate) => candidate.name === 'nex_browser_open'
+    );
+
+    const result = await tool!.execute({ teamId: 'team-1', windowId: ['window-1', 'window-2'] });
+
+    expect(result.structuredContent).toMatchObject({ success: 1, failed: 1, total: 2 });
+    expect((result.structuredContent as { rows: unknown[] }).rows).toEqual([
+      expect.objectContaining({ windowId: 'window-1', success: false }),
+      expect.objectContaining({ windowId: 'window-2', success: true })
+    ]);
+  });
+
   it('accepts documented ids when opening browsers', async () => {
     const request = vi.fn(async () => ({
       code: 0,

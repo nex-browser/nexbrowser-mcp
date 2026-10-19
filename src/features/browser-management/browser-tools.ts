@@ -688,6 +688,38 @@ async function listBrowserEnvironments(
   );
 }
 
+/** 建窗请求只携带 schema 声明的字段，未传字段由 Desktop 建窗默认值补齐。 */
+function createBrowserPayload(args: z.output<typeof createBrowsersInputSchema>) {
+  const fields = [
+    'name',
+    'count',
+    'groupId',
+    'remark',
+    'proxyId',
+    'accountIds',
+    'pluginIds',
+    'startupUrl',
+    'screen',
+    'preference',
+    'fingerprint'
+  ] as const;
+  const payload: Record<string, unknown> = {};
+  for (const field of fields) {
+    if (args[field] !== undefined) payload[field] = args[field];
+  }
+  payload.count ??= 1;
+  return payload;
+}
+
+/** 按窗口 ID 匹配启动结果，缺少 ID 时退回请求顺序；没有对应行视为失败而不是成功。 */
+function openedRow(rows: any[], windowId: string | number, index: number): any {
+  const rowId = (row: any) => row?.id ?? row?.windowId;
+  return (
+    rows.find((row) => rowId(row) !== undefined && String(rowId(row)) === String(windowId)) ??
+    (rowId(rows[index]) === undefined ? rows[index] : undefined)
+  );
+}
+
 /**
  * Stateless environment management specs. These schemas accept additional
  * Desktop request metadata, while automation action schemas are strict.
@@ -918,10 +950,10 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
       "Create NexBrowser environments in the desktop app's active workspace. Every unset field falls back to the desktop create-window defaults (fingerprint, preferences, layout, startup page), and each created window gets its own generated fingerprint, so pass only the fields that must differ.",
     inputSchema: createBrowsersInputSchema,
     execute: async (args, ctx) => {
-      // count 的取值范围由 inputSchema 保证，这里只补默认值。
+      // 只转发 schema 声明的字段，模型附带的未知键不进入建窗请求；count 范围由 inputSchema 保证。
       const response = await ctx.api.request<any>(BROWSER_CREATE_ROUTE, {
         method: 'POST',
-        body: JSON.stringify({ ...args, count: args.count ?? 1 })
+        body: JSON.stringify(createBrowserPayload(args))
       });
       if (response.code !== 0) return apiErrorResult('Failed to create browsers', response);
       const data = response.data || {};
@@ -1167,12 +1199,15 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
       });
       if (response.code !== 0) return apiErrorResult('Failed to open browsers', response);
       const rows = Array.isArray(response.data?.rows) ? response.data.rows : [response.data];
-      const outcomes = ids.map((windowId, index) => ({
-        windowId,
-        success: rows[index]?.success !== false,
-        data: safeConnection(rows[index] ?? {}, ctx.api.exposeCdp === true),
-        error: rows[index]?.error
-      }));
+      const outcomes = ids.map((windowId, index) => {
+        const row = openedRow(rows, windowId, index);
+        return {
+          windowId,
+          success: Boolean(row) && row.success !== false,
+          data: safeConnection(row ?? {}, ctx.api.exposeCdp === true),
+          error: row ? row.error : 'Desktop returned no result for this window'
+        };
+      });
       const success = outcomes.filter((item) => item.success);
       const failed = outcomes.filter((item) => !item.success);
       return successResult(
