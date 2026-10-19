@@ -45,7 +45,10 @@ export function requireCaptchaContract(data: any, productCode: string): CaptchaC
 }
 
 /** 在线规则未就绪时禁止付费，不再维护本地产品禁用名单。 */
-export function assertCaptchaReady(contract: CaptchaContract, browser = false) {
+export function assertCaptchaReady(
+  contract: CaptchaContract,
+  browser: boolean | 'BROWSER_INTERACTION' = false
+) {
   if (
     typeof contract.integration.readiness !== 'string' ||
     !contract.integration.readiness ||
@@ -65,10 +68,10 @@ export function assertCaptchaReady(contract: CaptchaContract, browser = false) {
   if (
     browser &&
     (!Array.isArray(contract.integration.workflows) ||
-      !contract.integration.workflows.includes('BROWSER_RESULT'))
+      !contract.integration.workflows.includes(browser === true ? 'BROWSER_RESULT' : browser))
   )
     throw new Error(
-      'The online contract does not support BROWSER_RESULT; do not purchase a page task.'
+      `The online contract does not support ${browser === true ? 'BROWSER_RESULT' : browser}; do not purchase a page task.`
     );
 }
 

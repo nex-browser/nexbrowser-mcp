@@ -62,6 +62,11 @@ function fixture() {
   };
   schemas.CLOUDFLARE_TURNSTILE = schemas.TURNSTILE!;
   const integration = onlineCaptchaContract('fixture').integration;
+  const gridResult = {
+    applied: true,
+    websiteVerified: false,
+    gridState: 'WAITING_IMAGES'
+  } as Record<string, any>;
   let contextId = 'team-a-revision';
   const ok = (data: unknown) => ({ code: 0, msg: 'ok', data, contextId });
   const request = vi.fn(async (route: string, options?: RequestInit) => {
@@ -90,7 +95,12 @@ function fixture() {
         result: { ...candidate, ready: true, adapter: { ...candidate.adapter, challenge: 'fresh' } }
       });
     if (body.action === 'captchaApply')
-      return ok({ result: { applied: true, guidance: 'Inspect website' } });
+      return ok({
+        result:
+          candidate.productCode === 'GRID'
+            ? gridResult
+            : { applied: true, guidance: 'Inspect website' }
+      });
     throw new Error(`Unexpected route: ${route}`);
   });
   const client = { request, getActiveSessionId: () => 'session' } as unknown as NexApiClient;
@@ -110,6 +120,7 @@ function fixture() {
     products,
     schemas,
     integration,
+    gridResult,
     record,
     request,
     call,
@@ -128,6 +139,180 @@ afterEach(() => {
 });
 
 describe('browser NexCaptcha workflow', () => {
+  /** 模拟在线 GRID 契约和固定浏览器动作，不发起真实付费任务。 */
+  function gridFixture() {
+    const f = fixture();
+    f.candidate.productCode = f.catalog.productCode = f.record.productCode = 'GRID';
+    f.candidate.adapter = { body: 'private-grid-base64', comment: 'Select red squares' };
+    Object.assign(f.candidate, {
+      grid: {
+        root: '#grid',
+        tiles: '.tile',
+        instruction: '#instruction',
+        verify: '#verify',
+        mode: 'dynamic',
+        fingerprint: 'image-1',
+        contentKey: 'sources-1',
+        rows: 3,
+        columns: 3
+      }
+    });
+    f.schemas.GRID = {
+      type: 'object',
+      properties: { body: { type: 'string' }, comment: { type: 'string' } },
+      required: ['body', 'comment'],
+      additionalProperties: false
+    };
+    Object.assign(f.integration, {
+      workflows: ['BROWSER_INTERACTION'],
+      resultKind: 'GRID_CELLS',
+      indexBase: 1,
+      order: 'ROW_MAJOR'
+    });
+    f.record.solution = { click: [1, 5] };
+    return f;
+  }
+
+  it('quotes a captured Grid, keeps the image private, and sends only body/comment to the online adapter', async () => {
+    const f = gridFixture();
+    const quote = await f.prepare();
+    expect(quote).toMatchObject({
+      ready: true,
+      productCode: 'GRID',
+      grid: { rows: 3, columns: 3 }
+    });
+    expect(JSON.stringify(quote)).not.toContain('private-grid-base64');
+    expect(f.buys()).toHaveLength(0);
+    await f.submit(quote.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body)).adapter).toEqual({
+      body: 'private-grid-base64',
+      comment: 'Select red squares'
+    });
+    f.record.state = 'SUCCEEDED';
+    expect(
+      (await f.call('complete', { prepareId: quote.prepareId })).structuredContent
+    ).toMatchObject({ applied: true, gridState: 'WAITING_IMAGES', websiteVerified: false });
+    await f.call('complete', { prepareId: quote.prepareId });
+    const requests = f.applies().map(([, options]) => JSON.parse(String(options?.body)).params);
+    expect(requests.filter((params) => params.gridProgress !== true)).toHaveLength(1);
+    expect(requests[0].solution).toEqual({ click: [1, 5] });
+    expect(requests[1].gridProgress).toBe(true);
+    expect(JSON.stringify(requests)).not.toContain('private-grid-base64');
+  });
+
+  it('captures a changed round and provides a new approval quote without automatically charging', async () => {
+    const f = gridFixture();
+    const first = await f.prepare();
+    await f.submit(first.prepareId);
+    f.record.state = 'SUCCEEDED';
+    // 页面仅在答案派发后切换到下一张图。
+    const original = f.request.getMockImplementation()!;
+    f.request.mockImplementation(async (route, options) => {
+      const body = options?.body ? JSON.parse(String(options.body)) : {};
+      if (body.action === 'captchaApply') {
+        f.candidate.challengeId = 'round-2';
+        f.candidate.adapter.body = 'second-grid-base64';
+        Object.assign((f.candidate as any).grid, {
+          fingerprint: 'image-2',
+          contentKey: 'sources-2'
+        });
+        Object.assign(f.gridResult, {
+          gridState: 'NEXT_ROUND',
+          nextCandidate: structuredClone(f.candidate)
+        });
+      }
+      return original(route, options);
+    });
+    const completed = (await f.call('complete', { prepareId: first.prepareId }))
+      .structuredContent as any;
+    expect(completed).toMatchObject({
+      gridState: 'NEXT_ROUND',
+      nextQuote: { requiresConfirmation: true, price: '0.005', ready: true }
+    });
+    expect(completed.nextPrepareId).toBe(completed.nextQuote.prepareId);
+    expect(JSON.stringify(completed)).not.toContain('grid-base64');
+    await f.call('complete', { prepareId: first.prepareId });
+    expect(f.buys()).toHaveLength(1);
+    await expect(
+      f.call('submit', { prepareId: completed.nextPrepareId, maxTotalPrice: '0.005' })
+    ).rejects.toThrow();
+    await f.submit(completed.nextPrepareId);
+    expect(f.buys()).toHaveLength(2);
+  });
+
+  it('rejects a Grid image change before purchase or result application', async () => {
+    for (const phase of ['submit', 'complete']) {
+      const f = gridFixture();
+      const quote = await f.prepare();
+      if (phase === 'complete') {
+        await f.submit(quote.prepareId);
+        f.record.state = 'SUCCEEDED';
+      }
+      f.candidate.challengeId = 'new-image';
+      if (phase === 'submit')
+        await expect(f.submit(quote.prepareId)).rejects.toThrow('challenge changed');
+      else
+        await expect(f.call('complete', { prepareId: quote.prepareId })).rejects.toThrow(
+          'challenge changed'
+        );
+      expect(f.buys()).toHaveLength(phase === 'submit' ? 0 : 1);
+      expect(f.applies()).toHaveLength(0);
+    }
+  });
+
+  it('does not replay Grid clicks after an unknown application outcome', async () => {
+    const f = gridFixture();
+    const quote = await f.prepare();
+    await f.submit(quote.prepareId);
+    f.record.state = 'SUCCEEDED';
+    const original = f.request.getMockImplementation()!;
+    f.request.mockImplementation(async (route, options) => {
+      if (String(options?.body).includes('captchaApply')) throw new Error('timeout after click');
+      return original(route, options);
+    });
+    await expect(f.call('complete', { prepareId: quote.prepareId })).rejects.toThrow(
+      'outcome is unknown'
+    );
+    await f.call('complete', { prepareId: quote.prepareId });
+    expect(f.applies()).toHaveLength(1);
+    expect(f.buys()).toHaveLength(1);
+  });
+
+  it('does not rebind an outstanding Grid task to an image changed during recognition', async () => {
+    const f = gridFixture();
+    const quote = await f.prepare();
+    await f.submit(quote.prepareId);
+    f.candidate.challengeId = 'changed-while-solving';
+    expect(await f.prepare()).toMatchObject({ ready: false, prepareId: quote.prepareId });
+    f.record.state = 'SUCCEEDED';
+    await expect(f.call('complete', { prepareId: quote.prepareId })).rejects.toThrow(
+      'challenge changed'
+    );
+    expect(f.applies()).toHaveLength(0);
+    expect(f.buys()).toHaveLength(1);
+  });
+
+  it.each(['indexBase', 'order', 'resultKind'])(
+    'blocks an incompatible Grid %s contract before payment',
+    async (field) => {
+      const f = gridFixture();
+      (f.integration as Record<string, unknown>)[field] = 'unsupported';
+      expect(await f.prepare()).toMatchObject({
+        ready: false,
+        reason: expect.stringContaining('ROW_MAJOR')
+      });
+      expect(f.buys()).toHaveLength(0);
+    }
+  );
+
+  it('redacts Grid image bodies when multiple candidates need selection', async () => {
+    const f = gridFixture();
+    f.page.candidates.push({ ...f.candidate, challengeId: 'second' });
+    const quote = await f.prepare();
+    expect(quote.ready).toBe(false);
+    expect(JSON.stringify(quote)).not.toContain('private-grid-base64');
+  });
+
   it('accepts a newly supported page parameter from the current online schema', async () => {
     const f = fixture();
     f.candidate.productCode = 'RECAPTCHA_V2';

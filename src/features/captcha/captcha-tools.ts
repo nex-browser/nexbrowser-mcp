@@ -82,7 +82,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_captcha_product_schema',
     description:
-      'Read the current online NexCaptcha adapter schema, example, integration/result contract and workflowGuide through the signed-in Desktop client. Free, read-only and requires a connection. productCode is required and must exactly match nex_captcha_product_list; no aliases or offline fallback. Preserve all schema constraints and unknown fields. Examples are placeholders, not real challenge inputs. DOCUMENTATION_REQUIRED blocks paid tasks. Online product support does not imply browser capture/apply support.',
+      'Read the current online NexCaptcha adapter schema, example, integration/result contract and workflowGuide through the signed-in Desktop client. Free, read-only and requires a connection. productCode is required and must exactly match nex_captcha_product_list; no aliases or offline fallback. Preserve all schema constraints and unknown fields. Read integration.workflows before choosing HTTP_SUBMIT, BROWSER_RESULT or BROWSER_INTERACTION. HTTP_SUBMIT requires a separately established site HTTP integration; browser workflows also require a supported local capture/apply adapter. Page CAPTCHAs start with nex_browser_captcha_prepare. Examples are placeholders, not real challenge inputs. DOCUMENTATION_REQUIRED blocks paid tasks. Online product support does not imply browser capture/apply support.',
     schema: z.object({ productCode: captchaProductCode }).strict(),
     route: CAPTCHA_SCHEMA_ROUTE,
     method: 'POST',
@@ -95,7 +95,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_captcha_buy',
     description:
-      'Create a CAPTCHA solving task and precharge once after explicit fee/scope approval (the host approval panel may supply it). Read nex_captcha_product_schema and use actual challenge inputs. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. Preflight maxTotalPrice is not atomic. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Never automatically retry or substitute GRID.',
+      'Create a CAPTCHA solving task and precharge once after explicit fee/scope approval (the host approval panel may supply it). Read nex_captcha_product_schema and use actual challenge inputs. For HTTP_SUBMIT, confirm integration.workflows permits it and a separate site integration can maintain the session and submit verification/business requests. This tool creates recognition tasks only; it does not submit to the target website or choose a workflow. Page CAPTCHAs use nex_browser_captcha_prepare/submit/complete; never bypass unsupported browser adapters with a raw purchase. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. Preflight maxTotalPrice is not atomic. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Never automatically retry or substitute GRID.',
     inputSchema: z
       .object({
         productCode: captchaProductCode,

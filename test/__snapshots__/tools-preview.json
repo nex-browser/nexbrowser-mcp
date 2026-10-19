@@ -1687,7 +1687,7 @@
   },
   {
     "name": "nex_browser_connect",
-    "description": "For nexbrowser-mcp browser tasks, use a NexBrowser environment by default; pass startIfNeeded=true to open a closed environment. Connect to one NexBrowser window using the active team by default and create an isolated automation session. For multiple windows, first call nex_browser_open once with all window IDs, then connect each window with startIfNeeded=false. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "For nexbrowser-mcp browser tasks, use a NexBrowser environment by default; pass startIfNeeded=true to open a closed environment. Connect to one NexBrowser window using the active team by default and create an isolated automation session. For multiple windows, first call nex_browser_open once with all window IDs, then connect each window with startIfNeeded=false. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1821,7 +1821,7 @@
   },
   {
     "name": "nex_browser_navigate",
-    "description": "Navigate the selected page and return its refreshed accessibility snapshot. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Navigate the selected page and return its refreshed accessibility snapshot. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1846,7 +1846,7 @@
   },
   {
     "name": "nex_browser_reload",
-    "description": "Reload the page. Obtain approval before reloading a filled form to restore CAPTCHA capture. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Reload the page. Obtain approval before reloading a filled form to restore CAPTCHA capture. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1903,7 +1903,7 @@
   },
   {
     "name": "nex_browser_click",
-    "description": "Click or double-click an element from the latest snapshot or a CSS selector. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Click or double-click an element from the latest snapshot or a CSS selector. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1940,7 +1940,7 @@
   },
   {
     "name": "nex_browser_mouse_click_xy",
-    "description": "Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2334,7 +2334,7 @@
   },
   {
     "name": "nex_browser_drag",
-    "description": "Drag one snapshot ref or selector to another. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Drag one snapshot ref or selector to another. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2463,7 +2463,7 @@
   },
   {
     "name": "nex_browser_snapshot",
-    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2541,7 +2541,7 @@
   },
   {
     "name": "nex_browser_get_text",
-    "description": "Read visible text from the page or one target. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Read visible text from the page or one target. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2672,7 +2672,7 @@
   },
   {
     "name": "nex_browser_evaluate",
-    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2697,7 +2697,7 @@
   },
   {
     "name": "nex_browser_run_code",
-    "description": "Run page JavaScript when the separate runCode permission is enabled. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Run page JavaScript when the separate runCode permission is enabled. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2722,7 +2722,7 @@
   },
   {
     "name": "nex_browser_take_screenshot",
-    "description": "Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays. For a page CAPTCHA (including GeeTest sliders), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance afterward.",
+    "description": "Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays. For a page CAPTCHA (including GeeTest sliders and image grids), first call nex_browser_captcha_prepare (free) with the original sessionId/pageId. BROWSER_RESULT applies answers to captured GeeTest v3/v4, explicit reCAPTCHA v2 or Turnstile callbacks; BROWSER_INTERACTION requires a real supported image grid and uses GRID capture/native clicks. prepare checks the online integration.workflows and local adapter; select challengeId when multiple challenges exist. HTTP_SUBMIT is preferred only for a separately established site HTTP integration that preserves the required session and submits verification/business requests; nex_captcha_buy/query provide recognition only, not that site integration. There is no workflow switch parameter or automatic three-way router. HTTP 403, timeout, missing parameters or an uncaptured callback never justify switching to GRID or bypassing prepare with raw nex_captcha_buy. Report the concrete blocker. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs. Obtain explicit fee and site callback approval, then use nex_browser_captcha_submit and nex_browser_captcha_complete with the same prepareId; verify website acceptance and business completion separately afterward. For GRID approve image/instruction sharing, tile clicks and CAPTCHA verify. complete captures changed images and returns a free nextPrepareId/nextQuote; each round requires a new fee approval and submit, never raw nex_captcha_buy.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3564,7 +3564,7 @@
   },
   {
     "name": "nex_captcha_product_schema",
-    "description": "Read the current online NexCaptcha adapter schema, example, integration/result contract and workflowGuide through the signed-in Desktop client. Free, read-only and requires a connection. productCode is required and must exactly match nex_captcha_product_list; no aliases or offline fallback. Preserve all schema constraints and unknown fields. Examples are placeholders, not real challenge inputs. DOCUMENTATION_REQUIRED blocks paid tasks. Online product support does not imply browser capture/apply support.",
+    "description": "Read the current online NexCaptcha adapter schema, example, integration/result contract and workflowGuide through the signed-in Desktop client. Free, read-only and requires a connection. productCode is required and must exactly match nex_captcha_product_list; no aliases or offline fallback. Preserve all schema constraints and unknown fields. Read integration.workflows before choosing HTTP_SUBMIT, BROWSER_RESULT or BROWSER_INTERACTION. HTTP_SUBMIT requires a separately established site HTTP integration; browser workflows also require a supported local capture/apply adapter. Page CAPTCHAs start with nex_browser_captcha_prepare. Examples are placeholders, not real challenge inputs. DOCUMENTATION_REQUIRED blocks paid tasks. Online product support does not imply browser capture/apply support.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3584,7 +3584,7 @@
   },
   {
     "name": "nex_captcha_buy",
-    "description": "Create a CAPTCHA solving task and precharge once after explicit fee/scope approval (the host approval panel may supply it). Read nex_captcha_product_schema and use actual challenge inputs. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. Preflight maxTotalPrice is not atomic. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Never automatically retry or substitute GRID.",
+    "description": "Create a CAPTCHA solving task and precharge once after explicit fee/scope approval (the host approval panel may supply it). Read nex_captcha_product_schema and use actual challenge inputs. For HTTP_SUBMIT, confirm integration.workflows permits it and a separate site integration can maintain the session and submit verification/business requests. This tool creates recognition tasks only; it does not submit to the target website or choose a workflow. Page CAPTCHAs use nex_browser_captcha_prepare/submit/complete; never bypass unsupported browser adapters with a raw purchase. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. Preflight maxTotalPrice is not atomic. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Never automatically retry or substitute GRID.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3685,7 +3685,7 @@
   },
   {
     "name": "nex_browser_captcha_prepare",
-    "description": "Check enabled NexCaptcha products/prices and the current online schema, then collect page CAPTCHA parameters and callback. Free: never creates a paid task. No offline product rules or fallback. Call before navigating to arm capture. Supports captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile; online product support does not add browser adapters. Select challengeId if multiple widgets exist. Quote the USDT fee and obtain explicit confirmation before submit. Never silently reload a filled form.",
+    "description": "Check enabled products/prices and online schema, then capture the page challenge. Free; no purchase. Chooses BROWSER_RESULT for captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, or BROWSER_INTERACTION for a real supported GRID; checks integration.workflows and the local adapter. No workflow switch parameter or automatic HTTP_SUBMIT integration. Detects visible reCAPTCHA image grids; for other regular image grids supply observed grid DOM selectors and mode. Unsupported canvas/custom widgets need a site adapter. Select challengeId if multiple widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or timeout are blockers, not reasons to substitute GRID or raw nex_captcha_buy. Grid capture preserves the original instructions and image; quote each round fee and approve tile clicks and CAPTCHA verify before submit. Never silently reload a filled form.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3704,6 +3704,53 @@
         "challengeUrl": {
           "type": "string",
           "format": "uri"
+        },
+        "grid": {
+          "type": "object",
+          "properties": {
+            "root": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "tiles": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "instruction": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "verify": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "success": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "mode": {
+              "default": "auto",
+              "type": "string",
+              "enum": [
+                "auto",
+                "static",
+                "dynamic"
+              ]
+            }
+          },
+          "required": [
+            "root",
+            "tiles",
+            "instruction",
+            "verify",
+            "mode"
+          ],
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -3711,7 +3758,7 @@
   },
   {
     "name": "nex_browser_captcha_submit",
-    "description": "After explicit user approval of the prepared product, single-task USDT fee and site callback dispatch, submit exactly once. confirmed=true records approval; maxTotalPrice must be the approved ceiling. Rechecks product price, team and page challenge. A timeout is an unknown charged outcome: never automatically purchase again. Saves the local task ID for complete. This does not click the final signup/login button.",
+    "description": "After explicit approval of the product, single-round fee and callback or Grid tile/verification interaction, submit exactly once. confirmed=true records approval; maxTotalPrice is the approved ceiling. Rechecks product price, team, document and current Grid image. Never repurchase after timeout. Every new Grid round needs its own quote/approval. Saves the local task ID for complete; does not click final signup/login.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3751,7 +3798,7 @@
   },
   {
     "name": "nex_browser_captcha_complete",
-    "description": "Query the prepared task once and, on SUCCEEDED, dispatch its validated solution to the original page widget callback. The callback may send verification requests or submit a site form; obtain authorization for that scope first. Pending results require another call after 3–5 seconds; no background polling or new purchases. Stops on FAILED/EXPIRED and asks to verify refunds in billing. Never equates callback dispatch with website acceptance: inspect a fresh page snapshot/site verification response. Does not click the final signup/login button.",
+    "description": "Query once; on SUCCEEDED apply to the original callback or click validated 1-based Grid tiles and CAPTCHA verify. Obtain interaction approval first. Grid waits for image replacement and inspects the next round; returns nextPrepareId/nextQuote without purchasing. Approve and submit that quote separately. Repeated complete only inspects applied Grid progress, never clicks again. Pending solver polls require 3–5 seconds. Stops on failure or unknown application. Website success requires explicit evidence; never click final signup/login.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",

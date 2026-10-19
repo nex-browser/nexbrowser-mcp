@@ -2,9 +2,11 @@
 
 现已支持 `nex_ip_*` 代理市场、续费与短效额度，`nex_mail_*` 邮箱申请与收信，`nex_captcha_*` 识别任务，以及 `nex_billing_trade_list` 账单核对。需要同时更新提供 `/ip`、`/mail`、`/captcha`、`/billing` 路由的 Desktop 客户端，并保持登录及现有服务端权限。
 
+NexCaptcha 有三种接入流程：`HTTP_SUBMIT` 仅在线上契约允许、且已有能保持会话并提交验证与业务请求的站点 HTTP 适配时优先使用；本 MCP 的独立任务 API 只负责识别，不提供通用站点 HTTP 提交。浏览器任务先调用免费的 `nex_browser_captcha_prepare`，按当前真实挑战检查 `BROWSER_RESULT`（受支持控件的结果回填）或 `BROWSER_INTERACTION`（受支持 Grid 图片采集与点击）。线上产品支持不等于本地浏览器能力已实现；没有三选一模式参数，也没有自动三路选优。HTTP 403、超时、缺参数或未捕获回调不能作为改用 Grid 或绕过 prepare 直接购买的理由。识别成功、网站验证通过、业务完成必须分别确认。完整条件见[选路与能力边界](skills/nexbrowser-automation/guides/captcha.md#choose-the-integration-workflow)。
+
 独立 NexCaptcha 任务先用 `nex_captcha_product_list` 获取启用产品与单次应付价格，再用返回的原始 productCode 调用 `nex_captcha_product_schema(productCode)`。此免费只读查询需要 Desktop 登录和网络连接，完整返回 `/nex_captcha_schema` 的参数 Schema、示例、integration 结果契约、workflowGuide 及未来字段。产品规则只来自线上接口，不再维护本地目录、固定产品数量、查询别名或离线回退。购买前重新读取线上规则，完整校验 oneOf、additionalProperties 等约束；Schema 不可用、不完整或返回 DOCUMENTATION_REQUIRED 时停止购买。填入真实挑战参数并确认费用与范围后，调用 `nex_captcha_buy(productCode, adapter, maxTotalPrice)`。线上产品支持不等于已实现页面采集和回填，详见 [NexCaptcha 流程](skills/nexbrowser-automation/guides/captcha.md)。
 
-页面验证码先用 `nex_browser_captcha_prepare` 检查 NexCaptcha、采集参数并获取报价，不扣费。用户明确确认单次费用和站点回调范围后，用 `nex_browser_captcha_submit` 提交，再用 `nex_browser_captcha_complete` 查询并回填原控件。支持已捕获的 GeeTest v3/v4、显式渲染的 reCAPTCHA v2 和 Turnstile。新 challenge、已加载页面的限制及超时核对见[页面验证码流程](skills/nexbrowser-automation/guides/captcha.md)。
+页面验证码先用 `nex_browser_captcha_prepare` 检查 NexCaptcha、采集参数并获取报价，不扣费。用户明确确认单次费用和站点回调或 Grid 图片交互范围后，用 `nex_browser_captcha_submit` 提交，再用 `nex_browser_captcha_complete` 查询并应用结果。支持已捕获的 GeeTest v3/v4、显式渲染的 reCAPTCHA v2、Turnstile，以及可见图片网格（自动检测 reCAPTCHA，其他网格显式提供选择器）。Grid 会自动点击当前格子、检查局部换图与下一轮，并免费返回新报价；新一轮付费任务仍需确认。Grid 桥接需要同时更新 MCP 和 Desktop。配置、新 challenge、已加载页面的限制及超时核对见[页面验证码流程](skills/nexbrowser-automation/guides/captcha.md)。
 
 所有扣费操作先报价并取得用户明确确认，再提交 `maxTotalPrice`。金额上限是实时预检，不是服务端原子锁价。购买、续费和短效提取遇到错误或超时后先核对记录、账单，禁止自动重提。语言默认使用 Desktop 设置。详见[业务服务接入指南](skills/nexbrowser-automation/guides/services.md)。
 

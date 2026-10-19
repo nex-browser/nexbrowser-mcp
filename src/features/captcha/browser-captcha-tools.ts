@@ -7,7 +7,7 @@ import {
   validateOnlineCaptchaAdapter,
   type CaptchaContract
 } from './online-schema.js';
-import { defineTool, type ToolContext } from '../../shared/define-tool.js';
+import { defineTool, type McpToolSpec, type ToolContext } from '../../shared/define-tool.js';
 import { maxTotalPrice, parseServiceJson } from '../../shared/service-tools.js';
 import { successResult } from '../../shared/tool-result.js';
 import type { ActiveSessionStore } from '../../shared/types.js';
@@ -20,6 +20,18 @@ import {
 import { sessionId } from '../browser-automation/common.js';
 import { automationSchema } from '../browser-automation/schema.js';
 
+const gridOptions = z
+  .object({
+    root: z.string().min(1).max(1_000),
+    tiles: z.string().min(1).max(1_000),
+    instruction: z.string().min(1).max(1_000),
+    verify: z.string().min(1).max(1_000),
+    success: z.string().min(1).max(1_000).optional(),
+    mode: z.enum(['auto', 'static', 'dynamic']).default('auto')
+  })
+  .strict();
+type GridOptions = z.output<typeof gridOptions>;
+
 interface Candidate {
   challengeId: string;
   documentId: string;
@@ -29,6 +41,7 @@ interface Candidate {
   reason?: string;
   frameIndex: number;
   frameUrl: string;
+  grid?: GridOptions & { fingerprint: string; contentKey: string; rows: number; columns: number };
 }
 interface Workflow {
   prepareId: string;
@@ -47,6 +60,8 @@ interface Workflow {
   state?: string;
   applied?: boolean;
   lastQueryAt?: number;
+  gridResult?: Record<string, unknown>;
+  nextPrepareId?: string;
 }
 const workflows = new WeakMap<ActiveSessionStore, Map<string, Workflow>>();
 const queryTimes = new WeakMap<ActiveSessionStore, number[]>();
@@ -97,8 +112,18 @@ function browserAdapter(
 ) {
   const code =
     candidate.productCode === 'TURNSTILE' ? 'CLOUDFLARE_TURNSTILE' : candidate.productCode;
-  if (!['GEETEST', 'GEETEST_V4', 'RECAPTCHA_V2', 'CLOUDFLARE_TURNSTILE'].includes(code))
+  if (!['GRID', 'GEETEST', 'GEETEST_V4', 'RECAPTCHA_V2', 'CLOUDFLARE_TURNSTILE'].includes(code))
     return { reason: 'This product has no supported automatic browser CAPTCHA adapter.' };
+  if (
+    code === 'GRID' &&
+    (!candidate.grid ||
+      contract.integration.resultKind !== 'GRID_CELLS' ||
+      contract.integration.indexBase !== 1 ||
+      contract.integration.order !== 'ROW_MAJOR')
+  )
+    return {
+      reason: 'GRID requires a captured grid and a documented 1-based ROW_MAJOR result contract.'
+    };
   const adapter = { ...candidate.adapter };
   if (code === 'GEETEST' && Object.hasOwn(adapter, 'geetestApiServerSubdomain')) {
     if (
@@ -173,7 +198,20 @@ async function current(ctx: ToolContext, workflow: Workflow) {
     workflow.sessionId,
     workflow.pageId,
     'captchaInspect',
-    {},
+    workflow.candidate.grid
+      ? {
+          grid: gridOptions.parse(
+            workflow.candidate.grid && {
+              root: workflow.candidate.grid.root,
+              tiles: workflow.candidate.grid.tiles,
+              instruction: workflow.candidate.grid.instruction,
+              verify: workflow.candidate.grid.verify,
+              success: workflow.candidate.grid.success,
+              mode: workflow.candidate.grid.mode
+            }
+          )
+        }
+      : {},
     workflow.contextId
   );
   const row = page.candidates?.find(
@@ -205,25 +243,91 @@ function status(workflow: Workflow, extra: Record<string, unknown> = {}) {
       state: workflow.state ?? 'QUOTED',
       applied: workflow.applied ?? false,
       websiteVerified: false,
+      ...workflow.gridResult,
+      ...(workflow.nextPrepareId ? { nextPrepareId: workflow.nextPrepareId } : {}),
       ...extra
     }
   );
 }
 
-export const BROWSER_CAPTCHA_TOOL_SPECS = [
+/** 网格图片不进入对话；仅展示题目、布局和后续费用审批所需信息。 */
+function publicCandidate(candidate: Candidate) {
+  if (candidate.productCode !== 'GRID') return candidate;
+  return {
+    ...candidate,
+    adapter: { comment: candidate.adapter.comment },
+    grid: candidate.grid && {
+      rows: candidate.grid.rows,
+      columns: candidate.grid.columns,
+      mode: candidate.grid.mode
+    }
+  };
+}
+
+/** 后续轮次只准备免费新报价，必须经新的 submit 审批才会再次购买。 */
+async function gridProgress(ctx: ToolContext, workflow: Workflow, result: any) {
+  workflow.gridResult = {
+    gridState: result.gridState,
+    websiteVerified: result.websiteVerified === true,
+    retryAfterMs: result.retryAfterMs,
+    guidance: result.guidance
+  };
+  if (result.gridState === 'NEXT_ROUND' && result.nextCandidate && !workflow.nextPrepareId) {
+    const grid = workflow.candidate.grid!;
+    const prepared = await BROWSER_CAPTCHA_TOOL_SPECS[0]!.execute(
+      {
+        sessionId: workflow.sessionId,
+        pageId: workflow.pageId,
+        challengeId: result.nextCandidate.challengeId,
+        grid: {
+          root: grid.root,
+          tiles: grid.tiles,
+          instruction: grid.instruction,
+          verify: grid.verify,
+          success: grid.success,
+          mode: grid.mode
+        }
+      },
+      ctx
+    );
+    const quote = prepared.structuredContent;
+    if (quote?.ready === true) {
+      const next = storeFor(ctx).get(String(quote.prepareId));
+      if (next?.contextId !== workflow.contextId)
+        throw new Error('Grid team context changed before next quote');
+      workflow.nextPrepareId = String(quote.prepareId);
+      workflow.gridResult.nextQuote = quote;
+    } else {
+      workflow.gridResult.guidance =
+        'The new Grid is not ready. Prepare the current round again without purchasing.';
+    }
+  }
+  return status(workflow);
+}
+
+export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_prepare',
     description:
-      'Check enabled NexCaptcha products/prices and the current online schema, then collect page CAPTCHA parameters and callback. Free: never creates a paid task. No offline product rules or fallback. Call before navigating to arm capture. Supports captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile; online product support does not add browser adapters. Select challengeId if multiple widgets exist. Quote the USDT fee and obtain explicit confirmation before submit. Never silently reload a filled form.',
+      'Check enabled products/prices and online schema, then capture the page challenge. Free; no purchase. Chooses BROWSER_RESULT for captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, or BROWSER_INTERACTION for a real supported GRID; checks integration.workflows and the local adapter. No workflow switch parameter or automatic HTTP_SUBMIT integration. Detects visible reCAPTCHA image grids; for other regular image grids supply observed grid DOM selectors and mode. Unsupported canvas/custom widgets need a site adapter. Select challengeId if multiple widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or timeout are blockers, not reasons to substitute GRID or raw nex_captcha_buy. Grid capture preserves the original instructions and image; quote each round fee and approve tile clicks and CAPTCHA verify before submit. Never silently reload a filled form.',
     inputSchema: automationSchema({
       challengeId: z.string().optional(),
-      challengeUrl: z.string().url().optional()
+      challengeUrl: z.string().url().optional(),
+      grid: gridOptions.optional()
     }),
     execute: async (args, ctx) => {
       const catalog = await service(ctx, CAPTCHA_PRODUCTS_ROUTE);
       const sid = sessionId(args, ctx.sessions);
-      const page = await action(ctx, sid, args.pageId, 'captchaInspect', {}, catalog.contextId);
+      const page = await action(
+        ctx,
+        sid,
+        args.pageId,
+        'captchaInspect',
+        args.grid ? { grid: args.grid } : {},
+        catalog.contextId
+      );
       const candidates: Candidate[] = page.candidates ?? [];
+      const publicPage = { ...page, candidates: candidates.map(publicCandidate) };
       const selected = args.challengeId
         ? candidates.find((row) => row.challengeId === args.challengeId)
         : candidates.length === 1
@@ -232,7 +336,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
       if (!selected)
         return successResult(
           'No unique captured CAPTCHA. Select challengeId or arm capture before navigation. Reinitializing an existing filled form requires user approval.',
-          { ...page, products: catalog.data, ready: false }
+          { ...publicPage, products: catalog.data, ready: false }
         );
       const product = quotedProduct(catalog.data, selected.productCode);
       const needsFreshChallenge =
@@ -243,11 +347,11 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           product
             ? (selected.reason ?? 'CAPTCHA is not ready')
             : 'This CAPTCHA product is not currently enabled in NexCaptcha',
-          { ...page, ready: false, product }
+          { ...publicPage, ready: false, product }
         );
       }
       const { contract } = await readCaptchaContract(ctx, product.productCode, catalog.contextId);
-      assertCaptchaReady(contract, true);
+      assertCaptchaReady(contract, selected.productCode === 'GRID' ? 'BROWSER_INTERACTION' : true);
       const preparedAdapter = browserAdapter(
         selected,
         contract,
@@ -262,14 +366,25 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           reason: preparedAdapter.reason
         });
       if (!page.pageId) throw new Error('Missing stable CAPTCHA page ID');
-      if (!['https:', 'http:'].includes(new URL(String(selected.adapter.websiteURL)).protocol))
+      if (
+        !['https:', 'http:'].includes(
+          new URL(String(selected.productCode === 'GRID' ? page.url : selected.adapter.websiteURL))
+            .protocol
+        )
+      )
         throw new Error('CAPTCHA websiteURL must be an HTTP(S) site URL');
       amount(product.price);
       const store = storeFor(ctx);
       const previous = [...store.values()].find(
         (row) =>
-          row.candidate.challengeId === selected.challengeId &&
-          row.candidate.documentId === selected.documentId
+          row.candidate.documentId === selected.documentId &&
+          (row.candidate.challengeId === selected.challengeId ||
+            (selected.productCode === 'GRID' &&
+              row.productCode === 'GRID' &&
+              row.candidate.frameIndex === selected.frameIndex &&
+              row.attempted &&
+              !row.applied &&
+              !['FAILED', 'EXPIRED'].includes(row.state ?? '')))
       );
       if (previous && previous.contextId !== catalog.contextId)
         throw new Error(
@@ -278,6 +393,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
       if (previous?.attempted || previous?.busy) {
         if (
           !previous.busy &&
+          previous.candidate.challengeId === selected.challengeId &&
           previous.url === page.url &&
           previous.candidate.productCode === selected.productCode &&
           previous.candidate.frameUrl === selected.frameUrl
@@ -316,7 +432,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
       };
       store.set(workflow.prepareId, workflow);
       return successResult(
-        `NexCaptcha ${workflow.productCode}: ${workflow.price} USDT for one task. Ask the user to explicitly approve this fee, sending the public CAPTCHA parameters to the service and dispatching the site callback, which may send verification requests or submit a site form.`,
+        `NexCaptcha ${workflow.productCode}: ${workflow.price} USDT for one task. Ask the user to explicitly approve this fee and ${selected.productCode === 'GRID' ? 'sending this Grid image/instructions, clicking the returned tiles and the CAPTCHA verification control. Each changed image/round requires a new approved quote' : 'sending the public CAPTCHA parameters and dispatching the site callback, which may send verification requests or submit a site form'}.`,
         {
           prepareId: workflow.prepareId,
           productCode: workflow.productCode,
@@ -324,7 +440,19 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           currency: 'USDT',
           ready: true,
           expiresAt: workflow.expiresAt,
-          adapter: preparedAdapter.adapter,
+          adapter:
+            selected.productCode === 'GRID'
+              ? { comment: selected.adapter.comment }
+              : preparedAdapter.adapter,
+          ...(selected.grid
+            ? {
+                grid: {
+                  rows: selected.grid.rows,
+                  columns: selected.grid.columns,
+                  mode: selected.grid.mode
+                }
+              }
+            : {}),
           contract,
           requiresConfirmation: true
         }
@@ -334,7 +462,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
   defineTool({
     name: 'nex_browser_captcha_submit',
     description:
-      'After explicit user approval of the prepared product, single-task USDT fee and site callback dispatch, submit exactly once. confirmed=true records approval; maxTotalPrice must be the approved ceiling. Rechecks product price, team and page challenge. A timeout is an unknown charged outcome: never automatically purchase again. Saves the local task ID for complete. This does not click the final signup/login button.',
+      'After explicit approval of the product, single-round fee and callback or Grid tile/verification interaction, submit exactly once. confirmed=true records approval; maxTotalPrice is the approved ceiling. Rechecks product price, team, document and current Grid image. Never repurchase after timeout. Every new Grid round needs its own quote/approval. Saves the local task ID for complete; does not click final signup/login.',
     annotations: { destructiveHint: true, idempotentHint: false },
     inputSchema: z
       .object({ prepareId: z.string(), confirmed: z.literal(true), maxTotalPrice })
@@ -362,7 +490,10 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           workflow.productCode,
           workflow.contextId
         );
-        assertCaptchaReady(contract, true);
+        assertCaptchaReady(
+          contract,
+          workflow.productCode === 'GRID' ? 'BROWSER_INTERACTION' : true
+        );
         let candidate = await current(ctx, workflow);
         const preflightAdapter = browserAdapter(
           candidate,
@@ -425,7 +556,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
   defineTool({
     name: 'nex_browser_captcha_complete',
     description:
-      'Query the prepared task once and, on SUCCEEDED, dispatch its validated solution to the original page widget callback. The callback may send verification requests or submit a site form; obtain authorization for that scope first. Pending results require another call after 3–5 seconds; no background polling or new purchases. Stops on FAILED/EXPIRED and asks to verify refunds in billing. Never equates callback dispatch with website acceptance: inspect a fresh page snapshot/site verification response. Does not click the final signup/login button.',
+      'Query once; on SUCCEEDED apply to the original callback or click validated 1-based Grid tiles and CAPTCHA verify. Obtain interaction approval first. Grid waits for image replacement and inspects the next round; returns nextPrepareId/nextQuote without purchasing. Approve and submit that quote separately. Repeated complete only inspects applied Grid progress, never clicks again. Pending solver polls require 3–5 seconds. Stops on failure or unknown application. Website success requires explicit evidence; never click final signup/login.',
     annotations: { readOnlyHint: false, idempotentHint: false },
     inputSchema: z.object({ prepareId: z.string() }).strict(),
     execute: async (args, ctx) => {
@@ -434,6 +565,24 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
         throw new Error(
           'No known local task ID. Reconcile records and billing; never automatically repeat the purchase'
         );
+      if (workflow.productCode === 'GRID' && workflow.applied && !workflow.nextPrepareId) {
+        if (workflow.busy) throw new Error('CAPTCHA workflow is busy');
+        workflow.busy = true;
+        try {
+          await service(ctx, CAPTCHA_PRODUCTS_ROUTE, workflow.contextId);
+          const progress = await action(
+            ctx,
+            workflow.sessionId,
+            workflow.pageId,
+            'captchaApply',
+            { ...workflow.candidate, adapter: undefined, gridProgress: true },
+            workflow.contextId
+          );
+          return await gridProgress(ctx, workflow, progress);
+        } finally {
+          workflow.busy = false;
+        }
+      }
       if (
         workflow.applied ||
         ['FAILED', 'EXPIRED', 'APPLY_OUTCOME_UNKNOWN'].includes(workflow.state ?? '')
@@ -477,12 +626,15 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           'captchaApply',
           {
             ...workflow.candidate,
+            ...(workflow.productCode === 'GRID' ? { adapter: undefined } : {}),
             solution: parseServiceJson(record.solution, {})
           },
           workflow.contextId
         );
         workflow.applied = applied.applied === true;
         workflow.state = workflow.applied ? 'APPLIED' : 'APPLY_OUTCOME_UNKNOWN';
+        if (workflow.productCode === 'GRID' && workflow.applied)
+          return await gridProgress(ctx, workflow, applied);
         return status(workflow, { guidance: applied.guidance });
       } catch (error) {
         if (workflow.state === 'APPLY_OUTCOME_UNKNOWN')
