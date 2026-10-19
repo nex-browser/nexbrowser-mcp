@@ -13,6 +13,14 @@ Cancellation and HTTP timeouts stop further local requests but cannot roll back 
 3. Submit once. A successful envelope may have null data; it does not establish delivery or completion.
 4. On any error, timeout or missing allocation, inspect module records and nex_billing_trade_list before deciding what happened. Never automatically purchase, renew, extract or release again. Existing records may belong to earlier purchases, so do not infer attribution from their mere presence.
 
+## Email and phone for sign-ups
+
+When a sign-up or verification step needs an email address or phone number the user has not supplied:
+
+1. Check owned resources first with nex_mail_record_list or nex_sms_record_list and reuse a suitable unexpired one already authorized for this task.
+2. Otherwise ask one question that offers both choices: the user's own address or number, or a NexMail mailbox / NexSMS number quoted from nex_mail_plan_list or nex_sms_project_list with type, lifetime and total USDT.
+3. A registration request alone does not approve a purchase. Buy only after the user accepts that quote, then follow the purchase rules above.
+
 The MCP never executes a real purchase as an automated regression test. Verification codes, email bodies, proxy credentials and task solutions must not be written to ordinary logs.
 
 ## Proxies

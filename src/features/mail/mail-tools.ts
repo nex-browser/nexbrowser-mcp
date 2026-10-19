@@ -108,7 +108,7 @@ export const MAIL_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_mail_record_list',
     description:
-      'List current user/current team mailbox records including expired mailboxes. Use local id, not upstream mailboxId. An empty cached message list does not prove the inbox is empty.',
+      'List current user/current team mailbox records including expired mailboxes. Check here before asking for an email address or offering a mailbox purchase for a sign-up. Use local id, not upstream mailboxId. An empty cached message list does not prove the inbox is empty.',
     schema: servicePager.extend({ type: z.enum(['TEMPORARY', 'MAINSTREAM']).optional() }),
     route: MAIL_RECORDS_ROUTE,
     readOnly: true,

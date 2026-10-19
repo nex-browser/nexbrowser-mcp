@@ -174,6 +174,22 @@ describe('NexBrowser MCP protocol', () => {
     }
   });
 
+  // Regression: a sign-up asked only for the user's own email without checking owned
+  // mailboxes or offering a quoted NexMail purchase.
+  it('guides sign-ups to owned mailboxes and numbers, then a quoted purchase offer', async () => {
+    const session = await createMcpSession(config);
+
+    try {
+      const instructions = session.client.getInstructions()!;
+      expect(instructions).toMatch(/sign-up.*email address or phone number.*nex_mail_record_list/i);
+      expect(instructions).toMatch(/own address or number, or a NexMail mailbox/i);
+      expect(instructions).toContain('A registration request alone does not approve a purchase');
+      expect(instructions).toMatch(/refs from the latest nex_browser_snapshot/);
+    } finally {
+      await session.close();
+    }
+  });
+
   it('lists unified tools and forwards a management call to OpenAPI', async () => {
     const fetchMock = installFetchMock(
       async () => new Response(JSON.stringify({ code: 0, msg: 'ok', data: { data: [], count: 0 } }))

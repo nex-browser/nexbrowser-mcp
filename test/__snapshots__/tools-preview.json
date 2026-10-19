@@ -2958,7 +2958,7 @@
   },
   {
     "name": "nex_sms_record_list",
-    "description": "List purchased cloud phone numbers with state, expiry, and the latest verification code. keyword filters by number or project.",
+    "description": "List purchased cloud phone numbers with state, expiry, and the latest verification code. Check here before asking for a phone number or offering a number purchase for a sign-up. keyword filters by number or project.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3451,7 +3451,7 @@
   },
   {
     "name": "nex_mail_record_list",
-    "description": "List current user/current team mailbox records including expired mailboxes. Use local id, not upstream mailboxId. An empty cached message list does not prove the inbox is empty.",
+    "description": "List current user/current team mailbox records including expired mailboxes. Check here before asking for an email address or offering a mailbox purchase for a sign-up. Use local id, not upstream mailboxId. An empty cached message list does not prove the inbox is empty.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",

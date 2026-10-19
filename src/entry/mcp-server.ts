@@ -7,12 +7,12 @@ import { createSmsTools } from '../features/sms/sms-tools.js';
 import { createIpTools } from '../features/ip/ip-tools.js';
 import { createMailTools } from '../features/mail/mail-tools.js';
 import { createCaptchaTools } from '../features/captcha/captcha-tools.js';
-import { PAGE_CAPTCHA_GUIDANCE } from '../features/captcha/routing-guidance.js';
 import { createBillingTools } from '../features/billing/billing-tools.js';
 import { errorResult, invalidArguments } from '../shared/tool-result.js';
 import { InvalidArgumentError, type NexApiConfig } from '../shared/types.js';
 import { NexApiClient } from '../transport/nex-api-client.js';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from '../version.js';
+import { SERVER_INSTRUCTIONS } from './server-instructions.js';
 
 /**
  * MCP server exposing NexBrowser environment management and automation tools.
@@ -44,11 +44,7 @@ export class NexBrowserMcpServer {
       { name: MCP_SERVER_NAME, version: MCP_SERVER_VERSION },
       {
         capabilities: { tools: {} },
-        instructions:
-          'When using nexbrowser-mcp for browser tasks, use NexBrowser environments by default. Reuse the task environment when available; otherwise use nex_browser_list to find a suitable environment, then nex_browser_connect(windowId, startIfNeeded=true) to open and connect it. Continue with nex_browser_* using the matching sessionId/pageId, without asking whether to use NexBrowser again. Honor any environment explicitly selected by the user. ' +
-          PAGE_CAPTCHA_GUIDANCE +
-          ' Discover and execute the CAPTCHA tools; merely reading their definitions is not preparation. Never download challenge images or install Pillow/OpenCV to solve them. If preparation reports an unsupported adapter, missing parameters or an uncaptured callback, report that concrete blocker; never bypass it with raw nex_captcha_buy or a local solver. Never silently reload a filled form, repurchase after timeout, or treat provider success as website acceptance. An explicit registration/login request authorizes its normal final submit unless the user restricted it; it does not authorize an unquoted CAPTCHA fee. Use one host approval request for the quoted fee and callback scope when available, without a duplicate text confirmation. ' +
-          "IMPORTANT ROUTING RULE: NexBrowser is the product and this MCP server, not a generic browser. Whenever the user explicitly says NexBrowser/nexbrowser or asks to use NexBrowser OpenAPI, use this server's nex_browser_* tools; never substitute the Browser plugin, Chrome plugin, computer-use, shell commands, or process enumeration. For requests to list or count NexBrowser windows/environments/profiles, call nex_browser_list first. Example: '使用 NexBrowser 查看我有多少窗口' means call nex_browser_list. NexBrowser windows are managed environments/profiles, not operating-system application windows or browser tabs. Browser tools use the nex_browser_* namespace; former tool names are not available. Cloud phone numbers for SMS verification codes use nex_sms_*; nex_sms_buy charges the account balance, so quote the price and get the user's explicit confirmation first. Proxy marketplace capabilities use nex_ip_*, mailboxes use nex_mail_*, CAPTCHA tasks use nex_captcha_*, and payment/refund reconciliation uses nex_billing_*. All purchases and renewals require explicit confirmation of scope and quoted total, with maxTotalPrice as a preflight ceiling rather than an atomic backend price lock. Quota extraction also requires approval. Never automatically repeat purchases, renewals, extraction or release after errors or timeouts; reconcile module records and billing first. Mail details mark messages read. Keep resource IDs and each module state machine distinct."
+        instructions: SERVER_INSTRUCTIONS
       }
     );
     const registered = new Set<string>();

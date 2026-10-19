@@ -158,7 +158,7 @@ export const SMS_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_sms_record_list',
     description:
-      'List purchased cloud phone numbers with state, expiry, and the latest verification code. keyword filters by number or project.',
+      'List purchased cloud phone numbers with state, expiry, and the latest verification code. Check here before asking for a phone number or offering a number purchase for a sign-up. keyword filters by number or project.',
     annotations: { readOnlyHint: true },
     inputSchema: z
       .object({
