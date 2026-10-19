@@ -6,6 +6,27 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.19-beta.2] - 2026-10-19
+
+### Added
+
+- Support browser CAPTCHA Grid interaction with automatic visible reCAPTCHA grid detection or explicit selectors for supported image grids, including static and dynamic rounds.
+- Return a free next-round preparation and quote when Grid images change; require separate fee and interaction approval before each new purchase.
+
+### Changed
+
+- Select browser CAPTCHA workflows from the current online contract and local adapter capabilities, and clarify when HTTP submission requires an established site integration.
+- Require a documented 1-based row-major Grid result contract and preserve the original challenge image and instructions while keeping image data out of tool summaries.
+
+### Fixed
+
+- Prevent duplicate purchases for an in-flight Grid challenge and repeated tile clicks when checking completion progress.
+- Treat unsupported adapters, missing parameters, uncaptured callbacks, HTTP 403 and timeouts as blockers instead of reasons to substitute Grid or raw CAPTCHA purchases.
+
+### Tests
+
+- Cover Grid preparation, per-round approval, result application, next-round quotes, duplicate-purchase prevention and workflow contract validation.
+
 ## [2026.10.19-beta.1] - 2026-10-19
 
 ### Changed
@@ -198,7 +219,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.1...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.2...HEAD
+[2026.10.19-beta.2]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.1...v2026.10.19-beta.2
 [2026.10.19-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.17-beta.1...v2026.10.19-beta.1
 [2026.10.17-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.16-beta.1...v2026.10.17-beta.1
 [2026.8.20]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.8.19...v2026.8.20
