@@ -1,6 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { CAPTCHA_ADAPTER_SCHEMAS } from './captcha-adapters.js';
+import {
+  assertCaptchaReady,
+  captchaAdapterInput,
+  readCaptchaContract,
+  validateOnlineCaptchaAdapter,
+  type CaptchaContract
+} from './online-schema.js';
 import { defineTool, type ToolContext } from '../../shared/define-tool.js';
 import { maxTotalPrice, parseServiceJson } from '../../shared/service-tools.js';
 import { successResult } from '../../shared/tool-result.js';
@@ -83,8 +89,12 @@ function quotedProduct(catalog: unknown, productCode: string) {
   return alias ? catalog.find((row: any) => row.productCode === alias) : undefined;
 }
 
-/** 页面流程只接受现有四类桥接，规范旧字段后按原生产品契约校验。 */
-function browserAdapter(candidate: Candidate, awaitingFreshChallenge = false) {
+/** 只保留已实现的页面桥接；产品参数全部按本次在线 Schema 校验。 */
+function browserAdapter(
+  candidate: Candidate,
+  contract: CaptchaContract,
+  awaitingFreshChallenge = false
+) {
   const code =
     candidate.productCode === 'TURNSTILE' ? 'CLOUDFLARE_TURNSTILE' : candidate.productCode;
   if (!['GEETEST', 'GEETEST_V4', 'RECAPTCHA_V2', 'CLOUDFLARE_TURNSTILE'].includes(code))
@@ -101,29 +111,21 @@ function browserAdapter(candidate: Candidate, awaitingFreshChallenge = false) {
     adapter.apiServerSubdomain = adapter.geetestApiServerSubdomain;
     delete adapter.geetestApiServerSubdomain;
   }
-  if (code === 'CLOUDFLARE_TURNSTILE') delete adapter.userAgent;
-  if (code === 'RECAPTCHA_V2' && Object.hasOwn(adapter, 'recaptchaDataSValue'))
+  // 旧桥接附带的 UA 仅在线规则明确不接受时移除，不维护固定产品字段表。
+  if (
+    code === 'CLOUDFLARE_TURNSTILE' &&
+    contract.schema.additionalProperties === false &&
+    !(contract.schema.properties as Record<string, unknown> | undefined)?.userAgent
+  )
+    delete adapter.userAgent;
+  try {
+    captchaAdapterInput.parse(adapter);
+    // GeeTest v3 的新 challenge 只能在审批后获取，完整线上校验推迟到刷新完成后。
+    if (!awaitingFreshChallenge) validateOnlineCaptchaAdapter(contract, adapter);
+  } catch (error) {
     return {
-      reason:
-        'This reCAPTCHA requires recaptchaDataSValue, which NexCaptcha does not currently expose. Do not purchase a task without support for this parameter.'
+      reason: error instanceof Error ? error.message : 'Online CAPTCHA contract validation failed.'
     };
-  const parsed = CAPTCHA_ADAPTER_SCHEMAS[code]!.safeParse(adapter);
-  if (!parsed.success) {
-    const issues = parsed.error.issues.filter(
-      (issue) =>
-        !(
-          code === 'GEETEST' &&
-          awaitingFreshChallenge &&
-          issue.path.length === 1 &&
-          issue.path[0] === 'challenge'
-        )
-    );
-    if (issues.length)
-      return {
-        reason: `CAPTCHA adapter does not match the NexCaptcha ${code} contract (${[
-          ...new Set(issues.map((issue) => issue.path.join('.') || 'adapter'))
-        ].join(', ')}). Inspect nex_captcha_product_schema before purchasing.`
-      };
   }
   return { adapter };
 }
@@ -212,7 +214,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
   defineTool({
     name: 'nex_browser_captcha_prepare',
     description:
-      'First check enabled NexCaptcha products/prices, then collect page CAPTCHA parameters and callback. Free: never creates a paid task. Call before navigating to a registration page to arm capture. Supports captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile; unsupported/uncaptured widgets return actionable blockers. Select challengeId if multiple widgets exist. Quote the returned USDT fee and obtain explicit confirmation before submit. Never silently reload a filled form.',
+      'Check enabled NexCaptcha products/prices and the current online schema, then collect page CAPTCHA parameters and callback. Free: never creates a paid task. No offline product rules or fallback. Call before navigating to arm capture. Supports captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile; online product support does not add browser adapters. Select challengeId if multiple widgets exist. Quote the USDT fee and obtain explicit confirmation before submit. Never silently reload a filled form.',
     inputSchema: automationSchema({
       challengeId: z.string().optional(),
       challengeUrl: z.string().url().optional()
@@ -244,8 +246,11 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           { ...page, ready: false, product }
         );
       }
+      const { contract } = await readCaptchaContract(ctx, product.productCode, catalog.contextId);
+      assertCaptchaReady(contract, true);
       const preparedAdapter = browserAdapter(
         selected,
+        contract,
         Boolean(needsFreshChallenge && args.challengeUrl)
       );
       if (preparedAdapter.reason)
@@ -320,6 +325,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
           ready: true,
           expiresAt: workflow.expiresAt,
           adapter: preparedAdapter.adapter,
+          contract,
           requiresConfirmation: true
         }
       );
@@ -351,9 +357,16 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
         const product = catalog.data?.find((row: any) => row.productCode === workflow.productCode);
         if (!product || comparePrice(product.price, workflow.price) !== 0)
           throw new Error('CAPTCHA price/product changed; obtain approval for a new quote');
+        const { contract } = await readCaptchaContract(
+          ctx,
+          workflow.productCode,
+          workflow.contextId
+        );
+        assertCaptchaReady(contract, true);
         let candidate = await current(ctx, workflow);
         const preflightAdapter = browserAdapter(
           candidate,
+          contract,
           candidate.productCode === 'GEETEST' && Boolean(workflow.challengeUrl)
         );
         if (preflightAdapter.reason) throw new Error(preflightAdapter.reason);
@@ -375,7 +388,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS = [
             'CAPTCHA refresh returned a different product; do not purchase this task'
           );
         if (!candidate.ready) throw new Error(candidate.reason ?? 'CAPTCHA challenge is not ready');
-        const submittedAdapter = browserAdapter(candidate);
+        const submittedAdapter = browserAdapter(candidate, contract);
         if (submittedAdapter.reason) throw new Error(submittedAdapter.reason);
         if (Date.now() > workflow.expiresAt)
           throw new Error('CAPTCHA quote expired during preflight; prepare again before buying');

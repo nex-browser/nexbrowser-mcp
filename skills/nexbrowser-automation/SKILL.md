@@ -72,6 +72,8 @@ Order of preference: `nex_browser_fill_account` for a bound vault credential; `n
 
 ### Paid actions
 
+- When using nexbrowser-mcp for browser tasks, open and use a NexBrowser environment by default: reuse the task environment, or find one with `nex_browser_list` and open/connect it with `nex_browser_connect(windowId, startIfNeeded=true)`. On a page CAPTCHA, actually execute free `nex_browser_captcha_prepare`; loading its definition is not preparation. Do not use CDP, Python, Pillow/OpenCV, downloaded challenge images, gap matching or scripted drags to solve it. Normal page inspection and non-CAPTCHA coding remain available.
+
 - Proxy market, mailbox, CAPTCHA and billing tools use `nex_ip_*`, `nex_mail_*`, `nex_captcha_*` and `nex_billing_*` within this same server. Read [service workflows](guides/services.md) for purchase confirmation, resource IDs, polling and reconciliation. These service tools do not require a browser session. For page CAPTCHAs, use `nex_browser_captcha_prepare` first, explicitly confirm the quoted fee and callback scope, then `nex_browser_captcha_submit` and `nex_browser_captcha_complete` in the original browser session. Read the [page CAPTCHA workflow](guides/captcha.md); never silently purchase while signing in or stop solely because a CAPTCHA appeared.
 - Every purchase or renewal requires explicit approval of the quoted scope and total. `maxTotalPrice` is live preflight protection, not an atomic backend lock. After errors or timeouts, inspect records and billing and never automatically resubmit. Short-term extraction consumes purchased quota and also requires approval.
 

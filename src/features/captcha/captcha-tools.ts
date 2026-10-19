@@ -1,15 +1,15 @@
 import { z } from 'zod';
 import { BROWSER_CAPTCHA_TOOL_SPECS } from './browser-captcha-tools.js';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
-import { errorResult, successResult } from '../../shared/tool-result.js';
+import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
 import {
-  CAPTCHA_SCHEMA_SOURCE,
+  assertCaptchaReady,
   captchaAdapterInput,
-  captchaProductConditions,
-  captchaProductDefinition,
-  captchaProductSummaries,
-  validateCaptchaAdapter
-} from './product-schemas.js';
+  captchaProductCode,
+  readCaptchaContract,
+  requireCaptchaContract,
+  validateOnlineCaptchaAdapter
+} from './online-schema.js';
 import {
   maxTotalPrice,
   parseServiceJson,
@@ -21,6 +21,7 @@ import {
 import type { NexApiClient } from '../../transport/nex-api-client.js';
 import {
   CAPTCHA_PRODUCTS_ROUTE,
+  CAPTCHA_SCHEMA_ROUTE,
   CAPTCHA_BUY_ROUTE,
   CAPTCHA_RECORDS_ROUTE,
   CAPTCHA_QUERY_ROUTE
@@ -44,8 +45,6 @@ const taskFields = new Set([
   'expiresAt',
   'expiredAt'
 ]);
-const schemaNote =
-  'Offline documentation snapshot, not current product availability or pricing. Use nex_captcha_product_list for enabled products and payable USDT prices. Desktop purchases use the existing login and local record id; no NexCaptcha API key or upstream taskId is needed. DOCUMENTATION_REQUIRED products need an established result contract before any paid task; do not guess results or use GRID as a generic fallback.';
 
 /** 列表保留任务归属与实际预扣价，任务答案只在单任务查询时展开。 */
 function taskSummary(row: any) {
@@ -75,69 +74,69 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
       data: {
         rows: (Array.isArray(data) ? data : []).map((product: any) => ({
           ...product,
-          parameterSchemaAvailable: Boolean(captchaProductDefinition(product.productCode)),
           parameterSchemaTool: 'nex_captcha_product_schema'
         }))
       }
     })
   }),
-  defineTool({
+  serviceTool({
     name: 'nex_captcha_product_schema',
     description:
-      'Read the documented NexCaptcha product adapter and result contracts without network access or charges. Omit productCode to list all 50 documented products; pass a code for required/optional fields, types, mutually exclusive modes, result schema/examples, input sources and application requirements. Consult before nex_captcha_buy. These are standalone parameter contracts, not a promise that the browser can collect/apply every product. Use nex_captcha_product_list for live availability/prices. TURNSTILE is a legacy lookup alias for CLOUDFLARE_TURNSTILE; purchases retain the live catalog code.',
-    inputSchema: z.object({ productCode: z.string().min(1).optional() }).strict(),
-    annotations: { readOnlyHint: true, idempotentHint: true },
-    execute: async ({ productCode }) => {
-      if (!productCode)
-        return successResult(
-          'Documented NexCaptcha parameter catalog; select a productCode for full details.',
-          {
-            source: CAPTCHA_SCHEMA_SOURCE,
-            rows: captchaProductSummaries(),
-            note: schemaNote
-          }
-        );
-      const definition = captchaProductDefinition(productCode);
-      if (!definition)
-        return errorResult(
-          'No bundled parameter contract for this productCode. Consult the current official documentation and enabled product list; do not guess adapter fields.',
-          { productCode, source: CAPTCHA_SCHEMA_SOURCE }
-        );
-      return successResult(
-        `NexCaptcha ${definition.productCode} input and result contract. ${schemaNote}`,
-        {
-          source: CAPTCHA_SCHEMA_SOURCE,
-          requestedProductCode: productCode,
-          ...definition,
-          note: schemaNote
-        }
-      );
-    }
+      'Read the current online NexCaptcha adapter schema, example, integration/result contract and workflowGuide through the signed-in Desktop client. Free, read-only and requires a connection. productCode is required and must exactly match nex_captcha_product_list; no aliases or offline fallback. Preserve all schema constraints and unknown fields. Examples are placeholders, not real challenge inputs. DOCUMENTATION_REQUIRED blocks paid tasks. Online product support does not imply browser capture/apply support.',
+    schema: z.object({ productCode: captchaProductCode }).strict(),
+    route: CAPTCHA_SCHEMA_ROUTE,
+    method: 'POST',
+    readOnly: true,
+    project: (data, args) => ({
+      text: 'Current online NexCaptcha product contract. No offline fallback; use actual challenge inputs and obtain fee approval before purchasing.',
+      data: requireCaptchaContract(data, args.productCode)
+    })
   }),
-  serviceTool({
+  defineTool({
     name: 'nex_captcha_buy',
     description:
-      'Create a CAPTCHA solving task and precharge the balance once. Read nex_captcha_product_schema for the selected live product, collect actual challenge inputs and quote the product, price and intended result use. Obtain explicit user approval (the host approval panel may supply it) before execution. Known products reject missing, unsupported or mistyped adapter fields; unknown future products still require a verified contract. Preflight maxTotalPrice is not atomic. adapter must be an object, never null. Creation is asynchronous; retain local id, not upstream taskId. Never automatically retry or substitute GRID after a failure.',
-    schema: z
+      'Create a CAPTCHA solving task and precharge once after explicit fee/scope approval (the host approval panel may supply it). Read nex_captcha_product_schema and use actual challenge inputs. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. Preflight maxTotalPrice is not atomic. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Never automatically retry or substitute GRID.',
+    inputSchema: z
       .object({
-        productCode: z.string().min(1),
+        productCode: captchaProductCode,
         adapter: captchaAdapterInput,
         maxTotalPrice
       })
-      .strict()
-      .superRefine(({ productCode, adapter }, context) =>
-        validateCaptchaAdapter(productCode, adapter, context)
-      )
-      .meta({ allOf: captchaProductConditions() }),
-    route: CAPTCHA_BUY_ROUTE,
-    method: 'POST',
-    consequential: true,
-    reconcile:
-      'Refresh nex_captcha_record_list and nex_billing_trade_list to reconcile the task and charge.',
-    project: (data) => ({
-      text: 'Task creation accepted; query the local id with nex_captcha_query. Creation does not mean solving succeeded.',
-      data: { record: data ? taskSummary(data) : null }
-    })
+      .strict(),
+    annotations: { destructiveHint: true, idempotentHint: false },
+    execute: async (args, ctx) => {
+      let contextId: string;
+      try {
+        const online = await readCaptchaContract(ctx, args.productCode);
+        assertCaptchaReady(online.contract);
+        validateOnlineCaptchaAdapter(online.contract, args.adapter);
+        contextId = online.contextId;
+      } catch (error) {
+        return errorResult(
+          `No purchase attempted. ${error instanceof Error ? error.message : 'Online CAPTCHA schema unavailable.'}`
+        );
+      }
+      try {
+        const response = await ctx.api.request(CAPTCHA_BUY_ROUTE, {
+          method: 'POST',
+          headers: { 'X-Nex-Service-Context': contextId },
+          body: JSON.stringify(args)
+        });
+        if (response.code !== 0)
+          return apiErrorResult(
+            'CAPTCHA purchase failed; reconcile records and billing before any new purchase',
+            response
+          );
+        return successResult(
+          'Task creation accepted; query the local id with nex_captcha_query. Creation does not mean solving succeeded.',
+          { record: response.data ? taskSummary(response.data) : null }
+        );
+      } catch {
+        return errorResult(
+          'Purchase outcome is unknown. Reconcile nex_captcha_record_list and nex_billing_trade_list; do not automatically repeat this purchase.'
+        );
+      }
+    }
   }),
   serviceTool({
     name: 'nex_captcha_record_list',

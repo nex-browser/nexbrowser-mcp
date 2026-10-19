@@ -117,6 +117,7 @@ export const MAIL_RECORDS_ROUTE = '/mail/records';
 export const MAIL_PULL_ROUTE = '/mail/pull';
 export const MAIL_DETAIL_ROUTE = '/mail/detail';
 export const CAPTCHA_PRODUCTS_ROUTE = '/captcha/products';
+export const CAPTCHA_SCHEMA_ROUTE = '/captcha/schema';
 export const CAPTCHA_BUY_ROUTE = '/captcha/buy';
 export const CAPTCHA_RECORDS_ROUTE = '/captcha/records';
 export const CAPTCHA_QUERY_ROUTE = '/captcha/query';

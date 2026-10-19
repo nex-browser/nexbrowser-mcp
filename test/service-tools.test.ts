@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { onlineCaptchaContract } from './helpers.js';
 import {
   createIpTools,
   createMailTools,
@@ -11,7 +12,14 @@ import {
 const ok = (data: unknown) => ({ code: 0, msg: 'ok', data });
 
 function setup(name: string, response: unknown) {
-  const request = vi.fn().mockResolvedValue(response);
+  const request = vi.fn(async (route: string, options?: RequestInit) =>
+    route === '/captcha/schema'
+      ? {
+          ...ok(onlineCaptchaContract(JSON.parse(String(options?.body)).productCode)),
+          contextId: 'team-a'
+        }
+      : response
+  );
   const client = { request } as unknown as NexApiClient;
   const tools = [
     ...createIpTools(client),
@@ -63,8 +71,10 @@ describe('service tool contracts', () => {
     const { tool, request } = setup(name, ok(null));
     const result = await tool.execute(args);
     expect(result.isError).not.toBe(true);
-    expect(request).toHaveBeenCalledExactlyOnceWith(route, expect.objectContaining({ method }));
-    if (method === 'POST') expect(JSON.parse(request.mock.calls[0]![1].body)).toMatchObject(args);
+    expect(request).toHaveBeenCalledWith(route, expect.objectContaining({ method }));
+    expect(request).toHaveBeenCalledTimes(name === 'nex_captcha_buy' ? 2 : 1);
+    if (method === 'POST')
+      expect(JSON.parse(String(request.mock.calls.at(-1)![1]?.body))).toMatchObject(args);
   });
 
   it.each([
@@ -202,12 +212,16 @@ describe('service tool contracts', () => {
 
   it('does not retry or invent failure/refund on an uncertain purchase', async () => {
     const { tool, request } = setup('nex_captcha_buy', null);
-    request.mockRejectedValue(new Error('timeout with confidential transport data'));
+    request.mockImplementation(async (route) => {
+      if (route === '/captcha/schema')
+        return { ...ok(onlineCaptchaContract('TEST')), contextId: 'team-a' };
+      throw new Error('timeout with confidential transport data');
+    });
     const result = await tool.execute({ productCode: 'TEST', adapter: {}, maxTotalPrice: 1 });
     expect(result.isError).toBe(true);
     expect(JSON.stringify(result)).toContain('outcome is unknown');
     expect(JSON.stringify(result)).not.toContain('confidential');
-    expect(request).toHaveBeenCalledTimes(1);
+    expect(request).toHaveBeenCalledTimes(2);
   });
 
   it('preserves backend permission failures', async () => {

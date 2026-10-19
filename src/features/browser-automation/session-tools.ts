@@ -4,6 +4,7 @@ import { invalidArguments } from '../../shared/tool-result.js';
 import type { McpToolDefinition } from '../../shared/types.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
 import { SESSIONS_ROOT, sessionRoute } from '../../transport/routes.js';
+import { PAGE_CAPTCHA_GUIDANCE } from '../captcha/routing-guidance.js';
 import { callEndpoint, sessionId } from './common.js';
 
 // Clients send team/window IDs as string or number; both are stringified before transport. 客户端可能以字符串或数字传团队/窗口 ID；发送前统一字符串化。
@@ -12,7 +13,8 @@ const browserIdSchema = z.union([z.string(), z.number()]);
 const CONNECT = defineTool({
   name: 'nex_browser_connect',
   description:
-    'Connect to one NexBrowser window using the active team by default and create an isolated automation session. For multiple windows, first call nex_browser_open once with all window IDs, then connect each window with startIfNeeded=false.',
+    'For nexbrowser-mcp browser tasks, use a NexBrowser environment by default; pass startIfNeeded=true to open a closed environment. Connect to one NexBrowser window using the active team by default and create an isolated automation session. For multiple windows, first call nex_browser_open once with all window IDs, then connect each window with startIfNeeded=false. ' +
+    PAGE_CAPTCHA_GUIDANCE,
   inputSchema: z
     .object({
       teamId: browserIdSchema
@@ -41,7 +43,7 @@ const CONNECT = defineTool({
           startIfNeeded: args.startIfNeeded === true
         })
       },
-      'Browser automation session connected.',
+      `Browser automation session connected.\n${PAGE_CAPTCHA_GUIDANCE}`,
       (data) => ctx.sessions.setActiveSessionId(String(data?.sessionId || '') || undefined)
     );
   }

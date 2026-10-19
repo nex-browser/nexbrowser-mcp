@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createMcpSession, installFetchMock } from './helpers.js';
+import { createMcpSession, installFetchMock, onlineCaptchaContract } from './helpers.js';
 import { createCaptchaTools } from '../src/features/captcha/captcha-tools.js';
 import type { NexApiClient } from '../src/transport/nex-api-client.js';
 
@@ -21,6 +21,47 @@ function fixture() {
   const catalog = { price: '0.005', productCode: 'GEETEST_V4' };
   const products = [catalog];
   const record = { id: 42, productCode: 'GEETEST_V4', state: 'PROCESSING', solution: {} };
+  const schemas: Record<string, Record<string, any>> = {
+    GEETEST_V4: {
+      type: 'object',
+      properties: {
+        websiteURL: { type: 'string' },
+        captchaId: { type: 'string' },
+        userAgent: { type: 'string' }
+      },
+      required: ['websiteURL', 'captchaId'],
+      additionalProperties: false
+    },
+    GEETEST: {
+      type: 'object',
+      properties: {
+        websiteURL: { type: 'string' },
+        gt: { type: 'string' },
+        challenge: { type: 'string' },
+        apiServerSubdomain: { type: 'string' }
+      },
+      required: ['websiteURL', 'gt', 'challenge'],
+      additionalProperties: false
+    },
+    RECAPTCHA_V2: {
+      type: 'object',
+      properties: { websiteURL: { type: 'string' }, websiteKey: { type: 'string' } },
+      required: ['websiteURL', 'websiteKey'],
+      additionalProperties: false
+    },
+    TURNSTILE: {
+      type: 'object',
+      properties: {
+        websiteURL: { type: 'string' },
+        websiteKey: { type: 'string' },
+        action: { type: 'string' }
+      },
+      required: ['websiteURL', 'websiteKey'],
+      additionalProperties: false
+    }
+  };
+  schemas.CLOUDFLARE_TURNSTILE = schemas.TURNSTILE!;
+  const integration = onlineCaptchaContract('fixture').integration;
   let contextId = 'team-a-revision';
   const ok = (data: unknown) => ({ code: 0, msg: 'ok', data, contextId });
   const request = vi.fn(async (route: string, options?: RequestInit) => {
@@ -32,6 +73,14 @@ function fixture() {
       return { code: 'SESSION_CONTEXT_CHANGED', msg: 'Changed', data: null, contextId };
     }
     if (route === '/captcha/products') return ok(products);
+    if (route === '/captcha/schema') {
+      const { productCode } = JSON.parse(String(options?.body));
+      return ok({
+        ...onlineCaptchaContract(productCode),
+        schema: schemas[productCode] ?? { type: 'object' },
+        integration
+      });
+    }
     if (route === '/captcha/buy') return ok({ ...record });
     if (route === '/captcha/query') return ok({ ...record });
     const body = JSON.parse(String(options?.body));
@@ -59,6 +108,8 @@ function fixture() {
     page,
     catalog,
     products,
+    schemas,
+    integration,
     record,
     request,
     call,
@@ -77,6 +128,46 @@ afterEach(() => {
 });
 
 describe('browser NexCaptcha workflow', () => {
+  it('accepts a newly supported page parameter from the current online schema', async () => {
+    const f = fixture();
+    f.candidate.productCode = 'RECAPTCHA_V2';
+    f.catalog.productCode = 'RECAPTCHA_V2';
+    f.record.productCode = 'RECAPTCHA_V2';
+    f.candidate.adapter = {
+      websiteURL: 'https://site.test/register',
+      websiteKey: 'public-key',
+      recaptchaDataSValue: 'current-challenge'
+    };
+    expect(await f.prepare()).toMatchObject({ ready: false });
+    f.schemas.RECAPTCHA_V2!.properties.recaptchaDataSValue = { type: 'string' };
+    const quote = await f.prepare();
+    expect(quote).toMatchObject({ ready: true });
+    await f.submit(quote.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body)).adapter.recaptchaDataSValue).toBe(
+      'current-challenge'
+    );
+  });
+
+  it.each(['DOCUMENTATION_REQUIRED', 'workflow', 'network', 'changed-rule'])(
+    'stops before buying when the online page contract is %s',
+    async (change) => {
+      const f = fixture();
+      const quote = await f.prepare();
+      if (change === 'DOCUMENTATION_REQUIRED') f.integration.readiness = change;
+      if (change === 'workflow') f.integration.workflows = ['HTTP_SUBMIT'];
+      if (change === 'changed-rule') f.schemas.GEETEST_V4!.required.push('newRequiredField');
+      if (change === 'network') {
+        const original = f.request.getMockImplementation()!;
+        f.request.mockImplementation(async (route, options) => {
+          if (route === '/captcha/schema') throw new Error('offline');
+          return original(route, options);
+        });
+      }
+      await expect(f.submit(quote.prepareId)).rejects.toThrow();
+      expect(f.buys()).toHaveLength(0);
+    }
+  );
+
   it('normalizes the legacy GeeTest field before quoting and after challenge refresh', async () => {
     const f = fixture();
     f.candidate.productCode = 'GEETEST';
@@ -136,11 +227,11 @@ describe('browser NexCaptcha workflow', () => {
         const blocked = await f.prepare();
         expect(blocked).toMatchObject({
           ready: false,
-          reason: expect.stringContaining('recaptchaDataSValue')
+          reason: expect.stringContaining('online contract')
         });
         expect(JSON.stringify(blocked)).not.toContain('private-challenge-parameter');
       } else {
-        await expect(f.submit(quote.prepareId)).rejects.toThrow('recaptchaDataSValue');
+        await expect(f.submit(quote.prepareId)).rejects.toThrow('online contract');
       }
       expect(f.buys()).toHaveLength(0);
     }
@@ -176,7 +267,7 @@ describe('browser NexCaptcha workflow', () => {
     } catch (error) {
       message = String(error);
     }
-    expect(message).toContain('contract');
+    expect(message).toContain('Platform API keys');
     expect(message).not.toContain('private-key-not-for-the-service');
     expect(f.buys()).toHaveLength(0);
   });

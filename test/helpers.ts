@@ -3,6 +3,22 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { vi } from 'vitest';
 import { NexBrowserMcpServer, type NexApiConfig } from '../src/index.js';
 
+/** 使用开放字段的模拟线上契约，通用传输测试不依赖固定产品目录。 */
+export function onlineCaptchaContract(productCode: string) {
+  return {
+    productCode,
+    schema: { type: 'object', additionalProperties: true } as Record<string, unknown>,
+    example: {},
+    integration: {
+      readiness: 'READY',
+      resultKind: 'TOKEN',
+      resultSchema: { type: 'object' },
+      workflows: ['HTTP_SUBMIT', 'BROWSER_RESULT']
+    },
+    workflowGuide: { source: 'test-server' }
+  };
+}
+
 /**
  * Stubs global fetch and returns the spy for assertions; the stub is not
  * self-restoring, so callers must call vi.unstubAllGlobals() in afterEach.

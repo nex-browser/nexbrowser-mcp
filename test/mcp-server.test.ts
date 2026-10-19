@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TOOLS } from '../src/index.js';
-import { createMcpSession, installFetchMock } from './helpers.js';
+import { createMcpSession, installFetchMock, onlineCaptchaContract } from './helpers.js';
 
 const config = {
   apiHost: 'http://127.0.0.1:45536',
@@ -13,72 +13,34 @@ afterEach(() => {
 });
 
 describe('NexBrowser MCP protocol', () => {
-  it('exposes the documented CAPTCHA catalog and adapter contracts offline through the SDK', async () => {
-    const fetchMock = installFetchMock(async () => {
-      throw new Error('Schema lookup must not access Desktop or an upstream service');
-    });
-    const session = await createMcpSession({ ...config, apiKey: '' });
+  it('reads online CAPTCHA contracts through the SDK and requires an exact product code', async () => {
+    const contract = onlineCaptchaContract('GEETEST_V4');
+    const fetchMock = installFetchMock(
+      async () => new Response(JSON.stringify({ code: 0, data: contract }))
+    );
+    const session = await createMcpSession(config);
     try {
       const listed = await session.client.listTools();
       const schema = listed.tools.find((tool) => tool.name === 'nex_captcha_product_schema')!;
       expect(schema.annotations?.readOnlyHint).toBe(true);
-      expect(schema.inputSchema.properties).toHaveProperty('productCode');
-      expect(schema.inputSchema.required ?? []).toEqual([]);
-
-      const catalog = await session.client.callTool({
-        name: 'nex_captcha_product_schema',
-        arguments: {}
-      });
-      expect(catalog.isError).not.toBe(true);
-      expect(catalog.structuredContent).toHaveProperty('rows.length', 50);
-      expect(catalog.structuredContent).toMatchObject({
-        source: {
-          documentationUrl: 'https://app.nexcaptcha.net/openapi/docs.cgi?lang=zh-CN',
-          openapiUrl: 'https://app.nexcaptcha.net/openapi/nexcaptcha-openapi.json',
-          version: expect.any(String)
-        },
-        rows: expect.arrayContaining([
-          expect.objectContaining({
-            productCode: 'GEETEST_V4',
-            required: expect.any(Array),
-            optional: expect.any(Array)
-          })
-        ]),
-        note: expect.any(String)
-      });
-
+      expect(schema.inputSchema.required).toEqual(['productCode']);
       const detail = await session.client.callTool({
         name: 'nex_captcha_product_schema',
         arguments: { productCode: 'GEETEST_V4' }
       });
       expect(detail.isError).not.toBe(true);
-      expect(detail.structuredContent).toMatchObject({
-        requestedProductCode: 'GEETEST_V4',
-        productCode: 'GEETEST_V4',
-        adapterSchema: { type: 'object', properties: expect.any(Object) },
-        integration: {
-          workflows: expect.any(Array),
-          readiness: expect.any(String),
-          resultKind: expect.any(String)
-        },
-        solutionExample: expect.any(Object)
-      });
-
-      const alias = await session.client.callTool({
-        name: 'nex_captcha_product_schema',
-        arguments: { productCode: 'TURNSTILE' }
-      });
-      expect(alias.isError).not.toBe(true);
-      expect(alias.structuredContent).toMatchObject({
-        requestedProductCode: 'TURNSTILE',
-        productCode: 'CLOUDFLARE_TURNSTILE'
-      });
-      expect(fetchMock).not.toHaveBeenCalled();
+      expect(detail.structuredContent).toEqual(contract);
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://127.0.0.1:45536/captcha/schema',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ productCode: 'GEETEST_V4' })
+        })
+      );
     } finally {
       await session.close();
     }
   });
-
   it('propagates an MCP cancellation into the in-flight service HTTP request', async () => {
     let started!: () => void, cancelled!: () => void;
     const ready = new Promise<void>((resolve) => {
@@ -88,6 +50,10 @@ describe('NexBrowser MCP protocol', () => {
       cancelled = resolve;
     });
     const fetchMock = installFetchMock(async (url, init) => {
+      if (String(url).endsWith('/captcha/schema'))
+        return new Response(
+          JSON.stringify({ code: 0, contextId: 'team-a', data: onlineCaptchaContract('TEST') })
+        );
       if (!String(url).endsWith('/captcha/buy')) return new Response('{"code":0,"data":null}');
       started();
       return new Promise((_resolve, reject) => {
