@@ -9,7 +9,7 @@ import {
 import type { McpToolDefinition, McpToolResult } from '../../shared/types.js';
 import { accountFillRoute, actionsRoute } from '../../transport/routes.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
-import { PAGE_CAPTCHA_GUIDANCE } from '../captcha/routing-guidance.js';
+import { PAGE_CAPTCHA_POINTER } from '../captcha/routing-guidance.js';
 import { callAction, sessionId } from './common.js';
 import { automationSchema, TARGET_PROPERTY } from './schema.js';
 
@@ -18,7 +18,7 @@ const RELOAD = defineTool({
   name: 'nex_browser_reload',
   description:
     'Reload the page. Obtain approval before reloading a filled form to restore CAPTCHA capture. ' +
-    PAGE_CAPTCHA_GUIDANCE,
+    PAGE_CAPTCHA_POINTER,
   inputSchema: automationSchema(),
   execute: (args, ctx) => callAction(ctx, args, 'reload', {}, 'Page reloaded.')
 });
@@ -46,7 +46,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
     name: 'nex_browser_navigate',
     description:
       'Navigate the selected page and return its refreshed accessibility snapshot. ' +
-      PAGE_CAPTCHA_GUIDANCE,
+      PAGE_CAPTCHA_POINTER,
     inputSchema: automationSchema({ url: z.string() }),
     execute: (args, ctx) => callAction(ctx, args, 'navigate', { url: args.url }, 'Page navigated.')
   }),
@@ -57,7 +57,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
     name: 'nex_browser_click',
     description:
       'Click or double-click an element from the latest snapshot or a CSS selector. ' +
-      PAGE_CAPTCHA_GUIDANCE,
+      PAGE_CAPTCHA_POINTER,
     inputSchema: automationSchema({
       target: TARGET_PROPERTY,
       doubleClick: z.boolean().optional(),
@@ -76,7 +76,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
     name: 'nex_browser_mouse_click_xy',
     description:
       'Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport. ' +
-      PAGE_CAPTCHA_GUIDANCE,
+      PAGE_CAPTCHA_POINTER,
     inputSchema: automationSchema({
       x: z.number().min(0),
       y: z.number().min(0),
@@ -283,7 +283,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_browser_drag',
-    description: 'Drag one snapshot ref or selector to another. ' + PAGE_CAPTCHA_GUIDANCE,
+    description: 'Drag one snapshot ref or selector to another. ' + PAGE_CAPTCHA_POINTER,
     inputSchema: automationSchema({
       startTarget: TARGET_PROPERTY,
       endTarget: TARGET_PROPERTY

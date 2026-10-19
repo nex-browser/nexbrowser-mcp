@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import type { McpToolDefinition } from '../../shared/types.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
-import { PAGE_CAPTCHA_GUIDANCE } from '../captcha/routing-guidance.js';
+import { PAGE_CAPTCHA_POINTER } from '../captcha/routing-guidance.js';
 import { callAction } from './common.js';
 import { automationSchema, TARGET_PROPERTY } from './schema.js';
 
@@ -15,7 +15,7 @@ export const ARTIFACT_TOOL_SPECS: readonly McpToolSpec[] = [
     name: 'nex_browser_take_screenshot',
     description:
       'Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays. ' +
-      PAGE_CAPTCHA_GUIDANCE,
+      PAGE_CAPTCHA_POINTER,
     inputSchema: automationSchema({
       target: TARGET_PROPERTY.optional(),
       clip: z

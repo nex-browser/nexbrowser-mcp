@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import type { McpToolDefinition } from '../../shared/types.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
-import { PAGE_CAPTCHA_GUIDANCE } from '../captcha/routing-guidance.js';
+import { PAGE_CAPTCHA_POINTER } from '../captcha/routing-guidance.js';
 import { callAction } from './common.js';
 import { automationSchema, TARGET_PROPERTY } from './schema.js';
 
@@ -10,7 +10,7 @@ import { automationSchema, TARGET_PROPERTY } from './schema.js';
 const RUN_CODE = defineTool({
   name: 'nex_browser_run_code',
   description:
-    'Run page JavaScript when the separate runCode permission is enabled. ' + PAGE_CAPTCHA_GUIDANCE,
+    'Run page JavaScript when the separate runCode permission is enabled. ' + PAGE_CAPTCHA_POINTER,
   inputSchema: automationSchema({ code: z.string() }),
   execute: (args, ctx) => callAction(ctx, args, 'runCode', { code: args.code }, 'Code result.')
 });
@@ -24,7 +24,7 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
     name: 'nex_browser_snapshot',
     description:
       'Capture an accessibility/ARIA snapshot with short-lived actionable refs. ' +
-      PAGE_CAPTCHA_GUIDANCE,
+      PAGE_CAPTCHA_POINTER,
     annotations: { readOnlyHint: true },
     inputSchema: automationSchema({
       target: TARGET_PROPERTY.optional(),
@@ -56,7 +56,7 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
   ),
   defineTool({
     name: 'nex_browser_get_text',
-    description: 'Read visible text from the page or one target. ' + PAGE_CAPTCHA_GUIDANCE,
+    description: 'Read visible text from the page or one target. ' + PAGE_CAPTCHA_POINTER,
     annotations: { readOnlyHint: true },
     inputSchema: automationSchema({ target: TARGET_PROPERTY.optional() }),
     execute: (args, ctx) => callAction(ctx, args, 'text', { target: args.target }, 'Page text.')
@@ -107,7 +107,7 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
     name: 'nex_browser_evaluate',
     description:
       'Evaluate JavaScript when the dedicated evaluate permission is enabled. ' +
-      PAGE_CAPTCHA_GUIDANCE,
+      PAGE_CAPTCHA_POINTER,
     inputSchema: automationSchema({ expression: z.string() }),
     execute: (args, ctx) =>
       callAction(ctx, args, 'evaluate', { expression: args.expression }, 'Evaluation result.')
