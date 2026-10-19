@@ -6,6 +6,26 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+### Added
+
+- Guide sign-ups that need an email address or phone number to check owned NexMail/NexSMS records first, then offer the user's own value or a quoted purchase in one question; a registration request alone never approves a purchase.
+- Tell hosts to act on refs from the latest snapshot instead of guessed CSS selectors, with a screenshot and coordinate click as the fallback when a snapshot fails.
+
+### Changed
+
+- Group the server instructions by topic and replace the full CAPTCHA workflow repeated in eleven page tool descriptions with a short pointer to the free `nex_browser_captcha_prepare` route, reducing tool descriptions from about 33.9k to 20.8k characters.
+
+### Fixed
+
+- Report failed browser actions as `Browser action <name> failed` and failed session/tab calls with their own labels, instead of prefixing errors with success text such as `Screenshot captured.`.
+- Send only declared fields from `nex_browser_create` to Desktop.
+- Match `nex_browser_open` results by window ID and report a window without a returned row as failed instead of opened.
+- Classify service tool transport failures (timeout or cancellation, missing configuration, invalid response, network error) with a structured code, without echoing raw exception text.
+
+### Removed
+
+- Unused per-file automation tool factories and the unread `docGroup` tool field.
+
 ## [2026.10.19-beta.3] - 2026-10-19
 
 ### Fixed
