@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.19-beta.4] - 2026-10-19
+
 ### Added
 
 - Guide sign-ups that need an email address or phone number to check owned NexMail/NexSMS records first, then offer the user's own value or a quoted purchase in one question; a registration request alone never approves a purchase.
@@ -250,7 +252,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.3...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.4...HEAD
+[2026.10.19-beta.4]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.3...v2026.10.19-beta.4
 [2026.10.19-beta.3]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.2...v2026.10.19-beta.3
 [2026.10.19-beta.2]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.1...v2026.10.19-beta.2
 [2026.10.19-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.17-beta.1...v2026.10.19-beta.1
