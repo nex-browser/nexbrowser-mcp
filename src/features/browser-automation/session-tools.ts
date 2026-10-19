@@ -43,7 +43,10 @@ const CONNECT = defineTool({
           startIfNeeded: args.startIfNeeded === true
         })
       },
-      `Browser automation session connected.\n${PAGE_CAPTCHA_GUIDANCE}`,
+      {
+        success: `Browser automation session connected.\n${PAGE_CAPTCHA_GUIDANCE}`,
+        failure: 'Failed to connect browser automation session'
+      },
       (data) => ctx.sessions.setActiveSessionId(String(data?.sessionId || '') || undefined)
     );
   }
@@ -58,7 +61,10 @@ const DISCONNECT = defineTool({
       ctx.api,
       sessionRoute(sessionId(args, ctx.sessions)),
       { method: 'DELETE' },
-      'Browser automation session disconnected.',
+      {
+        success: 'Browser automation session disconnected.',
+        failure: 'Failed to disconnect browser automation session'
+      },
       () => ctx.sessions.setActiveSessionId(undefined)
     )
 });

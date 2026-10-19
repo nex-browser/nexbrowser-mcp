@@ -21,7 +21,7 @@ export const TAB_TOOL_SPECS: readonly McpToolSpec[] = [
         ctx.api,
         tabsRoute(sessionId(args, ctx.sessions)),
         { method: 'GET' },
-        'Browser tabs.'
+        { success: 'Browser tabs.', failure: 'Failed to list browser tabs' }
       )
   }),
   defineTool({
@@ -33,7 +33,7 @@ export const TAB_TOOL_SPECS: readonly McpToolSpec[] = [
         ctx.api,
         tabsRoute(sessionId(args, ctx.sessions)),
         { method: 'POST', body: JSON.stringify(args.url ? { url: String(args.url) } : {}) },
-        'Browser tab opened.'
+        { success: 'Browser tab opened.', failure: 'Failed to open browser tab' }
       )
   }),
   ...(['select', 'close'] as const).map((operation) =>
@@ -50,7 +50,10 @@ export const TAB_TOOL_SPECS: readonly McpToolSpec[] = [
             method: 'POST',
             body: JSON.stringify({ pageId: requiredText(args.pageId, 'pageId') })
           },
-          `Browser tab ${operation === 'select' ? 'selected' : 'closed'}.`
+          {
+            success: `Browser tab ${operation === 'select' ? 'selected' : 'closed'}.`,
+            failure: `Failed to ${operation} browser tab`
+          }
         )
     })
   )

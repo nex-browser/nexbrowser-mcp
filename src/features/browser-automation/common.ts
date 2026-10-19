@@ -93,24 +93,28 @@ export async function callAction(
       params
     })
   });
+  // label 只描述成功结果，失败时按动作名给出前缀，避免错误被冠以「已完成」。
   return response.code === 0
     ? automationSuccess(label, response.data)
-    : apiErrorResult(label, response);
+    : apiErrorResult(`Browser action ${action} failed`, response);
 }
 
 /**
  * Calls a session or tab endpoint; onSuccess fires only on code 0, before the JSON payload is formatted.
+ * Success and failure carry separate labels so an error is never prefixed with a success message.
  * 调用会话或标签页端点；onSuccess 仅在 code 为 0 时、格式化 JSON 载荷之前触发。
+ * 成功与失败使用各自的标签，错误不会被冠以成功文案。
  */
 export async function callEndpoint(
   api: NexApiRequester,
   path: string,
   options: RequestInit,
-  label: string,
+  labels: { success: string; failure: string },
   onSuccess?: (data: any) => void
 ): Promise<McpToolResult> {
+  const label = labels.success;
   const response: NexApiResponse<any> = await api.request(path, options);
-  if (response.code !== 0) return apiErrorResult(label, response);
+  if (response.code !== 0) return apiErrorResult(labels.failure, response);
   const data = response.data;
   onSuccess?.(data);
   return successResult(
