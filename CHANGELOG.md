@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.19-beta.3] - 2026-10-19
+
+### Fixed
+
+- Report Desktop runtime state in browser window listings, distinguishing locally running windows, windows occupied by another user and closed windows.
+- Show an unknown status when older Desktop versions omit runtime state instead of inferring live processes from the raw server `opened` flag.
+
+### Tests
+
+- Cover runtime status summaries, legacy responses, pagination and query forwarding in browser window listings.
+
 ## [2026.10.19-beta.2] - 2026-10-19
 
 ### Added
@@ -219,7 +230,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.2...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.3...HEAD
+[2026.10.19-beta.3]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.2...v2026.10.19-beta.3
 [2026.10.19-beta.2]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.1...v2026.10.19-beta.2
 [2026.10.19-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.17-beta.1...v2026.10.19-beta.1
 [2026.10.17-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.16-beta.1...v2026.10.17-beta.1
