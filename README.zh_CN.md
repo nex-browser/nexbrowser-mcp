@@ -67,15 +67,17 @@ claude mcp add nexbrowser \
 }
 ```
 
-修改配置后，请重启或重新加载 MCP 客户端。
+修改配置后，请重启或重新加载 MCP 客户端，然后继续第 3 步。
 
-### 3. 安装自动化 Skill（可选）
+### 3. 安装自动化 Skill（推荐）
 
-该 Skill 帮助兼容的 Agent 选择工具、使用页面快照引用，并从常见错误中恢复。
+MCP 提供工具，Skill 教 Claude Code、Codex、Cursor 等支持 Skill 的 Agent 用好这些工具：选对并连接环境、用页面快照引用操作元素而不是猜测选择器、从常见错误中恢复，并在验证码和扣费前先报价确认。不装也能使用 MCP，但 Agent 更容易用错工具，在验证码和扣费流程上走弯路。
 
 ```bash
 npx skills add https://github.com/nex-browser/nexbrowser-mcp --skill nexbrowser-automation
 ```
+
+`latest` 与 `beta` 版本使用同一条命令。客户端的 API MCP 页面也会在配置下方给出这条命令。详见 [Skill 说明](skills/nexbrowser-automation/README.md)。
 
 ## 能力范围
 

@@ -57,16 +57,22 @@ Other MCP clients:
 }
 ```
 
-Restart or reload the MCP client after changing its configuration.
+Restart or reload the MCP client after changing its configuration, then continue with step 3.
 
-### 3. Install the automation Skill (optional)
+### 3. Install the automation Skill (recommended)
 
-The Skill teaches compatible agents how to choose tools, use snapshot references, and recover
-from common errors.
+The MCP server provides the tools; the Skill teaches Skill-capable agents such as Claude Code,
+Codex and Cursor how to use them well: pick and connect the right environment, act on snapshot
+references instead of guessed selectors, recover from common errors, and quote before any CAPTCHA
+or paid step. The MCP server still works without it, but agents are more likely to choose the wrong
+tool or take detours in CAPTCHA and billing workflows.
 
 ```bash
 npx skills add https://github.com/nex-browser/nexbrowser-mcp --skill nexbrowser-automation
 ```
+
+The same command works for both the `latest` and `beta` packages. Desktop's API MCP page shows it
+under the copied configuration. See the [Skill guide](skills/nexbrowser-automation/README.md).
 
 ## Capabilities
 
