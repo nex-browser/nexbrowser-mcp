@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+### Added
+
+- `nex_proxy_detect` accepts `proxyIds` (up to 50) to check several saved proxies in one call and lists each result, missing IDs, and IDs left unchecked by the request time limit for a follow-up call. Requires a Desktop build whose local OpenAPI detects proxies on the client and writes results back like the proxy center.
+
 ## [2026.10.19-beta.4] - 2026-10-19
 
 ### Added

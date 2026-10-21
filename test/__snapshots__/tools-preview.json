@@ -445,11 +445,27 @@
   },
   {
     "name": "nex_proxy_detect",
-    "description": "Probe a proxy resource or an unsaved host:port for exit IP, location, and timezone. Credentials are never returned.",
+    "description": "Probe saved proxy resources or an unsaved host:port for exit IP, location, and timezone. Pass proxyIds to check several saved proxies in one call. Results for saved proxies are written back like the Desktop proxy center. Credentials are never returned.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
+        "proxyIds": {
+          "minItems": 1,
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "description": "Saved proxy IDs to detect in one call (up to 50); use this instead of repeated single calls"
+        },
         "proxyId": {
           "anyOf": [
             {

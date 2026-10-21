@@ -248,6 +248,55 @@ describe('nex_proxy_detect', () => {
   });
 });
 
+describe('nex_proxy_detect batch', () => {
+  it('detects several saved proxies in one request and lists every outcome', async () => {
+    const { request, tool } = toolWith('nex_proxy_detect', {
+      total: 4,
+      success: 1,
+      failed: 1,
+      notFound: ['9'],
+      unchecked: [6],
+      saved: true,
+      rows: [
+        {
+          id: 1,
+          status: 'success',
+          activeIp: '203.0.113.1',
+          country: 'Japan',
+          city: 'Tokyo',
+          timezone: 'Asia/Tokyo',
+          password: 'do-not-expose'
+        },
+        { id: 2, status: 'fail', code: 'DETECTION_FAILED', message: '代理检测失败' }
+      ]
+    });
+
+    const result = await tool.execute({ proxyIds: [1, 2, 9, 6] });
+
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request).toHaveBeenLastCalledWith(
+      '/proxy/detect',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ proxyIds: [1, 2, 9, 6] }) })
+    );
+    const text = (result as any).content[0].text as string;
+    expect(text).toContain('1 succeeded, 1 failed');
+    expect(text).toContain('Proxy 1: 203.0.113.1 · Japan / Tokyo · Asia/Tokyo');
+    expect(text).toContain('Proxy 2: fail (代理检测失败)');
+    expect(text).toContain('Not found: 9');
+    expect(text).toContain('again with these proxyIds');
+    expect(text).toContain('saved to the proxy resources');
+    expect(JSON.stringify(result)).not.toContain('do-not-expose');
+  });
+
+  it('rejects more than 50 proxy ids', () => {
+    const { tool } = toolWith('nex_proxy_detect', {});
+    const parsed = (tool.inputSchema as any).safeParse({
+      proxyIds: Array.from({ length: 51 }, (_, index) => index + 1)
+    });
+    expect(parsed.success).toBe(false);
+  });
+});
+
 describe('nex_proxy_list filters', () => {
   it('forwards the documented state query as repeated params', async () => {
     const { request, tool } = toolWith('nex_proxy_list', { data: [], count: 0 });

@@ -198,6 +198,14 @@ const deleteProxyInputSchema = z
   .passthrough();
 const detectProxyInputSchema = z
   .object({
+    proxyIds: z
+      .array(browserIdSchema)
+      .min(1)
+      .max(50)
+      .describe(
+        'Saved proxy IDs to detect in one call (up to 50); use this instead of repeated single calls'
+      )
+      .optional(),
     proxyId: browserIdSchema
       .describe('Saved proxy ID to detect; omit when passing host and port')
       .optional(),
@@ -609,8 +617,59 @@ function safeDetectResult(data: any): Record<string, unknown> {
     query: data?.query,
     ip: data?.ip,
     status: data?.status,
+    code: data?.code,
     message: data?.message
   };
+}
+
+/** Formats one detect row as a single summary line. 将一行检测结果格式化为一行摘要。 */
+function detectRowLine(row: Record<string, any>): string {
+  if (row.status !== 'success') {
+    return `  - Proxy ${row.id ?? 'unknown'}: ${row.status || 'fail'}${row.message ? ` (${row.message})` : ''}`;
+  }
+  const location = [row.country, row.city].filter(Boolean).join(' / ') || 'Unknown location';
+  const exit = row.activeIp || row.ip || row.query || 'Unknown exit';
+  return `  - Proxy ${row.id ?? 'unknown'}: ${exit} · ${location} · ${row.timezone || 'Unknown timezone'}`;
+}
+
+/** Detects saved proxies in one Desktop request and reports every row, missing IDs, and IDs left for a follow-up call. 一次请求批量检测已保存代理，并列出每行结果、不存在的 ID 与留待下次检测的 ID。 */
+async function detectSavedProxies(proxyIds: Array<string | number>, ctx: ToolContext) {
+  const response = await ctx.api.request<any>(PROXY_DETECT_ROUTE, {
+    method: 'POST',
+    body: JSON.stringify({ proxyIds })
+  });
+  if (response.code !== 0) return apiErrorResult('Failed to detect proxies', response);
+  const data = response.data || {};
+  const rows = (Array.isArray(data.rows) ? data.rows : []).map(safeDetectResult);
+  const notFound: unknown[] = Array.isArray(data.notFound) ? data.notFound : [];
+  const unchecked: unknown[] = Array.isArray(data.unchecked) ? data.unchecked : [];
+  const success = Number(
+    data.success ?? rows.filter((row: any) => row.status === 'success').length
+  );
+  const failed = Number(data.failed ?? rows.length - success);
+  const lines = [
+    `Detected ${rows.length} proxy resource(s): ${success} succeeded, ${failed} failed.`,
+    ...rows.map(detectRowLine)
+  ];
+  if (notFound.length) lines.push(`Not found: ${notFound.join(', ')}`);
+  if (unchecked.length) {
+    lines.push(
+      `Not checked before the request time limit: ${unchecked.join(', ')}. Call nex_proxy_detect again with these proxyIds.`
+    );
+  }
+  if (data.saved === true) lines.push('Results were saved to the proxy resources.');
+  if (data.saved === false) {
+    lines.push(`Results were not saved${data.saveMessage ? `: ${data.saveMessage}` : '.'}`);
+  }
+  return successResult(lines.join('\n'), {
+    rows,
+    total: data.total ?? proxyIds.length,
+    success,
+    failed,
+    notFound,
+    unchecked,
+    saved: data.saved
+  });
 }
 
 /** Summarizes a per-window batch result shared by the proxy-bind and group-move tools. */
@@ -903,9 +962,10 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_proxy_detect',
     description:
-      'Probe a proxy resource or an unsaved host:port for exit IP, location, and timezone. Credentials are never returned.',
+      'Probe saved proxy resources or an unsaved host:port for exit IP, location, and timezone. Pass proxyIds to check several saved proxies in one call. Results for saved proxies are written back like the Desktop proxy center. Credentials are never returned.',
     inputSchema: detectProxyInputSchema,
     execute: async (args, ctx) => {
+      if (args.proxyIds?.length) return detectSavedProxies(args.proxyIds, ctx);
       const host = args.host === undefined ? '' : String(args.host).trim();
       const port = args.port === undefined || args.port === '' ? '' : String(args.port).trim();
       const protocol = normalizeProxyProtocol(args.protocol);
