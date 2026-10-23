@@ -6,10 +6,7 @@ import { z } from 'zod';
  * 自动化工具共享的 zod 词汇；这些字段定义唯一允许存在的位置。
  */
 export const SESSION_PROPERTIES = {
-  sessionId: z
-    .string()
-    .describe('Defaults to the active session')
-    .optional(),
+  sessionId: z.string().describe('Defaults to the active session').optional(),
   pageId: z.string().describe('Defaults to the active page').optional()
 };
 
@@ -17,9 +14,7 @@ export const SESSION_PROPERTIES = {
  * Shared locator field: a snapshot ref or unique CSS selector, resolved server-side.
  * 共享定位字段：快照 ref 或唯一 CSS 选择器，由服务端解析。
  */
-export const TARGET_PROPERTY = z
-  .string()
-  .describe('Snapshot ref (e12) or unique CSS selector');
+export const TARGET_PROPERTY = z.string().describe('Snapshot ref (e12) or unique CSS selector');
 
 /**
  * Builds the strict input schema every automation tool must use: the shared

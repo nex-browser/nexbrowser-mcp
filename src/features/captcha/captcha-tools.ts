@@ -94,8 +94,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_captcha_buy',
-    description:
-      `Create a standalone CAPTCHA recognition task from actual challenge inputs that match nex_captcha_product_schema (adapter object, no platform API keys). It only returns a solution and never submits to the website. Page CAPTCHAs must use nex_browser_captcha_prepare/submit/complete; never use this tool to bypass an unsupported page adapter or to substitute GRID. The schema is rechecked before charging. Keep the local id, not the upstream taskId. ${PAID_TOOL_NOTE}`,
+    description: `Create a standalone CAPTCHA recognition task from actual challenge inputs that match nex_captcha_product_schema (adapter object, no platform API keys). It only returns a solution and never submits to the website. Page CAPTCHAs must use nex_browser_captcha_prepare/submit/complete; never use this tool to bypass an unsupported page adapter or to substitute GRID. The schema is rechecked before charging. Keep the local id, not the upstream taskId. ${PAID_TOOL_NOTE}`,
     inputSchema: z
       .object({
         productCode: captchaProductCode,

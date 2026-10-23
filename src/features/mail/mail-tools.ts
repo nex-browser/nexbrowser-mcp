@@ -99,8 +99,7 @@ export const MAIL_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   serviceTool({
     name: 'nex_mail_buy',
-    description:
-      `Buy a receiving mailbox. MAINSTREAM needs a supported suffix and has no login password; TEMPORARY may take a domainId. No custom prefix, renewal or refund. ${PAID_TOOL_NOTE}`,
+    description: `Buy a receiving mailbox. MAINSTREAM needs a supported suffix and has no login password; TEMPORARY may take a domainId. No custom prefix, renewal or refund. ${PAID_TOOL_NOTE}`,
     schema: buy,
     route: MAIL_BUY_ROUTE,
     method: 'POST',

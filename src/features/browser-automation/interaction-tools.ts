@@ -16,8 +16,7 @@ import { automationSchema, TARGET_PROPERTY } from './schema.js';
 const RELOAD = defineTool({
   name: 'nex_browser_reload',
   description:
-    'Reload the page. Ask the user before reloading a filled form. ' +
-    PAGE_CAPTCHA_POINTER,
+    'Reload the page. Ask the user before reloading a filled form. ' + PAGE_CAPTCHA_POINTER,
   inputSchema: automationSchema(),
   execute: (args, ctx) => callAction(ctx, args, 'reload', {}, 'Page reloaded.')
 });

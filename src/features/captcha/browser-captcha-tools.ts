@@ -473,8 +473,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_browser_captcha_submit',
-    description:
-      `Submit a prepared page CAPTCHA once, then call nex_browser_captcha_complete with the same prepareId. Rechecks the product, team, page and current Grid image; each Grid round has its own prepareId. Never resubmit after a timeout. Does not click the final sign-up/login button. ${PAID_TOOL_NOTE}`,
+    description: `Submit a prepared page CAPTCHA once, then call nex_browser_captcha_complete with the same prepareId. Rechecks the product, team, page and current Grid image; each Grid round has its own prepareId. Never resubmit after a timeout. Does not click the final sign-up/login button. ${PAID_TOOL_NOTE}`,
     annotations: { destructiveHint: true, idempotentHint: false },
     inputSchema: z.object({ prepareId: z.string() }).strict(),
     execute: async (args, ctx) => {

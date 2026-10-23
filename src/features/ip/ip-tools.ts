@@ -90,8 +90,7 @@ export const IP_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   serviceTool({
     name: 'nex_ip_buy',
-    description:
-      `Buy general proxies. Delivery is asynchronous: check nex_ip_order_list and nex_proxy_list, and never repeat a pending order. ${PAID_TOOL_NOTE}`,
+    description: `Buy general proxies. Delivery is asynchronous: check nex_ip_order_list and nex_proxy_list, and never repeat a pending order. ${PAID_TOOL_NOTE}`,
     schema: z
       .object({
         productId: z.string().min(1),
@@ -119,8 +118,7 @@ export const IP_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   serviceTool({
     name: 'nex_ip_renew',
-    description:
-      `Renew local proxy IDs from nex_proxy_list (not order or upstream IDs). Order groups may partially succeed; replace unusable proxies instead of renewing them again. ${PAID_TOOL_NOTE}`,
+    description: `Renew local proxy IDs from nex_proxy_list (not order or upstream IDs). Order groups may partially succeed; replace unusable proxies instead of renewing them again. ${PAID_TOOL_NOTE}`,
     schema: renewal,
     route: IP_RENEW_ROUTE,
     method: 'POST',
@@ -148,8 +146,7 @@ export const IP_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   serviceTool({
     name: 'nex_ip_snap_buy',
-    description:
-      `Buy a short-term proxy quota package by an exact ipNum from nex_ip_snap_package_list, and keep the returned local order id for nex_ip_snap_pull. Use remaining quota first. ${PAID_TOOL_NOTE}`,
+    description: `Buy a short-term proxy quota package by an exact ipNum from nex_ip_snap_package_list, and keep the returned local order id for nex_ip_snap_pull. Use remaining quota first. ${PAID_TOOL_NOTE}`,
     schema: z.object({ num: serviceId }).strict(),
     route: IP_SNAP_BUY_ROUTE,
     method: 'POST',
