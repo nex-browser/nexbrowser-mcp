@@ -6,9 +6,27 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.23] - 2026-10-23
+
 ### Added
 
+- Promote the NexIP, NexMail, NexSMS and NexCaptcha service tools and browser CAPTCHA workflows from the October prereleases to the stable channel, including online product contracts, supported Grid rounds, region screenshots and coordinate clicks.
+- Add structured resource recovery for confirmed SMS, mailbox, proxy and CAPTCHA failures. Interactive tasks can replace unsuitable countries/products or mailbox formats/domains without another confirmation, respecting user constraints and at most 3 attempts per resource flow including the first.
+- Add bounded SMS waiting up to 120 seconds and mailbox polling up to 180 seconds. The local `receivedAfter` filter accepts current messages already delivered before polling and excludes older messages; SMS with unverifiable receipt times is never filled when a sending-time filter is supplied.
+- Add stable insufficient-balance flags that stop subsequent paid actions, and distinguish unknown purchase outcomes that require record and billing reconciliation before further spending.
+- Bundle the updated automation Skill and installation guidance for the stable service workflows.
 - `nex_proxy_detect` accepts `proxyIds` (up to 50) to check several saved proxies in one call and lists each result, missing IDs, and IDs left unchecked by the request time limit for a follow-up call. Requires a Desktop build whose local OpenAPI detects proxies on the client and writes results back like the proxy center.
+
+### Changed
+
+- **Breaking:** authorized service purchases, renewals, quota extraction and CAPTCHA submissions charge directly at the current server price. Remove quotation/payment-confirmation stages, `maxTotalPrice`, the CAPTCHA `confirmed` argument and the standalone proxy renewal quote tool. A price inquiry alone never places an order, and explicit user spending restrictions remain effective.
+- Keep normal CAPTCHA Grid continuations on the original workflow and require a fresh challenge after a confirmed terminal failure. Unknown purchase outcomes retain their original identity and do not trigger duplicate charges.
+
+### Fixed
+
+- Carry structured billing and recovery states through text-only MCP hosts without losing the original service error code.
+- Preserve browser action failure labels, declared management arguments and accurate window runtime/opening results from the prerelease fixes.
+- Upgrade the MCP SDK to 1.32.0 to resolve the production dependency audit findings while retaining the Node.js 18 runtime floor.
 
 ## [2026.10.19-beta.4] - 2026-10-19
 

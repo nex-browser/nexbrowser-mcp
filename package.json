@@ -1,6 +1,6 @@
 {
   "name": "@nexbrowser/mcp",
-  "version": "2026.10.19-beta.4",
+  "version": "2026.10.23",
   "description": "Model Context Protocol server for NexBrowser environment management and browser automation",
   "type": "module",
   "main": "lib/index.cjs",
@@ -78,7 +78,7 @@
     "provenance": true
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.31.0",
+    "@modelcontextprotocol/sdk": "1.32.0",
     "commander": "13.1.0",
     "dotenv": "17.4.2",
     "zod": "4.4.3"

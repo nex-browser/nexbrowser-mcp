@@ -47,7 +47,10 @@ function installTarball(tarball) {
     });
   }
 
-  return runPnpm(['add', '--ignore-scripts', tarball], { cwd: consumerRoot });
+  // Keep the temporary consumer independent when TMP is inside this workspace.
+  return runPnpm(['--ignore-workspace', 'add', '--ignore-scripts', tarball], {
+    cwd: consumerRoot
+  });
 }
 
 try {
