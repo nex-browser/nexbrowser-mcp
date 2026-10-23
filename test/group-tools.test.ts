@@ -127,6 +127,46 @@ describe('nex_browser_group_delete', () => {
   });
 });
 
+describe('nex_browser_rename', () => {
+  it('sends only windowId and the trimmed name', async () => {
+    const { request, tool } = toolWith('nex_browser_rename', { windowId: '22', name: 'Shop A' });
+
+    const result = await tool.execute({ windowId: 22, name: '  Shop A  ' });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/browser/name',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ windowId: '22', name: 'Shop A' })
+      })
+    );
+    expect(result.isError).toBeFalsy();
+    expect(String((result.content[0] as { text: string }).text)).toContain('renamed to "Shop A"');
+  });
+
+  it('rejects extra fields and blank names before calling Desktop', async () => {
+    const { request, tool } = toolWith('nex_browser_rename', null);
+
+    // Schema validation throws synchronously, before any request promise exists.
+    expect(() => tool.execute({ windowId: '22', name: '   ' })).toThrow();
+    expect(() => tool.execute({ windowId: '22', name: 'A', remark: 'x' })).toThrow();
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it('surfaces the Desktop error message', async () => {
+    const request = vi.fn(async () => ({ code: 1, msg: '数据不存在', data: null }));
+    const client = { request, getActiveSessionId: () => undefined } as unknown as NexApiClient;
+    const tool = createBrowserManagementTools(client).find(
+      (candidate) => candidate.name === 'nex_browser_rename'
+    )!;
+
+    const result = await tool.execute({ windowId: '22', name: 'A' });
+
+    expect(result.isError).toBe(true);
+    expect(String((result.content[0] as { text: string }).text)).toContain('数据不存在');
+  });
+});
+
 describe('nex_browser_move_to_group', () => {
   it('moves multiple windows into one group', async () => {
     const { request, tool } = toolWith('nex_browser_move_to_group', {

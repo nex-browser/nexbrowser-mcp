@@ -42,6 +42,8 @@ export const BROWSER_CREATE_ROUTE = '/browser/create';
 export const BROWSER_PROXY_ROUTE = '/browser/proxy';
 /** Moves windows into one window group; groupId=0 moves them out of any group. 把窗口移动到指定分组；groupId=0 移出分组。 */
 export const BROWSER_GROUP_ROUTE = '/browser/group';
+/** Renames one window; only windowId and name are accepted. 修改单个窗口名称；只接受 windowId 与 name。 */
+export const BROWSER_NAME_ROUTE = '/browser/name';
 /** Platform accounts bound to a window; secrets are never returned. 窗口绑定的平台账号；不返回任何密钥。 */
 export const BROWSER_ACCOUNTS_ROUTE = '/browser/accounts';
 /** Binds catalog platform accounts to closed windows; accountIds=[] removes the binding. 给已关闭窗口绑定目录账号；accountIds=[] 解绑。 */

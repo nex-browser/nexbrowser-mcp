@@ -1029,6 +1029,40 @@
     }
   },
   {
+    "name": "nex_browser_rename",
+    "description": "Rename one NexBrowser window. Pass only windowId and the new name; no other window settings change. The name is window metadata, so running windows can be renamed without closing them first.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "windowId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "One window ID from nex_browser_list"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "New window title"
+        }
+      },
+      "required": [
+        "windowId",
+        "name"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "idempotentHint": true
+    }
+  },
+  {
     "name": "nex_browser_open",
     "description": "Start NexBrowser environments and return per-window status. For multi-window tasks, pass every window ID in one windowId array so Desktop can batch-start and tile them before creating automation sessions.",
     "inputSchema": {

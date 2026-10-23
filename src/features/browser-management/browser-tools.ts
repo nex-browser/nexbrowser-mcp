@@ -22,6 +22,7 @@ import {
   BROWSER_CREATE_ROUTE,
   BROWSER_GROUP_ROUTE,
   BROWSER_LIST_ROUTE,
+  BROWSER_NAME_ROUTE,
   BROWSER_OPEN_ROUTE,
   BROWSER_PROXY_ROUTE,
   GROUP_CREATE_ROUTE,
@@ -110,6 +111,12 @@ const bindProxyInputSchema = z
     proxyId: browserIdSchema.describe('Proxy resource ID to bind; 0 removes the proxy binding')
   })
   .passthrough();
+const renameInputSchema = z
+  .object({
+    windowId: browserIdSchema.describe('One window ID from nex_browser_list'),
+    name: z.string().trim().min(1).describe('New window title')
+  })
+  .strict();
 const bindAccountInputSchema = z
   .object({
     windowId: browserIdsSchema
@@ -1260,6 +1267,26 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
           total: data.total
         }
       );
+    }
+  }),
+  defineTool({
+    name: 'nex_browser_rename',
+    description:
+      'Rename one NexBrowser window. Pass only windowId and the new name; no other window settings change. The name is window metadata, so running windows can be renamed without closing them first.',
+    annotations: { idempotentHint: true },
+    inputSchema: renameInputSchema,
+    execute: async (args, ctx) => {
+      const windowId = String(args.windowId).trim();
+      if (!windowId) return errorResult('Failed to rename window: windowId is required');
+      const response = await ctx.api.request<any>(BROWSER_NAME_ROUTE, {
+        method: 'POST',
+        body: JSON.stringify({ windowId, name: args.name })
+      });
+      if (response.code !== 0) return apiErrorResult('Failed to rename window', response);
+      return successResult(`Window ${windowId} renamed to "${args.name}".`, {
+        windowId,
+        name: args.name
+      });
     }
   }),
   defineTool({

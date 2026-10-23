@@ -81,7 +81,7 @@ import { fileURLToPath } from 'node:url';
 import * as mcp from '@nexbrowser/mcp';
 assert.equal(mcp.MCP_SERVER_NAME, 'nexbrowser-mcp');
 assert.equal(mcp.MCP_SERVER_VERSION, mcp.PKG_VERSION);
-assert.equal(mcp.TOOLS.length, 95);
+assert.equal(mcp.TOOLS.length, 96);
 assert.equal(mcp.TOOLS.find(tool => tool.name === 'nex_captcha_product_schema').annotations.readOnlyHint, true);
 assert.ok(mcp.TOOLS.some(tool => tool.name === 'nex_browser_mouse_click_xy'));
 assert.ok(mcp.TOOLS.find(tool => tool.name === 'nex_browser_take_screenshot').inputSchema.properties.clip);
@@ -101,7 +101,7 @@ const mcp = require('@nexbrowser/mcp');
 void (async () => {
 assert.equal(mcp.MCP_SERVER_NAME, 'nexbrowser-mcp');
 assert.equal(mcp.MCP_SERVER_VERSION, mcp.PKG_VERSION);
-assert.equal(mcp.TOOLS.length, 95);
+assert.equal(mcp.TOOLS.length, 96);
 assert.equal(mcp.TOOLS.find(tool => tool.name === 'nex_captcha_product_schema').annotations.readOnlyHint, true);
 assert.ok(mcp.TOOLS.some(tool => tool.name === 'nex_browser_mouse_click_xy'));
 assert.ok(mcp.TOOLS.find(tool => tool.name === 'nex_browser_take_screenshot').inputSchema.properties.clip);
