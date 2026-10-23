@@ -12,7 +12,7 @@ export const ARTIFACT_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_take_screenshot',
     description:
-      'Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays. ' +
+      'Capture the viewport, one target, or a viewport clip (target, clip and fullPage=true are mutually exclusive). The returned origin and pixelsPerCssPixel map image pixels to nex_browser_mouse_click_xy coordinates. ' +
       PAGE_CAPTCHA_POINTER,
     inputSchema: automationSchema({
       target: TARGET_PROPERTY.optional(),

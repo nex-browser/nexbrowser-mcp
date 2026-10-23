@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { BROWSER_CAPTCHA_TOOL_SPECS } from './browser-captcha-tools.js';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
-import { resourceRecovery } from '../../shared/service-recovery.js';
+import { PAID_TOOL_NOTE, resourceRecovery } from '../../shared/service-recovery.js';
 import {
   assertCaptchaReady,
   captchaAdapterInput,
@@ -65,7 +65,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_captcha_product_list',
     description:
-      'List enabled CAPTCHA solving products. Returned price is the single payable price, already rounded by the backend. Do not multiply or round it again. productCode must come from this list. Before creating a task, call nex_captcha_product_schema(productCode) for required adapter fields, input modes and result usage; documentation alone does not confirm availability.',
+      'List enabled CAPTCHA products. price is the final per-task price; do not recalculate it. Use productCode exactly as returned, and read nex_captcha_product_schema(productCode) before creating a task.',
     schema: z.object({}).strict(),
     route: CAPTCHA_PRODUCTS_ROUTE,
     readOnly: true,
@@ -82,7 +82,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_captcha_product_schema',
     description:
-      'Read the current online NexCaptcha adapter schema, example, integration/result contract and workflowGuide through the signed-in Desktop client. Free, read-only and requires a connection. productCode is required and must exactly match nex_captcha_product_list; no aliases or offline fallback. Preserve all schema constraints and unknown fields. Read integration.workflows before choosing HTTP_SUBMIT, BROWSER_RESULT or BROWSER_INTERACTION. HTTP_SUBMIT requires a separately established site HTTP integration; browser workflows also require a supported local capture/apply adapter. Page CAPTCHAs start with nex_browser_captcha_prepare. Examples are placeholders, not real challenge inputs. DOCUMENTATION_REQUIRED blocks paid tasks. Online product support does not imply browser capture/apply support.',
+      'Free, read-only: read the online adapter schema, example, integration/result contract and workflowGuide for one productCode from nex_captcha_product_list (exact match; no aliases or offline fallback). Keep every schema constraint; examples are placeholders. Check integration.workflows: HTTP_SUBMIT needs a separate site HTTP integration, browser workflows need a supported local adapter, and page CAPTCHAs start with nex_browser_captcha_prepare. DOCUMENTATION_REQUIRED blocks paid tasks.',
     schema: z.object({ productCode: captchaProductCode }).strict(),
     route: CAPTCHA_SCHEMA_ROUTE,
     method: 'POST',
@@ -95,7 +95,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_captcha_buy',
     description:
-      "Create a CAPTCHA solving task and charge once directly at the current server price, without a separate quotation or payment confirmation. Use only for a requested task or when needed for the user's task; price inquiries alone do not authorize purchases. Read nex_captcha_product_schema and use actual challenge inputs. For HTTP_SUBMIT, confirm integration.workflows permits it and a separate site integration can maintain the session and submit verification/business requests. This tool creates recognition tasks only; it does not submit to the target website or choose a workflow. Page CAPTCHAs use nex_browser_captcha_prepare/submit/complete; never bypass unsupported browser adapters with a raw purchase. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Confirmed FAILED/EXPIRED or explicit site rejection permits a fresh challenge within 3 attempts including the first, after records/billing checks, without another payment confirmation. Never repeat an unknown purchase/application or substitute GRID.",
+      `Create a standalone CAPTCHA recognition task from actual challenge inputs that match nex_captcha_product_schema (adapter object, no platform API keys). It only returns a solution and never submits to the website. Page CAPTCHAs must use nex_browser_captcha_prepare/submit/complete; never use this tool to bypass an unsupported page adapter or to substitute GRID. The schema is rechecked before charging. Keep the local id, not the upstream taskId. ${PAID_TOOL_NOTE}`,
     inputSchema: z
       .object({
         productCode: captchaProductCode,
@@ -165,7 +165,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_captcha_record_list',
     description:
-      'List current user/current team CAPTCHA tasks. keyword matches productCode. price remains the original precharge even after refunds; inspect billing for refund entries.',
+      'List CAPTCHA tasks of the current user and team; keyword matches productCode. price stays the original charge after refunds; check billing for refunds.',
     schema: servicePager,
     route: CAPTCHA_RECORDS_ROUTE,
     readOnly: true,
@@ -177,7 +177,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_captcha_query',
     description:
-      'Query one local CAPTCHA record id, never upstream taskId. Poll every 3–5 seconds only while needed; at most 5 calls per user per 3 seconds. Stop on SUCCEEDED, FAILED or EXPIRED. solution may contain text, token or product-specific fields. FAILED/EXPIRED trigger server refunds; verify billing. Network errors or unknown states are not failure/refund evidence. No cancel or manual refund API.',
+      'Query one local CAPTCHA record id (not the upstream taskId) every 3–5 seconds while needed; at most 5 calls per 3 seconds. Stop on SUCCEEDED, FAILED or EXPIRED. solution may be text, a token or product-specific fields. FAILED/EXPIRED are refunded by the server; verify billing. Network errors and unknown states are not failures. No cancel or manual refund.',
     schema: z.object({ id: serviceId }).strict(),
     route: CAPTCHA_QUERY_ROUTE,
     method: 'POST',

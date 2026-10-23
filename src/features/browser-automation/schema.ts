@@ -8,9 +8,9 @@ import { z } from 'zod';
 export const SESSION_PROPERTIES = {
   sessionId: z
     .string()
-    .describe('Optional session ID; defaults to this MCP client active session')
+    .describe('Defaults to the active session')
     .optional(),
-  pageId: z.string().describe('Stable page ID; defaults to the session active page').optional()
+  pageId: z.string().describe('Defaults to the active page').optional()
 };
 
 /**
@@ -19,7 +19,7 @@ export const SESSION_PROPERTIES = {
  */
 export const TARGET_PROPERTY = z
   .string()
-  .describe('Snapshot ref such as e12, aria-ref=e12, or a unique CSS selector');
+  .describe('Snapshot ref (e12) or unique CSS selector');
 
 /**
  * Builds the strict input schema every automation tool must use: the shared

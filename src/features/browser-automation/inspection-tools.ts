@@ -40,13 +40,13 @@ export const INSPECTION_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   ...(
     [
-      ['nex_browser_page_title', 'title', 'Page title.'],
-      ['nex_browser_page_url', 'url', 'Page URL.']
+      ['nex_browser_page_title', 'title', 'Page title.', 'Read the page title.'],
+      ['nex_browser_page_url', 'url', 'Page URL.', 'Read the current page URL.']
     ] as const
-  ).map(([name, action, label]) =>
+  ).map(([name, action, label, description]) =>
     defineTool({
       name,
-      description: label,
+      description,
       annotations: { readOnlyHint: true },
       inputSchema: automationSchema(),
       execute: (args, ctx) => callAction(ctx, args, action, {}, label)

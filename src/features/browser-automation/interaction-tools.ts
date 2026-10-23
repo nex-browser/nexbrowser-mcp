@@ -16,7 +16,7 @@ import { automationSchema, TARGET_PROPERTY } from './schema.js';
 const RELOAD = defineTool({
   name: 'nex_browser_reload',
   description:
-    'Reload the page. Obtain approval before reloading a filled form to restore CAPTCHA capture. ' +
+    'Reload the page. Ask the user before reloading a filled form. ' +
     PAGE_CAPTCHA_POINTER,
   inputSchema: automationSchema(),
   execute: (args, ctx) => callAction(ctx, args, 'reload', {}, 'Page reloaded.')
@@ -24,14 +24,14 @@ const RELOAD = defineTool({
 
 const GO_BACK = defineTool({
   name: 'nex_browser_go_back',
-  description: 'Navigated back.',
+  description: 'Go back one entry in the page history.',
   inputSchema: automationSchema(),
   execute: (args, ctx) => callAction(ctx, args, 'goBack', {}, 'Navigated back.')
 });
 
 const GO_FORWARD = defineTool({
   name: 'nex_browser_go_forward',
-  description: 'Navigated forward.',
+  description: 'Go forward one entry in the page history.',
   inputSchema: automationSchema(),
   execute: (args, ctx) => callAction(ctx, args, 'goForward', {}, 'Navigated forward.')
 });
@@ -74,7 +74,7 @@ export const INTERACTION_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_mouse_click_xy',
     description:
-      'Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport. ' +
+      'Click at x/y in viewport CSS pixels, including canvas, iframes and extension overlays injected into the page (not native toolbar popups). Take coordinates from a fresh screenshot: divide image pixels by pixelsPerCssPixel, then add the returned origin. ' +
       PAGE_CAPTCHA_POINTER,
     inputSchema: automationSchema({
       x: z.number().min(0),

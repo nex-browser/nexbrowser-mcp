@@ -3,7 +3,7 @@ import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-too
 import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
 import type { McpToolDefinition } from '../../shared/types.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
-import { resourceRecovery } from '../../shared/service-recovery.js';
+import { PAID_TOOL_NOTE, resourceRecovery } from '../../shared/service-recovery.js';
 import {
   SMS_BUY_ROUTE,
   SMS_COUNTRIES_ROUTE,
@@ -85,7 +85,7 @@ export const SMS_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_sms_buy',
-    description: `Buy cloud phone numbers for receiving SMS verification codes and charge the account balance directly at the current server price. No separate quotation or payment confirmation is needed. Use only for a requested purchase or when needed for the user's task; price inquiries alone do not authorize purchases. At most ${SMS_MAX_BUY_QUANTITY} numbers per call. After a confirmed 120-second code timeout or site rejection, continue with a replacement within 3 attempts including the first, release an eligible task-owned number and reconcile records/billing first. A null result, purchase error or timeout may hide a charge or partial purchase: reconcile and stop new purchases until its outcome is established.`,
+    description: `Buy cloud phone numbers for SMS verification, at most ${SMS_MAX_BUY_QUANTITY} per call. A failed batch may still have bought some numbers. ${PAID_TOOL_NOTE}`,
     annotations: { destructiveHint: true, idempotentHint: false },
     inputSchema: z
       .object({
@@ -216,7 +216,7 @@ export const SMS_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_sms_code_get',
-    description: `Fetch the latest SMS and verification code of one purchased number. Set waitSeconds (max ${SMS_MAX_WAIT_SECONDS}) to keep polling until a code arrives or the number stops waiting; onlyNew ignores codes already received. Pass receivedAfter as the current send request's ISO timestamp with timezone to ignore earlier SMS. Time-filtered codes with missing/invalid receipt times are not accepted. Leave onlyNew false to accept a current code already present on the first pull. To type the code into a NexBrowser page, prefer nex_sms_code_fill.`,
+    description: `Read the latest SMS and code of one purchased number. waitSeconds (max ${SMS_MAX_WAIT_SECONDS}) polls until a code arrives or the number stops waiting. receivedAfter (ISO time with timezone of the current send) ignores earlier SMS and SMS without a valid time; onlyNew ignores codes already present at the first pull. To type the code into a page, use nex_sms_code_fill.`,
     annotations: { readOnlyHint: true },
     inputSchema: z
       .object({
@@ -269,7 +269,7 @@ export const SMS_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_sms_code_fill',
-    description: `Wait for the SMS verification code of one purchased number and type it straight into the NexBrowser automation session, so the code never has to pass through the conversation. Typical flow: nex_sms_buy, type the number into the site, record the send request time, click its send-code button, take nex_browser_snapshot to get the code input ref, then call this with receivedAfter as that ISO timestamp with timezone. The local filter rejects older codes and codes with missing/invalid receipt times, while accepting current codes already present on the first pull. Normally leave onlyNew false; set it only when deliberately ignoring all codes already present at the first pull after a resend. submit=true presses Enter after filling. Polls up to waitSeconds (max ${SMS_MAX_WAIT_SECONDS}, default 120). A confirmed code timeout permits a task-scoped replacement without another payment confirmation, at most 3 number attempts including the first. Purchase timeouts require reconciliation and never count as a code timeout.`,
+    description: `Wait for one number's SMS code and type it into the page, so the code never passes through the conversation. Flow: enter the number on the site, note the send time, click send, take a snapshot for the code input ref, then call this with receivedAfter set to that send time (ISO with timezone). Waits up to waitSeconds (default and max ${SMS_MAX_WAIT_SECONDS}). onlyNew ignores codes already present at the first pull; use it only after a resend. submit=true presses Enter. A confirmed code timeout allows a replacement number; a purchase timeout is not a code timeout.`,
     inputSchema: automationSchema({
       tel: z.string().min(1),
       target: TARGET_PROPERTY,
@@ -353,7 +353,7 @@ export const SMS_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_sms_release',
     description:
-      'Request release and refund of one waiting number. For a number acquired or explicitly authorized for the current task, release after a confirmed code timeout or site rejection without asking again. Do not release unrelated or user-supplied resources. A null response or old state does not prove a new refund; refresh the number and billing. Refund eligibility and amount are decided by the server/upstream. Do not repeat an unknown release.',
+      'Release one waiting number and request its refund. Release a number bought for the current task after a confirmed code timeout or site rejection without asking again; never release unrelated or user-supplied numbers. The server decides refunds: refresh the number and billing to confirm, and do not repeat an unclear release.',
     annotations: { destructiveHint: true, idempotentHint: false },
     inputSchema: z.object({ tel: z.string().min(1), reason: z.enum(RECOVER_REASONS) }).strict(),
     execute: async (args, ctx) => {

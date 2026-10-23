@@ -7,7 +7,7 @@ export const BILLING_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_billing_trade_list',
     description:
-      'List current user payment and refund trades. Positive amount is credit, negative is debit. Branch on type, not translated remark/typeRemark. The backend formats supported descriptions using Accept-Language. Trades help reconcile uncertain purchases but are not an idempotency guarantee.',
+      "List the current user's payments and refunds (positive amount = credit, negative = debit). Branch on type, not the translated remark/typeRemark. Use it to reconcile unclear purchases; it is not an idempotency guarantee.",
     schema: servicePager.omit({ keyword: true }),
     route: BILLING_TRADES_ROUTE,
     readOnly: true,

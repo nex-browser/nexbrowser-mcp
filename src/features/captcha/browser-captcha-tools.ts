@@ -10,7 +10,7 @@ import {
 import { defineTool, type McpToolSpec, type ToolContext } from '../../shared/define-tool.js';
 import { parseServiceJson } from '../../shared/service-tools.js';
 import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
-import { resourceRecovery } from '../../shared/service-recovery.js';
+import { PAID_TOOL_NOTE, resourceRecovery } from '../../shared/service-recovery.js';
 import type { ActiveSessionStore, NexApiResponse } from '../../shared/types.js';
 import {
   actionsRoute,
@@ -326,7 +326,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_prepare',
     description:
-      'Check enabled products and online schema, then capture the page challenge. Free; no purchase or quotation. Chooses BROWSER_RESULT for captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, or BROWSER_INTERACTION for a real supported GRID; checks integration.workflows and the local adapter. No workflow switch parameter or automatic HTTP_SUBMIT integration. Detects visible reCAPTCHA image grids; for other regular image grids supply observed grid DOM selectors and mode. Unsupported canvas/custom widgets need a site adapter. Select challengeId if multiple widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or timeout are blockers, not reasons to substitute GRID or raw nex_captcha_buy. Grid capture preserves the original instructions and image. Once ready, submit directly for the requested task. Never silently reload a filled form.',
+      'Free, no purchase: capture the page CAPTCHA and check product availability and the online schema. Supports captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, and real image grids (reCAPTCHA grids are detected; for other grids pass the observed grid selectors and mode). Canvas or custom widgets need a site adapter. Pass challengeId when several widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or a timeout are blockers to report, not reasons to switch to GRID or raw nex_captcha_buy. Never silently reload a filled form. When ready, call nex_browser_captcha_submit.',
     inputSchema: automationSchema({
       challengeId: z.string().optional(),
       challengeUrl: z.string().url().optional(),
@@ -474,7 +474,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_submit',
     description:
-      "Submit a prepared page CAPTCHA exactly once and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Use when needed for the user's task; inquiries alone do not authorize purchases. Rechecks product availability, team, document and current Grid image. Never repurchase after timeout. Each new Grid round has its own prepareId. Saves the local task ID for complete; does not click final signup/login.",
+      `Submit a prepared page CAPTCHA once, then call nex_browser_captcha_complete with the same prepareId. Rechecks the product, team, page and current Grid image; each Grid round has its own prepareId. Never resubmit after a timeout. Does not click the final sign-up/login button. ${PAID_TOOL_NOTE}`,
     annotations: { destructiveHint: true, idempotentHint: false },
     inputSchema: z.object({ prepareId: z.string() }).strict(),
     execute: async (args, ctx) => {
@@ -603,7 +603,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_complete',
     description:
-      'Query once; on SUCCEEDED apply to the original callback or click validated 1-based Grid tiles and CAPTCHA verify as part of the requested task. Grid waits for image replacement and inspects the next round; returns nextPrepareId/nextPreparation without purchasing. Submit each prepared round directly when needed. Repeated complete only inspects applied Grid progress, never clicks again. Pending solver polls require 3–5 seconds. Confirmed FAILED/EXPIRED permits a genuinely new challenge after records/billing checks, at most 3 attempts including the first; do not ask again. Unknown purchase/application blocks new charges. Website success requires explicit evidence; never click final signup/login.',
+      'Query the task once; on SUCCEEDED apply the answer to the captured widget, or click the returned Grid tiles and the verify button. Poll pending tasks every 3–5 seconds. A changed Grid returns nextPrepareId without charging; submit it as the next round. Repeat calls only inspect progress and never click again. On FAILED/EXPIRED, check billing and prepare a fresh challenge, within 3 attempts. An unclear charge or application blocks new charges. Website acceptance needs page evidence; never clicks the final sign-up/login button.',
     annotations: { readOnlyHint: false, idempotentHint: false },
     inputSchema: z.object({ prepareId: z.string() }).strict(),
     execute: async (args, ctx) => {

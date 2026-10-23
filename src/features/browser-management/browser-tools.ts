@@ -107,7 +107,7 @@ const bindProxyInputSchema = z
     windowId: browserIdsSchema
       .describe('One window ID or a list of closed window IDs; alias of windowIds')
       .optional(),
-    windowIds: browserIdsSchema.describe('Documented alias of windowId').optional(),
+    windowIds: browserIdsSchema.describe('Alias of windowId').optional(),
     proxyId: browserIdSchema.describe('Proxy resource ID to bind; 0 removes the proxy binding')
   })
   .passthrough();
@@ -122,7 +122,7 @@ const bindAccountInputSchema = z
     windowId: browserIdsSchema
       .describe('One window ID or a list of closed window IDs; alias of windowIds')
       .optional(),
-    windowIds: browserIdsSchema.describe('Documented alias of windowId').optional(),
+    windowIds: browserIdsSchema.describe('Alias of windowId').optional(),
     accountIds: browserIdsSchema.describe(
       'Catalog account IDs that replace the window binding; [] or 0 removes all bound accounts'
     )
@@ -139,7 +139,7 @@ const deleteGroupInputSchema = z
     groupId: browserIdSchema
       .describe('Custom group ID to delete; the ungrouped bucket 0 is rejected')
       .optional(),
-    id: browserIdSchema.describe('Documented alias of groupId').optional()
+    id: browserIdSchema.describe('Alias of groupId').optional()
   })
   .passthrough();
 const moveToGroupInputSchema = z
@@ -147,7 +147,7 @@ const moveToGroupInputSchema = z
     windowId: browserIdsSchema
       .describe('One window ID or a list of window IDs; alias of windowIds')
       .optional(),
-    windowIds: browserIdsSchema.describe('Documented alias of windowId').optional(),
+    windowIds: browserIdsSchema.describe('Alias of windowId').optional(),
     groupId: browserIdSchema.describe(
       'Target group ID from nex_browser_group_list; 0 moves the windows out of any group'
     )
@@ -155,7 +155,7 @@ const moveToGroupInputSchema = z
   .passthrough();
 const proxyProtocolSchema = z
   .string()
-  .describe('SOCKS5, HTTP, or HTTPS; omitted create defaults to SOCKS5');
+  .describe('SOCKS5, HTTP or HTTPS; defaults to SOCKS5 when creating');
 const proxyPortSchema = z.union([z.string(), z.number()]).describe('Proxy port');
 const proxyItemInputSchema = z
   .object({
@@ -163,8 +163,8 @@ const proxyItemInputSchema = z
     host: z.string().describe('Proxy host or IP'),
     port: proxyPortSchema,
     ipVersion: z.string().describe('IPv4 or IPv6').optional(),
-    username: z.string().describe('Write-only; never returned').optional(),
-    password: z.string().describe('Write-only; never returned').optional(),
+    username: z.string().describe('Write-only').optional(),
+    password: z.string().describe('Write-only').optional(),
     remark: z.string().optional()
   })
   .passthrough();
@@ -174,8 +174,8 @@ const createProxyInputSchema = z
     host: z.string().describe('Proxy host or IP; required unless items is set').optional(),
     port: proxyPortSchema.optional(),
     ipVersion: z.string().describe('IPv4 or IPv6').optional(),
-    username: z.string().describe('Write-only; never returned').optional(),
-    password: z.string().describe('Write-only; never returned').optional(),
+    username: z.string().describe('Write-only').optional(),
+    password: z.string().describe('Write-only').optional(),
     remark: z.string().optional(),
     items: z
       .array(proxyItemInputSchema)
@@ -186,13 +186,13 @@ const createProxyInputSchema = z
 const modifyProxyInputSchema = z
   .object({
     proxyId: browserIdSchema.describe('Existing proxy resource ID from nex_proxy_list').optional(),
-    id: browserIdSchema.describe('Documented alias of proxyId').optional(),
+    id: browserIdSchema.describe('Alias of proxyId').optional(),
     protocol: proxyProtocolSchema.optional(),
     host: z.string().optional(),
     port: proxyPortSchema.optional(),
     ipVersion: z.string().describe('IPv4 or IPv6').optional(),
-    username: z.string().describe('Write-only; never returned').optional(),
-    password: z.string().describe('Write-only; never returned').optional(),
+    username: z.string().describe('Write-only').optional(),
+    password: z.string().describe('Write-only').optional(),
     remark: z.string().optional()
   })
   .passthrough();
@@ -200,7 +200,7 @@ const deleteProxyInputSchema = z
   .object({
     proxyId: browserIdsSchema.describe('One proxy ID or a list of proxy IDs to delete').optional(),
     proxyIds: browserIdsSchema.describe('Alias of proxyId').optional(),
-    items: browserIdsSchema.describe('Documented alias of proxyId').optional(),
+    items: browserIdsSchema.describe('Alias of proxyId').optional(),
     id: browserIdSchema.describe('Single-ID alias of proxyId').optional()
   })
   .passthrough();
@@ -217,12 +217,12 @@ const detectProxyInputSchema = z
     proxyId: browserIdSchema
       .describe('Saved proxy ID to detect; omit when passing host and port')
       .optional(),
-    id: browserIdSchema.describe('Documented alias of proxyId').optional(),
+    id: browserIdSchema.describe('Alias of proxyId').optional(),
     protocol: proxyProtocolSchema.optional(),
     host: z.string().optional(),
     port: proxyPortSchema.optional(),
-    username: z.string().describe('Write-only; never returned').optional(),
-    password: z.string().describe('Write-only; never returned').optional()
+    username: z.string().describe('Write-only').optional(),
+    password: z.string().describe('Write-only').optional()
   })
   .passthrough();
 const modifyGroupInputSchema = z
@@ -230,7 +230,7 @@ const modifyGroupInputSchema = z
     groupId: browserIdSchema
       .describe('Custom group ID to rename or reorder; the ungrouped bucket 0 is rejected')
       .optional(),
-    id: browserIdSchema.describe('Documented alias of groupId').optional(),
+    id: browserIdSchema.describe('Alias of groupId').optional(),
     name: z.string().describe('New unique group name').optional(),
     seq: z.number().int().describe('New sort order').optional()
   })
@@ -249,7 +249,7 @@ const accountItemInputSchema = z
     platformUrl: z.string().describe('Platform website URL, for example https://www.tiktok.com'),
     platformName: z.string().describe('Display name for the platform').optional(),
     username: z.string().describe('Login username or email').optional(),
-    password: z.string().describe('Write-only; never returned').optional(),
+    password: z.string().describe('Write-only').optional(),
     key2fa: z.string().describe('Write-only authenticator secret; never returned').optional(),
     remark: z.string().optional()
   })
@@ -267,12 +267,12 @@ const batchCreateAccountInputSchema = z
 const modifyAccountInputSchema = z
   .object({
     accountId: browserIdSchema.describe('Platform account ID from nex_account_list').optional(),
-    id: browserIdSchema.describe('Documented alias of accountId').optional(),
+    id: browserIdSchema.describe('Alias of accountId').optional(),
     teamId: browserIdSchema.optional(),
     platformUrl: z.string().optional(),
     platformName: z.string().optional(),
     username: z.string().optional(),
-    password: z.string().describe('Write-only; never returned').optional(),
+    password: z.string().describe('Write-only').optional(),
     key2fa: z.string().describe('Write-only authenticator secret; never returned').optional(),
     remark: z.string().optional()
   })
@@ -283,7 +283,7 @@ const deleteAccountInputSchema = z
       .describe('One account ID or a list of account IDs to delete')
       .optional(),
     accountIds: browserIdsSchema.describe('Alias of accountId').optional(),
-    items: browserIdsSchema.describe('Documented alias of accountId').optional(),
+    items: browserIdsSchema.describe('Alias of accountId').optional(),
     id: browserIdSchema.describe('Single-ID alias of accountId').optional()
   })
   .passthrough();
@@ -1070,7 +1070,7 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_bind_proxy',
     description:
-      'Bind one proxy resource to one or more closed NexBrowser windows. For the task environment, binding a confirmed replacement and reopening it is authorized by the task without asking again. Preserve the task URL and form state before closing; reconnect and verify the exit after binding. Pass proxyId=0 to remove the binding. Running windows are rejected and must be closed first.',
+      'Bind one proxy to one or more closed NexBrowser windows; proxyId=0 removes the binding. Running windows are rejected, so close them first. Replacing a confirmed failed proxy on the task window needs no extra confirmation: save the task URL and form state before closing, then reopen and verify the exit.',
     annotations: { destructiveHint: true },
     inputSchema: bindProxyInputSchema,
     execute: async (args, ctx) => {
@@ -1301,7 +1301,7 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
             'One window ID, or all target window IDs in one array for a single batch-start request.'
           )
           .optional(),
-        ids: browserIdsSchema.describe('Documented alias of windowId').optional()
+        ids: browserIdsSchema.describe('Alias of windowId').optional()
       })
       .passthrough(),
     execute: async (args, ctx) => {
@@ -1395,7 +1395,7 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
       .object({
         teamId: browserIdSchema.optional(),
         windowId: browserIdsSchema.describe('One window ID or a list; alias of ids').optional(),
-        ids: browserIdsSchema.describe('Documented alias of windowId').optional()
+        ids: browserIdsSchema.describe('Alias of windowId').optional()
       })
       .passthrough(),
     execute: async (args, ctx) => {

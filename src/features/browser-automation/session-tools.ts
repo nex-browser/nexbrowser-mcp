@@ -11,7 +11,7 @@ const browserIdSchema = z.union([z.string(), z.number()]);
 const CONNECT = defineTool({
   name: 'nex_browser_connect',
   description:
-    'For nexbrowser-mcp browser tasks, use a NexBrowser environment by default; pass startIfNeeded=true to open a closed environment. Connect to one NexBrowser window using the active team by default and create an isolated automation session. For multiple windows, first call nex_browser_open once with all window IDs, then connect each window with startIfNeeded=false. ' +
+    'For nexbrowser-mcp browser tasks, use a NexBrowser environment by default. Connects one window (active team by default) and creates an isolated automation session; startIfNeeded=true opens a closed window. For several windows, call nex_browser_open once with all IDs, then connect each with startIfNeeded=false. ' +
     PAGE_CAPTCHA_POINTER,
   inputSchema: z
     .object({
@@ -42,7 +42,7 @@ const CONNECT = defineTool({
         })
       },
       {
-        success: `Browser automation session connected.\n${PAGE_CAPTCHA_GUIDANCE}`,
+        success: `Browser automation session connected.\nPage CAPTCHA:\n${PAGE_CAPTCHA_GUIDANCE}`,
         failure: 'Failed to connect browser automation session'
       },
       (data) => ctx.sessions.setActiveSessionId(String(data?.sessionId || '') || undefined)

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { bindTools, type McpToolSpec } from '../../shared/define-tool.js';
-import { resourceRecovery } from '../../shared/service-recovery.js';
+import { PAID_TOOL_NOTE, resourceRecovery } from '../../shared/service-recovery.js';
 import {
   parseServiceJson,
   serviceId,
@@ -79,7 +79,7 @@ export const IP_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_ip_product_list',
     description:
-      'List current general proxy products with live prices. The server calculates charges by quantity, duration and product days and rounds each order total UP to 2 decimal places. Read-only inquiries never place orders.',
+      'List general proxy products with live prices. The server charges by quantity, duration and product days, rounding each order total up to 2 decimals.',
     schema: z.object({}).strict(),
     route: IP_PRODUCTS_ROUTE,
     readOnly: true,
@@ -91,7 +91,7 @@ export const IP_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_ip_buy',
     description:
-      "Buy general proxies and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Use only for a requested purchase or when needed for the user's task; price inquiries alone do not authorize purchases. Delivery is asynchronous: reconcile orders, saved proxies and billing; never repeat a pending or unknown purchase. After confirmed delivered-proxy failure and no suitable owned replacement, buy a task-scoped replacement without asking again, at most 3 proxy attempts including the first.",
+      `Buy general proxies. Delivery is asynchronous: check nex_ip_order_list and nex_proxy_list, and never repeat a pending order. ${PAID_TOOL_NOTE}`,
     schema: z
       .object({
         productId: z.string().min(1),
@@ -120,7 +120,7 @@ export const IP_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_ip_renew',
     description:
-      'Renew local ProxyInfo IDs from nex_proxy_list, never order IDs or upstream proxy IDs. Charge the balance directly at the current server price, without a separate quotation or payment confirmation. Multiple groups may partially succeed. Reconcile each original-order group before considering another operation; never repeat a pending or unknown batch. Confirmed unusable proxies should use the bounded replacement flow rather than repeated renewals.',
+      `Renew local proxy IDs from nex_proxy_list (not order or upstream IDs). Order groups may partially succeed; replace unusable proxies instead of renewing them again. ${PAID_TOOL_NOTE}`,
     schema: renewal,
     route: IP_RENEW_ROUTE,
     method: 'POST',
@@ -149,7 +149,7 @@ export const IP_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_ip_snap_buy',
     description:
-      'Buy a short-term proxy quota package and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Save the returned local order id for extraction. Reuse remaining owned quota before buying more. Confirm delivered-proxy failure and reconcile first; task-scoped proxy replacement allows at most 3 attempts including the first. Never repeat a pending or unknown purchase.',
+      `Buy a short-term proxy quota package by an exact ipNum from nex_ip_snap_package_list, and keep the returned local order id for nex_ip_snap_pull. Use remaining quota first. ${PAID_TOOL_NOTE}`,
     schema: z.object({ num: serviceId }).strict(),
     route: IP_SNAP_BUY_ROUTE,
     method: 'POST',
@@ -160,7 +160,7 @@ export const IP_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_ip_snap_pull',
     description:
-      "Consume purchased short-term quota to extract proxies for the user's task without a separate payment confirmation. nexIpId is the local SNAP order ID. This is a consequential extraction, not a read. Reconcile remaining quota and saved proxies before a new extraction; never repeat an unknown operation. After confirmed proxy failure, reuse quota for task-scoped replacements within 3 attempts including the first. Delivered proxies are already saved by the server.",
+      "Consume short-term quota to extract proxies for the user's task, without a separate payment confirmation; nexIpId is the local SNAP order ID. Extracted proxies are saved by the server. Not a read: never repeat an unclear extraction, and check remaining quota and nex_proxy_list first.",
     schema: z
       .object({ nexIpId: serviceId, countryCode: z.string().regex(/^[A-Z]{2}$/), num: serviceId })
       .strict(),

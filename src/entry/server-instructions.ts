@@ -1,52 +1,44 @@
 import { PAGE_CAPTCHA_GUIDANCE } from '../features/captcha/routing-guidance.js';
 
 /**
- * Server instructions sent once at MCP initialization, grouped by topic. Tool descriptions
- * repeat only the short pointers a lazily discovered tool needs; workflow detail lives here.
- * MCP 初始化时下发的服务说明，按主题分段；工具描述只保留按需发现所需的简短指引。
+ * Server instructions sent once at MCP initialization: the single source for cross-tool rules.
+ * Tool descriptions keep only what a lazily discovered tool needs on its own.
+ * MCP 初始化时下发的服务说明，是跨工具规则的唯一来源；工具描述只保留单独发现时必需的内容。
  */
-const ROUTING = [
-  'When using nexbrowser-mcp for browser tasks, use NexBrowser environments by default.',
-  'Reuse the task environment when available; otherwise use nex_browser_list to find a suitable environment, then nex_browser_connect(windowId, startIfNeeded=true) to open and connect it.',
-  'Continue with nex_browser_* using the matching sessionId/pageId, without asking whether to use NexBrowser again. Honor any environment explicitly selected by the user.',
-  "IMPORTANT ROUTING RULE: NexBrowser is the product and this MCP server, not a generic browser. Whenever the user explicitly says NexBrowser/nexbrowser or asks to use NexBrowser OpenAPI, use this server's nex_browser_* tools; never substitute the Browser plugin, Chrome plugin, computer-use, shell commands, or process enumeration.",
-  "NexBrowser windows are managed environments/profiles, not operating-system application windows or browser tabs. For requests to list or count them, call nex_browser_list first. Example: '使用 NexBrowser 查看我有多少窗口' means call nex_browser_list. Former tool names are not available."
-].join(' ');
+const ROUTING = `## Routing
+- IMPORTANT: NexBrowser is the product behind this MCP server, not a generic browser. When the user names NexBrowser/nexbrowser or its OpenAPI, use nex_* tools; never substitute the Browser plugin, Chrome plugin, computer-use, shell commands, or process enumeration.
+- NexBrowser windows are managed environments/profiles, not operating-system windows or browser tabs. To list or count them, call nex_browser_list; '使用 NexBrowser 查看我有多少窗口' means call nex_browser_list.
+- When using nexbrowser-mcp for browser tasks, use NexBrowser environments by default. Reuse the task environment, or pick one with nex_browser_list and call nex_browser_connect(windowId, startIfNeeded=true). Honor an environment the user selected, and keep using its sessionId/pageId without asking again.`;
 
-const PAGE_INTERACTION = [
-  'Act on refs from the latest nex_browser_snapshot instead of guessed CSS selectors.',
-  'If a snapshot fails, take a screenshot and use nex_browser_mouse_click_xy, or report the concrete error; do not retry invented selectors until they time out.'
-].join(' ');
+const PAGE_INTERACTION = `## Page interaction
+- Act on refs from the latest nex_browser_snapshot, not guessed CSS selectors.
+- If a snapshot fails, take a screenshot and use nex_browser_mouse_click_xy, or report the error; do not retry invented selectors until they time out.`;
 
-const CAPTCHA = [
-  PAGE_CAPTCHA_GUIDANCE,
-  'Discover and execute the CAPTCHA tools; merely reading their definitions is not preparation. Never download challenge images or install Pillow/OpenCV to solve them.',
-  'If preparation reports an unsupported adapter, missing parameters or an uncaptured callback, report that concrete blocker; never bypass it with raw nex_captcha_buy or a local solver.',
-  'Never silently reload a filled form, repurchase after a purchase/application timeout, or treat provider success as website acceptance. Confirmed FAILED/EXPIRED or explicit site rejection permits a genuinely new challenge after records/billing checks, within 3 attempts including the first; retain the old prepareId and never dispatch or buy that same challenge again.',
-  'An explicit registration/login request authorizes its normal final submit and necessary NexCaptcha solving unless the user restricted it. Charge necessary paid tools directly at the current server price without a separate quotation or payment confirmation.'
-].join(' ');
+const CAPTCHA = `## Page CAPTCHA
+${PAGE_CAPTCHA_GUIDANCE}
+- An explicit sign-up/login request authorizes its final submit and the CAPTCHA solving it needs, unless the user restricted it.`;
 
-const REGISTRATION_RESOURCES = [
-  'When a sign-up or verification step needs an email address or phone number the user has not supplied, first check owned resources with nex_mail_record_list or nex_sms_record_list and reuse a suitable unexpired one.',
-  'If no suitable owned resource exists, obtain the needed NexMail mailbox or NexSMS number directly for the requested task, unless the user restricted purchases or specified their own address or number.',
-  'Choose the required type, lifetime and quantity from the current service catalog; do not ask for a separate price confirmation.'
-].join(' ');
+const PAID_SERVICES = `## Paid services
+- nex_sms_* phone numbers, nex_mail_* mailboxes, nex_ip_* proxy marketplace, nex_captcha_* CAPTCHA tasks, nex_billing_* charges and refunds.
+- When the user's task needs a purchase, renewal, quota extraction or CAPTCHA submission, charge directly without a quotation or payment confirmation. A price, stock or plan inquiry alone never authorizes a purchase. Honor user spending limits and resource scope; never run purchases as tests.
+- Sign-up resources: when a sign-up needs an email address or phone number the user did not supply, check nex_mail_record_list or nex_sms_record_list and reuse a suitable unexpired one. Otherwise obtain the needed NexMail mailbox or NexSMS number directly, choosing type, lifetime and quantity from the live catalog; do not ask for a separate price confirmation.
+- Unknown outcome: a purchase error, timeout, missing allocation or unclear result may already have charged. Reconcile the module records and nex_billing_trade_list first; while unresolved, buy nothing more for that resource and report the blocker. Pending states and old records do not prove failure.
+- Insufficient balance (-1208, billingBlocked or stopPaidOperations): stop all paid actions and report it.`;
 
-const SERVICES = [
-  'Cloud phone numbers for SMS verification codes use nex_sms_*, proxy marketplace capabilities use nex_ip_*, mailboxes use nex_mail_*, CAPTCHA tasks use nex_captcha_*, and payment/refund reconciliation uses nex_billing_*.',
-  'Purchases, renewals and quota extraction needed for the requested task execute directly at the current server price without a quotation stage or separate payment confirmation. Honor user limits and resource scope. A price, availability or plan inquiry alone never authorizes a purchase.',
-  'For interactive tasks, recover without asking the user to approve each replacement: wait 120 seconds for SMS, call nex_mail_message_list with waitSeconds=180 for verification email, confirm proxy probe/site failure, or confirm CAPTCHA FAILED/EXPIRED/site rejection. Reuse a suitable owned resource first, then replace only the failed task-scoped resource and continue. Each resource recovery flow allows at most 3 attempts including the first; stop at that limit or a stricter user limit. Normal requested batch quantities are not retry attempts.',
-  'Release an eligible task-owned waiting number and bind a replacement proxy to the task environment without asking again. Preserve task state before closing/reopening a proxy-bound window. Never replace user-supplied or unrelated resources without authorization.',
-  "Track failed phone numbers and (countryId, projectId) candidates. If a country/product cannot receive codes, choose another compatible live-catalog candidate for the same target site, respecting any fixed country or other user requirement; never select an unrelated app project. Track rejected mailbox types/domains/suffixes and choose another supported candidate when the site rejects its format/domain or mail does not arrive. Refill the new address/number and trigger a new send; pass that send request's ISO timestamp with timezone as receivedAfter to SMS code_get/code_fill and mail message_list. Normally leave onlyNew=false so codes arriving before the first pull are accepted; old or missing/invalid-time SMS cannot be filled by a time-filtered wait. Match email recipient, target site and receivedAt after that send, and never reuse a previous resource's code. Switching country/product/domain never resets the 3-attempt recovery limit.",
-  'Distinguish business waiting from purchase delivery: a confirmed SMS/email wait timeout can trigger bounded replacement, but a purchase error, timeout, missing allocation or unknown callback may already have charged or acted. Reconcile module records and billing first; while attribution remains unknown, stop new paid operations for that resource and report the concrete blocker. Do not treat network errors, pending states or old records as evidence that a purchase failed. On -1208 or billingBlocked/stopPaidOperations, stop all further paid actions and clearly report insufficient balance.',
-  'Keep progress visible: state the current resource attempt and wait, the observed failure, any release/refund reconciliation, the replacement/rebinding or new challenge, and the final result. Do not turn progress updates into confirmation questions. Do not run paid purchases as tests.',
-  'Mail details mark messages read. Keep resource IDs and each module state machine distinct.'
-].join(' ');
+const RECOVERY = `## Automatic recovery in interactive tasks
+- Confirmed failure means: no SMS within 120 seconds, no matching email within 180 seconds (nex_mail_message_list waitSeconds=180), a confirmed proxy failure, CAPTCHA FAILED/EXPIRED, or the site rejecting the resource. Then replace only the failed task resource and continue without asking: reuse a suitable owned resource first, otherwise buy one.
+- At most 3 attempts per resource flow including the first, or the user's lower limit. Changing country, project, domain or type does not reset the count; requested batch quantities are not retries.
+- Phone numbers: track failed numbers and (countryId, projectId) pairs; choose another live-catalog project for the same target site and keep any country the user fixed. Release an eligible task-owned waiting number with nex_sms_release.
+- Mailboxes: track rejected types, domains and suffixes, and choose another supported one.
+- After replacing a number or mailbox, refill the form and send again. Pass that send's ISO timestamp with timezone as receivedAfter to nex_sms_code_get, nex_sms_code_fill or nex_mail_message_list, normally with onlyNew=false. Never reuse a previous resource's code.
+- Proxies: save the task URL and form state, close only the task window, bind the replacement and reopen it. Never replace user-supplied or unrelated resources.
+- Report each wait, failure, attempt count and replacement as progress, not as a question.
+- Mail details mark messages read. Keep each module's resource IDs separate.`;
 
 export const SERVER_INSTRUCTIONS = [
   ROUTING,
   PAGE_INTERACTION,
   CAPTCHA,
-  REGISTRATION_RESOURCES,
-  SERVICES
+  PAID_SERVICES,
+  RECOVERY
 ].join('\n\n');
