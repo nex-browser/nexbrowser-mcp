@@ -33,24 +33,18 @@ function setup(name: string, response: unknown) {
 describe('service tool contracts', () => {
   it.each([
     ['nex_ip_product_list', {}, '/ip/products', 'GET'],
-    [
-      'nex_ip_buy',
-      { productId: 'p', quantity: 2, duration: 30, maxTotalPrice: '0.01' },
-      '/ip/buy',
-      'POST'
-    ],
+    ['nex_ip_buy', { productId: 'p', quantity: 2, duration: 30 }, '/ip/buy', 'POST'],
     ['nex_ip_order_list', { page: 2 }, '/ip/orders?page=2&size=20', 'GET'],
-    ['nex_ip_renew_quote', { items: [501], duration: 30 }, '/ip/renew_calc', 'POST'],
-    ['nex_ip_renew', { items: [501], duration: 30, maxTotalPrice: 1 }, '/ip/renew', 'POST'],
+    ['nex_ip_renew', { items: [501], duration: 30 }, '/ip/renew', 'POST'],
     ['nex_ip_snap_package_list', {}, '/ip/snap/plans', 'GET'],
     ['nex_ip_snap_country_list', {}, '/ip/snap/products', 'GET'],
-    ['nex_ip_snap_buy', { num: 100, maxTotalPrice: 22 }, '/ip/snap/buy', 'POST'],
+    ['nex_ip_snap_buy', { num: 100 }, '/ip/snap/buy', 'POST'],
     ['nex_ip_snap_pull', { nexIpId: 1, countryCode: 'US', num: 10 }, '/ip/snap/pull', 'POST'],
     ['nex_mail_plan_list', {}, '/mail/plans', 'GET'],
     ['nex_mail_domain_list', {}, '/mail/domains', 'GET'],
     [
       'nex_mail_buy',
-      { type: 'MAINSTREAM', suffix: 'gmail.com', durationHours: 'DAY_1', maxTotalPrice: 1 },
+      { type: 'MAINSTREAM', suffix: 'gmail.com', durationHours: 'DAY_1' },
       '/mail/buy',
       'POST'
     ],
@@ -58,12 +52,7 @@ describe('service tool contracts', () => {
     ['nex_mail_message_list', { id: 101 }, '/mail/pull', 'POST'],
     ['nex_mail_message_detail', { id: 101, mailId: 500 }, '/mail/detail', 'POST'],
     ['nex_captcha_product_list', {}, '/captcha/products', 'GET'],
-    [
-      'nex_captcha_buy',
-      { productCode: 'TEST', adapter: {}, maxTotalPrice: 0.005 },
-      '/captcha/buy',
-      'POST'
-    ],
+    ['nex_captcha_buy', { productCode: 'TEST', adapter: {} }, '/captcha/buy', 'POST'],
     ['nex_captcha_record_list', {}, '/captcha/records?page=1&size=20', 'GET'],
     ['nex_captcha_query', { id: 101 }, '/captcha/query', 'POST'],
     ['nex_billing_trade_list', {}, '/billing/trades?page=1&size=20', 'GET']
@@ -78,28 +67,24 @@ describe('service tool contracts', () => {
   });
 
   it.each([
-    ['nex_ip_buy', { productId: 'p', quantity: 1, duration: 30 }],
-    ['nex_ip_renew', { items: [1, 1], duration: 30, maxTotalPrice: 1 }],
+    ['nex_ip_buy', { productId: 'p', quantity: 0, duration: 30 }],
+    ['nex_ip_renew', { items: [1, 1], duration: 30 }],
     ['nex_ip_snap_pull', { nexIpId: 1, countryCode: 'USA', num: 0 }],
-    ['nex_mail_buy', { type: 'TEMPORARY', durationHours: 24, maxTotalPrice: 1 }],
-    [
-      'nex_mail_buy',
-      { type: 'TEMPORARY', durationHours: 'DAY_1', prefix: 'custom', maxTotalPrice: 1 }
-    ],
+    ['nex_mail_buy', { type: 'TEMPORARY', durationHours: 24 }],
+    ['nex_mail_buy', { type: 'TEMPORARY', durationHours: 'DAY_1', prefix: 'custom' }],
     [
       'nex_mail_buy',
       {
         type: 'MAINSTREAM',
         durationHours: 'DAY_1',
         suffix: 'gmail.com',
-        domainId: 1,
-        maxTotalPrice: 1
+        domainId: 1
       }
     ],
     ['nex_mail_message_list', { id: 101, size: 10 }],
     ['nex_mail_message_detail', { id: 101, mailId: '<Message-ID>' }],
-    ['nex_captcha_buy', { productCode: 'TEST', maxTotalPrice: 1 }],
-    ['nex_captcha_buy', { productCode: 'TEST', adapter: null, maxTotalPrice: 1 }],
+    ['nex_captcha_buy', { productCode: 'TEST' }],
+    ['nex_captcha_buy', { productCode: 'TEST', adapter: null }],
     ['nex_captcha_query', { taskId: 'upstream-id' }]
   ])('rejects invalid %s input without sending a request', (name, args) => {
     const { tool, request } = setup(name as string, ok(null));
@@ -217,12 +202,36 @@ describe('service tool contracts', () => {
         return { ...ok(onlineCaptchaContract('TEST')), contextId: 'team-a' };
       throw new Error('timeout with confidential transport data');
     });
-    const result = await tool.execute({ productCode: 'TEST', adapter: {}, maxTotalPrice: 1 });
+    const result = await tool.execute({ productCode: 'TEST', adapter: {} });
     expect(result.isError).toBe(true);
     expect(JSON.stringify(result)).toContain('outcome is unknown');
     expect(JSON.stringify(result)).not.toContain('confidential');
     expect(request).toHaveBeenCalledTimes(2);
   });
+
+  it.each([
+    ['nex_ip_buy', { productId: 'p', quantity: 1, duration: 1 }, []],
+    [
+      'nex_mail_buy',
+      { type: 'TEMPORARY', durationHours: 'HOUR_1' },
+      { email: 'no-id@example.com' }
+    ],
+    [
+      'nex_captcha_buy',
+      { productCode: 'TEST', adapter: {} },
+      { id: 9, productCode: 'DIFFERENT', state: 'CREATED' }
+    ]
+  ])(
+    'requires allocation reconciliation for malformed successful %s delivery',
+    async (name, args, data) => {
+      const { tool } = setup(name as string, ok(data));
+      const result = await tool.execute(args as any);
+      expect(result.structuredContent).toMatchObject({
+        code: 'OUTCOME_UNKNOWN',
+        recovery: { action: 'RECONCILE', retryable: false }
+      });
+    }
+  );
 
   it('classifies transport failures without echoing raw error text', async () => {
     const { tool, request } = setup('nex_mail_plan_list', null);

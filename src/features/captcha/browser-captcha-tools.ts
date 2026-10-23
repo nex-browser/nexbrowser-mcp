@@ -8,9 +8,10 @@ import {
   type CaptchaContract
 } from './online-schema.js';
 import { defineTool, type McpToolSpec, type ToolContext } from '../../shared/define-tool.js';
-import { maxTotalPrice, parseServiceJson } from '../../shared/service-tools.js';
-import { successResult } from '../../shared/tool-result.js';
-import type { ActiveSessionStore } from '../../shared/types.js';
+import { parseServiceJson } from '../../shared/service-tools.js';
+import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
+import { resourceRecovery } from '../../shared/service-recovery.js';
+import type { ActiveSessionStore, NexApiResponse } from '../../shared/types.js';
 import {
   actionsRoute,
   CAPTCHA_BUY_ROUTE,
@@ -51,7 +52,6 @@ interface Workflow {
   candidate: Candidate;
   productCode: string;
   contextId: string;
-  price: string;
   expiresAt: number;
   challengeUrl?: string;
   attempted: boolean;
@@ -73,25 +73,8 @@ function storeFor(ctx: ToolContext) {
   return store;
 }
 
-/** 用十进制定点整数比较报价，避免浮点边界放宽扣费上限。 */
-function amount(value: unknown) {
-  const text = String(value);
-  if (!/^\d+(?:\.\d+)?$/.test(text) || text.length > 64) throw new Error('Invalid CAPTCHA price');
-  const [whole, fraction = ''] = text.split('.');
-  return { digits: BigInt(whole + fraction), scale: fraction.length };
-}
-/** 将不同精度的金额对齐后比较，不修改服务端给出的应付价格。 */
-function comparePrice(left: unknown, right: unknown) {
-  const a = amount(left);
-  const b = amount(right);
-  const scale = Math.max(a.scale, b.scale);
-  const x = a.digits * 10n ** BigInt(scale - a.scale);
-  const y = b.digits * 10n ** BigInt(scale - b.scale);
-  return x < y ? -1 : x > y ? 1 : 0;
-}
-
 /** 仅兼容已支持的 Turnstile 旧产品码，优先使用目录中的精确匹配。 */
-function quotedProduct(catalog: unknown, productCode: string) {
+function enabledProduct(catalog: unknown, productCode: string) {
   if (!Array.isArray(catalog)) return undefined;
   const exact = catalog.find((row: any) => row.productCode === productCode);
   if (exact) return exact;
@@ -145,7 +128,7 @@ function browserAdapter(
     delete adapter.userAgent;
   try {
     captchaAdapterInput.parse(adapter);
-    // GeeTest v3 的新 challenge 只能在审批后获取，完整线上校验推迟到刷新完成后。
+    // GeeTest v3 的新 challenge 在提交前获取，完整线上校验推迟到刷新完成后。
     if (!awaitingFreshChallenge) validateOnlineCaptchaAdapter(contract, adapter);
   } catch (error) {
     return {
@@ -155,15 +138,19 @@ function browserAdapter(
   return { adapter };
 }
 
-/** 每一步服务读取都绑定报价时的用户和团队版本，禁止切团队后续用旧任务。 */
+/** 每一步服务读取都绑定准备时的用户和团队版本，禁止切团队后续用旧任务。 */
+class CaptchaServiceError extends Error {
+  constructor(readonly response: NexApiResponse) {
+    super(`NexCaptcha request failed (${response.code}): ${response.msg}`);
+  }
+}
 async function service(ctx: ToolContext, route: string, contextId?: string, body?: unknown) {
   const response = await ctx.api.request<any>(route, {
     method: body === undefined ? 'GET' : 'POST',
     ...(contextId ? { headers: { 'X-Nex-Service-Context': contextId } } : {}),
     ...(body === undefined ? {} : { body: JSON.stringify(body) })
   });
-  if (response.code !== 0)
-    throw new Error(`NexCaptcha request failed (${response.code}): ${response.msg}`);
+  if (response.code !== 0) throw new CaptchaServiceError(response);
   if (!response.contextId || (contextId && response.contextId !== contextId))
     throw new Error(
       'Service identity/team context changed or is unavailable; prepare again without purchasing'
@@ -240,9 +227,28 @@ function status(workflow: Workflow, extra: Record<string, unknown> = {}) {
     {
       prepareId: workflow.prepareId,
       localId: workflow.localId,
-      state: workflow.state ?? 'QUOTED',
+      state: workflow.state ?? 'PREPARED',
       applied: workflow.applied ?? false,
       websiteVerified: false,
+      ...(['FAILED', 'EXPIRED'].includes(workflow.state ?? '')
+        ? {
+            recovery: resourceRecovery(
+              'captcha',
+              'RETRY_CHALLENGE',
+              'CONFIRMED_SOLVER_FAILURE',
+              workflow.localId ?? workflow.prepareId
+            )
+          }
+        : workflow.state === 'OUTCOME_UNKNOWN' || workflow.state === 'APPLY_OUTCOME_UNKNOWN'
+          ? {
+              recovery: resourceRecovery(
+                'captcha',
+                'RECONCILE',
+                'OUTCOME_UNKNOWN',
+                workflow.localId ?? workflow.prepareId
+              )
+            }
+          : {}),
       ...workflow.gridResult,
       ...(workflow.nextPrepareId ? { nextPrepareId: workflow.nextPrepareId } : {}),
       ...extra
@@ -250,7 +256,18 @@ function status(workflow: Workflow, extra: Record<string, unknown> = {}) {
   );
 }
 
-/** 网格图片不进入对话；仅展示题目、布局和后续费用审批所需信息。 */
+/** This invocation stopped before submitting any purchase RPC. */
+function preparationRequired(message: string, prepareId: string, retryAfterMs?: number) {
+  return errorResult(`No purchase attempted. ${message}`, {
+    code: 'CAPTCHA_PREPARATION_REQUIRED',
+    purchaseAttempted: false,
+    prepareId,
+    ...(retryAfterMs === undefined ? {} : { retryAfterMs }),
+    recovery: resourceRecovery('captcha', 'RETRY_CHALLENGE', 'PREPARATION_REQUIRED', prepareId)
+  });
+}
+
+/** 网格图片不进入对话；仅展示题目、布局和准备状态。 */
 function publicCandidate(candidate: Candidate) {
   if (candidate.productCode !== 'GRID') return candidate;
   return {
@@ -264,7 +281,7 @@ function publicCandidate(candidate: Candidate) {
   };
 }
 
-/** 后续轮次只准备免费新报价，必须经新的 submit 审批才会再次购买。 */
+/** 后续轮次只准备挑战；显式调用新的 submit 才会购买，避免重复扣费。 */
 async function gridProgress(ctx: ToolContext, workflow: Workflow, result: any) {
   workflow.gridResult = {
     gridState: result.gridState,
@@ -290,13 +307,13 @@ async function gridProgress(ctx: ToolContext, workflow: Workflow, result: any) {
       },
       ctx
     );
-    const quote = prepared.structuredContent;
-    if (quote?.ready === true) {
-      const next = storeFor(ctx).get(String(quote.prepareId));
+    const preparation = prepared.structuredContent;
+    if (preparation?.ready === true) {
+      const next = storeFor(ctx).get(String(preparation.prepareId));
       if (next?.contextId !== workflow.contextId)
-        throw new Error('Grid team context changed before next quote');
-      workflow.nextPrepareId = String(quote.prepareId);
-      workflow.gridResult.nextQuote = quote;
+        throw new Error('Grid team context changed before next preparation');
+      workflow.nextPrepareId = String(preparation.prepareId);
+      workflow.gridResult.nextPreparation = preparation;
     } else {
       workflow.gridResult.guidance =
         'The new Grid is not ready. Prepare the current round again without purchasing.';
@@ -309,7 +326,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_prepare',
     description:
-      'Check enabled products/prices and online schema, then capture the page challenge. Free; no purchase. Chooses BROWSER_RESULT for captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, or BROWSER_INTERACTION for a real supported GRID; checks integration.workflows and the local adapter. No workflow switch parameter or automatic HTTP_SUBMIT integration. Detects visible reCAPTCHA image grids; for other regular image grids supply observed grid DOM selectors and mode. Unsupported canvas/custom widgets need a site adapter. Select challengeId if multiple widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or timeout are blockers, not reasons to substitute GRID or raw nex_captcha_buy. Grid capture preserves the original instructions and image; quote each round fee and approve tile clicks and CAPTCHA verify before submit. Never silently reload a filled form.',
+      'Check enabled products and online schema, then capture the page challenge. Free; no purchase or quotation. Chooses BROWSER_RESULT for captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, or BROWSER_INTERACTION for a real supported GRID; checks integration.workflows and the local adapter. No workflow switch parameter or automatic HTTP_SUBMIT integration. Detects visible reCAPTCHA image grids; for other regular image grids supply observed grid DOM selectors and mode. Unsupported canvas/custom widgets need a site adapter. Select challengeId if multiple widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or timeout are blockers, not reasons to substitute GRID or raw nex_captcha_buy. Grid capture preserves the original instructions and image. Once ready, submit directly for the requested task. Never silently reload a filled form.',
     inputSchema: automationSchema({
       challengeId: z.string().optional(),
       challengeUrl: z.string().url().optional(),
@@ -338,7 +355,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
           'No unique captured CAPTCHA. Select challengeId or arm capture before navigation. Reinitializing an existing filled form requires user approval.',
           { ...publicPage, products: catalog.data, ready: false }
         );
-      const product = quotedProduct(catalog.data, selected.productCode);
+      const product = enabledProduct(catalog.data, selected.productCode);
       const needsFreshChallenge =
         selected.productCode === 'GEETEST' &&
         selected.reason?.startsWith('Fresh challenge required');
@@ -373,15 +390,14 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
         )
       )
         throw new Error('CAPTCHA websiteURL must be an HTTP(S) site URL');
-      amount(product.price);
       const store = storeFor(ctx);
       const previous = [...store.values()].find(
         (row) =>
           row.candidate.documentId === selected.documentId &&
           (row.candidate.challengeId === selected.challengeId ||
-            (selected.productCode === 'GRID' &&
-              row.productCode === 'GRID' &&
+            (row.candidate.productCode === selected.productCode &&
               row.candidate.frameIndex === selected.frameIndex &&
+              row.candidate.frameUrl === selected.frameUrl &&
               row.attempted &&
               !row.applied &&
               !['FAILED', 'EXPIRED'].includes(row.state ?? '')))
@@ -408,7 +424,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
             'This challenge already has an active purchase workflow. Query/complete or reconcile it; do not buy again.'
         });
       }
-      // 未购买报价可淘汰；已尝试任务保留，防止新 prepare 绕过重复扣费保护。
+      // 未购买的准备状态可淘汰；已尝试任务保留，防止新 prepare 绕过重复扣费保护。
       for (const [id, row] of store)
         if (!row.attempted && row.expiresAt < Date.now()) store.delete(id);
       if (previous) store.delete(previous.prepareId);
@@ -424,7 +440,6 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
         candidate: selected,
         productCode: product.productCode,
         contextId: catalog.contextId,
-        price: String(product.price),
         expiresAt: Date.now() + 120_000,
         challengeUrl: args.challengeUrl,
         attempted: false,
@@ -432,12 +447,10 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
       };
       store.set(workflow.prepareId, workflow);
       return successResult(
-        `NexCaptcha ${workflow.productCode}: ${workflow.price} USDT for one task. Ask the user to explicitly approve this fee and ${selected.productCode === 'GRID' ? 'sending this Grid image/instructions, clicking the returned tiles and the CAPTCHA verification control. Each changed image/round requires a new approved quote' : 'sending the public CAPTCHA parameters and dispatching the site callback, which may send verification requests or submit a site form'}.`,
+        `NexCaptcha ${workflow.productCode} challenge is ready. Call nex_browser_captcha_submit with this prepareId to create one task and charge the balance directly, then nex_browser_captcha_complete to apply the result. No separate payment confirmation is needed.`,
         {
           prepareId: workflow.prepareId,
           productCode: workflow.productCode,
-          price: workflow.price,
-          currency: 'USDT',
           ready: true,
           expiresAt: workflow.expiresAt,
           adapter:
@@ -453,8 +466,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
                 }
               }
             : {}),
-          contract,
-          requiresConfirmation: true
+          contract
         }
       );
     }
@@ -462,29 +474,36 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_submit',
     description:
-      'After explicit approval of the product, single-round fee and callback or Grid tile/verification interaction, submit exactly once. confirmed=true records approval; maxTotalPrice is the approved ceiling. Rechecks product price, team, document and current Grid image. Never repurchase after timeout. Every new Grid round needs its own quote/approval. Saves the local task ID for complete; does not click final signup/login.',
+      "Submit a prepared page CAPTCHA exactly once and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Use when needed for the user's task; inquiries alone do not authorize purchases. Rechecks product availability, team, document and current Grid image. Never repurchase after timeout. Each new Grid round has its own prepareId. Saves the local task ID for complete; does not click final signup/login.",
     annotations: { destructiveHint: true, idempotentHint: false },
-    inputSchema: z
-      .object({ prepareId: z.string(), confirmed: z.literal(true), maxTotalPrice })
-      .strict(),
+    inputSchema: z.object({ prepareId: z.string() }).strict(),
     execute: async (args, ctx) => {
       const workflow = storeFor(ctx).get(args.prepareId);
-      if (!workflow) throw new Error('Unknown prepareId; prepare a fresh quote');
+      if (!workflow)
+        return preparationRequired(
+          'Unknown prepareId; prepare the current challenge.',
+          args.prepareId
+        );
       if (workflow.attempted) {
         await service(ctx, CAPTCHA_PRODUCTS_ROUTE, workflow.contextId);
         return status(workflow);
       }
-      if (workflow.busy) throw new Error('CAPTCHA workflow is busy');
+      if (workflow.busy)
+        return preparationRequired(
+          'CAPTCHA workflow is busy; wait before preparing/submitting again.',
+          workflow.prepareId,
+          1_000
+        );
       if (Date.now() > workflow.expiresAt)
-        throw new Error('CAPTCHA quote expired; prepare again before buying');
+        return preparationRequired(
+          'CAPTCHA preparation expired; prepare again before buying.',
+          workflow.prepareId
+        );
       workflow.busy = true;
       try {
-        if (comparePrice(workflow.price, args.maxTotalPrice) > 0)
-          throw new Error('Approved price ceiling is below the quote');
         const catalog = await service(ctx, CAPTCHA_PRODUCTS_ROUTE, workflow.contextId);
         const product = catalog.data?.find((row: any) => row.productCode === workflow.productCode);
-        if (!product || comparePrice(product.price, workflow.price) !== 0)
-          throw new Error('CAPTCHA price/product changed; obtain approval for a new quote');
+        if (!product) throw new Error('CAPTCHA product changed or is unavailable; prepare again');
         const { contract } = await readCaptchaContract(
           ctx,
           workflow.productCode,
@@ -522,13 +541,14 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
         const submittedAdapter = browserAdapter(candidate, contract);
         if (submittedAdapter.reason) throw new Error(submittedAdapter.reason);
         if (Date.now() > workflow.expiresAt)
-          throw new Error('CAPTCHA quote expired during preflight; prepare again before buying');
+          throw new Error(
+            'CAPTCHA preparation expired during preflight; prepare again before buying'
+          );
         workflow.attempted = true;
         workflow.state = 'OUTCOME_UNKNOWN';
         const created = await service(ctx, CAPTCHA_BUY_ROUTE, workflow.contextId, {
           productCode: workflow.productCode,
-          adapter: submittedAdapter.adapter,
-          maxTotalPrice: workflow.price
+          adapter: submittedAdapter.adapter
         });
         const id = created.data?.id;
         if (
@@ -543,11 +563,38 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
         workflow.state = created.data.state;
         return status(workflow);
       } catch (error) {
+        if (error instanceof CaptchaServiceError) {
+          const result = apiErrorResult('NexCaptcha request failed', error.response);
+          if (result.structuredContent?.billingBlocked === true) {
+            workflow.state = 'BILLING_BLOCKED';
+            return workflow.attempted
+              ? result
+              : errorResult(String((result.content[0] as { text: string }).text), {
+                  ...result.structuredContent,
+                  purchaseAttempted: false
+                });
+          }
+        }
         if (workflow.attempted)
-          throw new Error(
-            `CAPTCHA purchase outcome is unknown for prepareId=${workflow.prepareId}. Reconcile nex_captcha_record_list and nex_billing_trade_list; never automatically retry. ${error instanceof Error ? error.message : 'Request failed'}`
+          return errorResult(
+            `CAPTCHA purchase outcome is unknown for prepareId=${workflow.prepareId}. Reconcile nex_captcha_record_list and nex_billing_trade_list; stop new charges until this outcome is established.`,
+            {
+              code: 'CAPTCHA_PURCHASE_OUTCOME_UNKNOWN',
+              prepareId: workflow.prepareId,
+              recovery: resourceRecovery(
+                'captcha',
+                'RECONCILE',
+                'PURCHASE_OUTCOME_UNKNOWN',
+                workflow.prepareId
+              )
+            }
           );
-        throw error;
+        return preparationRequired(
+          error instanceof Error
+            ? error.message
+            : 'CAPTCHA preflight failed; prepare the current challenge again.',
+          workflow.prepareId
+        );
       } finally {
         workflow.busy = false;
       }
@@ -556,7 +603,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_complete',
     description:
-      'Query once; on SUCCEEDED apply to the original callback or click validated 1-based Grid tiles and CAPTCHA verify. Obtain interaction approval first. Grid waits for image replacement and inspects the next round; returns nextPrepareId/nextQuote without purchasing. Approve and submit that quote separately. Repeated complete only inspects applied Grid progress, never clicks again. Pending solver polls require 3–5 seconds. Stops on failure or unknown application. Website success requires explicit evidence; never click final signup/login.',
+      'Query once; on SUCCEEDED apply to the original callback or click validated 1-based Grid tiles and CAPTCHA verify as part of the requested task. Grid waits for image replacement and inspects the next round; returns nextPrepareId/nextPreparation without purchasing. Submit each prepared round directly when needed. Repeated complete only inspects applied Grid progress, never clicks again. Pending solver polls require 3–5 seconds. Confirmed FAILED/EXPIRED permits a genuinely new challenge after records/billing checks, at most 3 attempts including the first; do not ask again. Unknown purchase/application blocks new charges. Website success requires explicit evidence; never click final signup/login.',
     annotations: { readOnlyHint: false, idempotentHint: false },
     inputSchema: z.object({ prepareId: z.string() }).strict(),
     execute: async (args, ctx) => {
@@ -613,7 +660,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
           return status(workflow, {
             retryAfterMs: ['FAILED', 'EXPIRED'].includes(record.state) ? undefined : 3_000,
             guidance: ['FAILED', 'EXPIRED'].includes(record.state)
-              ? 'Stop. Verify refund via nex_billing_trade_list; do not automatically purchase another task.'
+              ? 'Recognition definitively failed. Check records/billing, refresh the widget through its supported visible controls, then prepare and submit a genuinely new challenge without another payment confirmation, up to 3 attempts including the first. Do not repurchase the same challenge or repeat an unknown purchase/application.'
               : 'Still pending or unknown. Query only when needed after 3–5 seconds.'
           });
         const candidate = await current(ctx, workflow);

@@ -41,6 +41,29 @@ describe('nex_proxy_list', () => {
   });
 });
 
+describe('proxy detection recovery', () => {
+  it.each(['fail', 'success', 'unknown'])(
+    'only classifies explicit saved-proxy outcome %s for recovery',
+    async (status) => {
+      const { tool } = toolWith('nex_proxy_detect', {
+        rows: [{ id: 1, status }],
+        success: status === 'success' ? 1 : 0,
+        failed: status === 'fail' ? 1 : 0
+      });
+      const result = await tool.execute({ proxyIds: [1] });
+      if (status === 'fail')
+        expect(result.structuredContent).toMatchObject({
+          recovery: { action: 'REPLACE_RESOURCE', resourceType: 'proxy', maxAttempts: 3 }
+        });
+      if (status === 'success')
+        expect(result.structuredContent).toMatchObject({
+          recovery: { action: 'COMPLETE', resourceType: 'proxy' }
+        });
+      if (status === 'unknown') expect(result.structuredContent).not.toHaveProperty('recovery');
+    }
+  );
+});
+
 describe('nex_proxy_import', () => {
   it('forwards Desktop-compatible text and strips credentials from the result', async () => {
     const { request, tool } = toolWith('nex_proxy_import', {
@@ -286,6 +309,10 @@ describe('nex_proxy_detect batch', () => {
     expect(text).toContain('again with these proxyIds');
     expect(text).toContain('saved to the proxy resources');
     expect(JSON.stringify(result)).not.toContain('do-not-expose');
+    expect(result.structuredContent).not.toHaveProperty('recovery');
+    expect((result.structuredContent?.rows as any[])[1]).toMatchObject({
+      recovery: { action: 'REPLACE_RESOURCE', resourceType: 'proxy', resourceId: 2 }
+    });
   });
 
   it('rejects more than 50 proxy ids', () => {

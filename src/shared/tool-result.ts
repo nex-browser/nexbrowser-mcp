@@ -121,6 +121,22 @@ const NEX_ERROR_HINTS: Record<string, string> = {
  */
 export function apiErrorResult(prefix: string, response: NexApiResponse): McpToolResult {
   const message = response.msg || 'Unknown error';
+  const code = String(response.code).trim().toLowerCase();
+  if (code === '-1208' || code === 'insufficient_balance' || code === 'insufficient_points') {
+    const hint =
+      'Stop all paid operations for this task. Do not retry purchases or replace paid resources. Report insufficient balance and the need to top up before continuing. Do not request a reply or payment confirmation.';
+    return errorResult(
+      `Insufficient account balance. Paid workflow stopped; top up before continuing.\n${hint}`,
+      {
+        code: response.code,
+        message,
+        billingBlocked: true,
+        retryable: false,
+        stopPaidOperations: true,
+        hint
+      }
+    );
+  }
   // Normalize numeric and AutomationErrorCode-string failures for the hint lookup.
   // 将数值失败码与 AutomationErrorCode 字符串统一后查找提示。
   const hint = NEX_ERROR_HINTS[String(response.code)];

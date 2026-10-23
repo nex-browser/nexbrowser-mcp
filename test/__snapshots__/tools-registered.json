@@ -648,7 +648,7 @@
   },
   {
     "name": "nex_browser_bind_proxy",
-    "description": "Bind one proxy resource to one or more closed NexBrowser windows. Pass proxyId=0 to remove the binding. Running windows are rejected and must be closed first.",
+    "description": "Bind one proxy resource to one or more closed NexBrowser windows. For the task environment, binding a confirmed replacement and reopening it is authorized by the task without asking again. Preserve the task URL and form state before closing; reconnect and verify the exit after binding. Pass proxyId=0 to remove the binding. Running windows are rejected and must be closed first.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1703,7 +1703,7 @@
   },
   {
     "name": "nex_browser_connect",
-    "description": "For nexbrowser-mcp browser tasks, use a NexBrowser environment by default; pass startIfNeeded=true to open a closed environment. Connect to one NexBrowser window using the active team by default and create an isolated automation session. For multiple windows, first call nex_browser_open once with all window IDs, then connect each window with startIfNeeded=false. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "For nexbrowser-mcp browser tasks, use a NexBrowser environment by default; pass startIfNeeded=true to open a closed environment. Connect to one NexBrowser window using the active team by default and create an isolated automation session. For multiple windows, first call nex_browser_open once with all window IDs, then connect each window with startIfNeeded=false. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1837,7 +1837,7 @@
   },
   {
     "name": "nex_browser_navigate",
-    "description": "Navigate the selected page and return its refreshed accessibility snapshot. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Navigate the selected page and return its refreshed accessibility snapshot. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1862,7 +1862,7 @@
   },
   {
     "name": "nex_browser_reload",
-    "description": "Reload the page. Obtain approval before reloading a filled form to restore CAPTCHA capture. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Reload the page. Obtain approval before reloading a filled form to restore CAPTCHA capture. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1919,7 +1919,7 @@
   },
   {
     "name": "nex_browser_click",
-    "description": "Click or double-click an element from the latest snapshot or a CSS selector. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Click or double-click an element from the latest snapshot or a CSS selector. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1956,7 +1956,7 @@
   },
   {
     "name": "nex_browser_mouse_click_xy",
-    "description": "Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Click at x/y in viewport CSS pixels, including canvas, iframe contents and page-injected extension overlays. Use a fresh screenshot; for cropped/device-scale images add the returned origin after dividing image coordinates by pixelsPerCssPixel. Native browser toolbar popups are outside the page viewport. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2350,7 +2350,7 @@
   },
   {
     "name": "nex_browser_drag",
-    "description": "Drag one snapshot ref or selector to another. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Drag one snapshot ref or selector to another. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2479,7 +2479,7 @@
   },
   {
     "name": "nex_browser_snapshot",
-    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2557,7 +2557,7 @@
   },
   {
     "name": "nex_browser_get_text",
-    "description": "Read visible text from the page or one target. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Read visible text from the page or one target. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2688,7 +2688,7 @@
   },
   {
     "name": "nex_browser_evaluate",
-    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2713,7 +2713,7 @@
   },
   {
     "name": "nex_browser_run_code",
-    "description": "Run page JavaScript when the separate runCode permission is enabled. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Run page JavaScript when the separate runCode permission is enabled. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2738,7 +2738,7 @@
   },
   {
     "name": "nex_browser_take_screenshot",
-    "description": "Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId and follow its quote and approval flow. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
+    "description": "Capture the viewport, a target element, or a viewport-relative clip. target, clip and fullPage=true are mutually exclusive. CSS scale is the default; returned origin and pixelsPerCssPixel map image coordinates to viewport clicks. Includes page-injected extension overlays. Page CAPTCHA: first call nex_browser_captcha_prepare (free, no purchase) with this sessionId/pageId, then submit and complete directly for the requested task without a quotation or payment confirmation. Do not use CDP, Python, image matching or scripted drags to solve CAPTCHAs, and never bypass prepare with raw nex_captcha_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2902,7 +2902,7 @@
   },
   {
     "name": "nex_sms_project_list",
-    "description": "List the projects (target apps/sites such as Telegram or WhatsApp) of one country with live unit price and stock. Call this before nex_sms_buy to pick a projectId and to quote the price to the user.",
+    "description": "List the projects (target apps/sites such as Telegram or WhatsApp) of one country with live unit price and stock. Use this to pick a projectId before nex_sms_buy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2924,7 +2924,7 @@
   },
   {
     "name": "nex_sms_buy",
-    "description": "Buy cloud phone numbers for receiving SMS verification codes. This CHARGES THE ACCOUNT BALANCE: quote the project, quantity, and total price from nex_sms_project_list and get explicit user confirmation first. maxTotalPrice is a live preflight ceiling, not an atomic backend guarantee. At most 10 numbers per call. A null result requires record reconciliation; batch failures may have partially purchased numbers. Never automatically retry.",
+    "description": "Buy cloud phone numbers for receiving SMS verification codes and charge the account balance directly at the current server price. No separate quotation or payment confirmation is needed. Use only for a requested purchase or when needed for the user's task; price inquiries alone do not authorize purchases. At most 10 numbers per call. After a confirmed 120-second code timeout or site rejection, continue with a replacement within 3 attempts including the first, release an eligible task-owned number and reconcile records/billing first. A null result, purchase error or timeout may hide a charge or partial purchase: reconcile and stop new purchases until its outcome is established.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2943,25 +2943,11 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 10
-        },
-        "maxTotalPrice": {
-          "anyOf": [
-            {
-              "type": "number",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^\\d+(?:\\.\\d+)?$"
-            }
-          ],
-          "description": "Maximum total USDT explicitly approved by the user. Live preflight only; the backend does not support an atomic price ceiling."
         }
       },
       "required": [
         "countryId",
-        "projectId",
-        "maxTotalPrice"
+        "projectId"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false
@@ -3000,7 +2986,7 @@
   },
   {
     "name": "nex_sms_code_get",
-    "description": "Fetch the latest SMS and verification code of one purchased number. Set waitSeconds (max 120) to keep polling until a code arrives or the number stops waiting; onlyNew ignores codes already received. To type the code into a NexBrowser page, prefer nex_sms_code_fill.",
+    "description": "Fetch the latest SMS and verification code of one purchased number. Set waitSeconds (max 120) to keep polling until a code arrives or the number stops waiting; onlyNew ignores codes already received. Pass receivedAfter as the current send request's ISO timestamp with timezone to ignore earlier SMS. Time-filtered codes with missing/invalid receipt times are not accepted. Leave onlyNew false to accept a current code already present on the first pull. To type the code into a NexBrowser page, prefer nex_sms_code_fill.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3012,6 +2998,11 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 120
+        },
+        "receivedAfter": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
         },
         "onlyNew": {
           "type": "boolean"
@@ -3029,7 +3020,7 @@
   },
   {
     "name": "nex_sms_code_fill",
-    "description": "Wait for the SMS verification code of one purchased number and type it straight into the NexBrowser automation session, so the code never has to pass through the conversation. Typical flow: nex_sms_buy, type the number into the site, click its send-code button, take nex_browser_snapshot to get the code input ref, then call this. Set onlyNew after asking the site to resend a code. submit=true presses Enter after filling. Polls up to waitSeconds (max 120, default 90).",
+    "description": "Wait for the SMS verification code of one purchased number and type it straight into the NexBrowser automation session, so the code never has to pass through the conversation. Typical flow: nex_sms_buy, type the number into the site, record the send request time, click its send-code button, take nex_browser_snapshot to get the code input ref, then call this with receivedAfter as that ISO timestamp with timezone. The local filter rejects older codes and codes with missing/invalid receipt times, while accepting current codes already present on the first pull. Normally leave onlyNew false; set it only when deliberately ignoring all codes already present at the first pull after a resend. submit=true presses Enter after filling. Polls up to waitSeconds (max 120, default 120). A confirmed code timeout permits a task-scoped replacement without another payment confirmation, at most 3 number attempts including the first. Purchase timeouts require reconciliation and never count as a code timeout.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3054,6 +3045,11 @@
           "minimum": 0,
           "maximum": 120
         },
+        "receivedAfter": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
         "onlyNew": {
           "type": "boolean"
         },
@@ -3071,7 +3067,7 @@
   },
   {
     "name": "nex_sms_release",
-    "description": "Request release and refund of one waiting number. Obtain explicit approval of the number first. A null response or old state does not prove a new refund; refresh the number and billing. Refund eligibility and amount are decided by the server/upstream. Never automatically retry.",
+    "description": "Request release and refund of one waiting number. For a number acquired or explicitly authorized for the current task, release after a confirmed code timeout or site rejection without asking again. Do not release unrelated or user-supplied resources. A null response or old state does not prove a new refund; refresh the number and billing. Refund eligibility and amount are decided by the server/upstream. Do not repeat an unknown release.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3104,7 +3100,7 @@
   },
   {
     "name": "nex_ip_product_list",
-    "description": "List current general proxy products. Quote discountPrice by quantity, duration and product days; server rounds each order total UP to 2 decimal places.",
+    "description": "List current general proxy products with live prices. The server calculates charges by quantity, duration and product days and rounds each order total UP to 2 decimal places. Read-only inquiries never place orders.",
     "inputSchema": {
       "type": "object",
       "properties": {},
@@ -3117,7 +3113,7 @@
   },
   {
     "name": "nex_ip_buy",
-    "description": "Buy general proxies and charge the balance. Quote the total and obtain explicit user confirmation first. maxTotalPrice is a live preflight ceiling, not an atomic backend guarantee. Delivery is asynchronous; never automatically retry.",
+    "description": "Buy general proxies and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Use only for a requested purchase or when needed for the user's task; price inquiries alone do not authorize purchases. Delivery is asynchronous: reconcile orders, saved proxies and billing; never repeat a pending or unknown purchase. After confirmed delivered-proxy failure and no suitable owned replacement, buy a task-scoped replacement without asking again, at most 3 proxy attempts including the first.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3135,26 +3131,12 @@
           "exclusiveMinimum": 0,
           "maximum": 9007199254740991,
           "description": "Positive duration in days"
-        },
-        "maxTotalPrice": {
-          "anyOf": [
-            {
-              "type": "number",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^\\d+(?:\\.\\d+)?$"
-            }
-          ],
-          "description": "Maximum total USDT explicitly approved by the user. Live preflight only; the backend does not support an atomic price ceiling."
         }
       },
       "required": [
         "productId",
         "quantity",
-        "duration",
-        "maxTotalPrice"
+        "duration"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false
@@ -3191,8 +3173,8 @@
     }
   },
   {
-    "name": "nex_ip_renew_quote",
-    "description": "Quote renewal for local ProxyInfo IDs from nex_proxy_list, never order IDs or upstream proxy IDs. Returns missingIds and totalPrice rounded by original order group. Review the actual renewable scope before confirmation.",
+    "name": "nex_ip_renew",
+    "description": "Renew local ProxyInfo IDs from nex_proxy_list, never order IDs or upstream proxy IDs. Charge the balance directly at the current server price, without a separate quotation or payment confirmation. Multiple groups may partially succeed. Reconcile each original-order group before considering another operation; never repeat a pending or unknown batch. Confirmed unusable proxies should use the bounded replacement flow rather than repeated renewals.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3215,53 +3197,6 @@
       "required": [
         "items",
         "duration"
-      ],
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "additionalProperties": false
-    },
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "nex_ip_renew",
-    "description": "Renew local proxy IDs after nex_ip_renew_quote and explicit user approval of scope and total. Charges the balance; preflight maxTotalPrice is not atomic. Multiple groups may partially succeed. Never automatically repeat a failed or timed-out batch.",
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "items": {
-          "minItems": 1,
-          "maxItems": 1000,
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
-          }
-        },
-        "duration": {
-          "type": "integer",
-          "exclusiveMinimum": 0,
-          "maximum": 9007199254740991
-        },
-        "maxTotalPrice": {
-          "anyOf": [
-            {
-              "type": "number",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^\\d+(?:\\.\\d+)?$"
-            }
-          ],
-          "description": "Maximum total USDT explicitly approved by the user. Live preflight only; the backend does not support an atomic price ceiling."
-        }
-      },
-      "required": [
-        "items",
-        "duration",
-        "maxTotalPrice"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false
@@ -3299,7 +3234,7 @@
   },
   {
     "name": "nex_ip_snap_buy",
-    "description": "Buy a short-term proxy quota package. This charges the balance; quote the package and total and obtain explicit confirmation first. Preflight maxTotalPrice is not atomic. Save the returned local order id for extraction. Never automatically retry.",
+    "description": "Buy a short-term proxy quota package and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Save the returned local order id for extraction. Reuse remaining owned quota before buying more. Confirm delivered-proxy failure and reconcile first; task-scoped proxy replacement allows at most 3 attempts including the first. Never repeat a pending or unknown purchase.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3307,24 +3242,10 @@
           "type": "integer",
           "exclusiveMinimum": 0,
           "maximum": 9007199254740991
-        },
-        "maxTotalPrice": {
-          "anyOf": [
-            {
-              "type": "number",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^\\d+(?:\\.\\d+)?$"
-            }
-          ],
-          "description": "Maximum total USDT explicitly approved by the user. Live preflight only; the backend does not support an atomic price ceiling."
         }
       },
       "required": [
-        "num",
-        "maxTotalPrice"
+        "num"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false
@@ -3336,7 +3257,7 @@
   },
   {
     "name": "nex_ip_snap_pull",
-    "description": "Consume purchased short-term quota to extract proxies. Requires explicit approval of the order, country and quantity. nexIpId is the local SNAP order ID. This is a consequential extraction, not a read; never automatically retry. Delivered proxies are already saved by the server.",
+    "description": "Consume purchased short-term quota to extract proxies for the user's task without a separate payment confirmation. nexIpId is the local SNAP order ID. This is a consequential extraction, not a read. Reconcile remaining quota and saved proxies before a new extraction; never repeat an unknown operation. After confirmed proxy failure, reuse quota for task-scoped replacements within 3 attempts including the first. Delivered proxies are already saved by the server.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3396,7 +3317,7 @@
   },
   {
     "name": "nex_mail_buy",
-    "description": "Buy a temporary or mainstream mailbox for receiving email. Charges the balance and is non-refundable: quote the enabled plan and total and obtain explicit confirmation first. Preflight maxTotalPrice is not atomic. MAINSTREAM requires a supported suffix and has no login password; TEMPORARY optionally uses domainId. No custom prefix, renewal or refund. Never automatically retry.",
+    "description": "Buy a temporary or mainstream mailbox for receiving email and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Use only for a requested purchase or when needed for the user's task; price inquiries alone do not authorize purchases. MAINSTREAM requires a supported suffix and has no login password; TEMPORARY optionally uses domainId. No custom prefix, renewal or refund. After a confirmed 180-second empty verification-mail wait or site rejection, continue with a task-scoped replacement without asking again, at most 3 mailbox attempts including the first. A purchase error, timeout or missing allocation requires records/billing reconciliation; stop new charges until its outcome is established.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3417,19 +3338,6 @@
             "DAY_120"
           ]
         },
-        "maxTotalPrice": {
-          "anyOf": [
-            {
-              "type": "number",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^\\d+(?:\\.\\d+)?$"
-            }
-          ],
-          "description": "Maximum total USDT explicitly approved by the user. Live preflight only; the backend does not support an atomic price ceiling."
-        },
         "domainId": {
           "type": "integer",
           "exclusiveMinimum": 0,
@@ -3449,8 +3357,7 @@
       },
       "required": [
         "type",
-        "durationHours",
-        "maxTotalPrice"
+        "durationHours"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false
@@ -3498,7 +3405,7 @@
   },
   {
     "name": "nex_mail_message_list",
-    "description": "Synchronize and list email for a local mailbox id. Fixed 10 messages per page; keyword filters messages. Copy full keyword, never keywordDisplay. Poll at 10–15 second intervals only while needed and unexpired, without overlapping requests. Read endpoints allow at most 5 calls per user per 3 seconds.",
+    "description": "Synchronize and list email for a local mailbox id. Fixed 10 messages per page; keyword filters messages. Copy full keyword, never keywordDisplay. waitSeconds defaults to 0 (one sync); set 180 when waiting for verification mail. Polls every 10 seconds, at most 180 seconds in one identity/team. receivedAfter is an ISO timestamp with timezone for the current send request; ignore older email and still match recipient/site from returned fields. onlyNew defaults to false; true ignores messages present on the first sync, so use it only after requesting a resend. A confirmed empty wait returns MAIL_MESSAGE_TIMEOUT and allows a task-scoped replacement, at most 3 mailbox attempts including the first. A purchase timeout never permits replacement until allocation and billing are reconciled. Read endpoints allow at most 5 calls per user per 3 seconds.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3515,6 +3422,21 @@
         },
         "keyword": {
           "type": "string"
+        },
+        "receivedAfter": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "waitSeconds": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 180
+        },
+        "onlyNew": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "required": [
@@ -3590,7 +3512,7 @@
   },
   {
     "name": "nex_captcha_buy",
-    "description": "Create a CAPTCHA solving task and precharge once after explicit fee/scope approval (the host approval panel may supply it). Read nex_captcha_product_schema and use actual challenge inputs. For HTTP_SUBMIT, confirm integration.workflows permits it and a separate site integration can maintain the session and submit verification/business requests. This tool creates recognition tasks only; it does not submit to the target website or choose a workflow. Page CAPTCHAs use nex_browser_captcha_prepare/submit/complete; never bypass unsupported browser adapters with a raw purchase. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. Preflight maxTotalPrice is not atomic. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Never automatically retry or substitute GRID.",
+    "description": "Create a CAPTCHA solving task and charge once directly at the current server price, without a separate quotation or payment confirmation. Use only for a requested task or when needed for the user's task; price inquiries alone do not authorize purchases. Read nex_captcha_product_schema and use actual challenge inputs. For HTTP_SUBMIT, confirm integration.workflows permits it and a separate site integration can maintain the session and submit verification/business requests. This tool creates recognition tasks only; it does not submit to the target website or choose a workflow. Page CAPTCHAs use nex_browser_captcha_prepare/submit/complete; never bypass unsupported browser adapters with a raw purchase. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Confirmed FAILED/EXPIRED or explicit site rejection permits a fresh challenge within 3 attempts including the first, after records/billing checks, without another payment confirmation. Never repeat an unknown purchase/application or substitute GRID.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3606,25 +3528,11 @@
             }
           },
           "additionalProperties": {}
-        },
-        "maxTotalPrice": {
-          "anyOf": [
-            {
-              "type": "number",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^\\d+(?:\\.\\d+)?$"
-            }
-          ],
-          "description": "Maximum total USDT explicitly approved by the user. Live preflight only; the backend does not support an atomic price ceiling."
         }
       },
       "required": [
         "productCode",
-        "adapter",
-        "maxTotalPrice"
+        "adapter"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false
@@ -3687,7 +3595,7 @@
   },
   {
     "name": "nex_browser_captcha_prepare",
-    "description": "Check enabled products/prices and online schema, then capture the page challenge. Free; no purchase. Chooses BROWSER_RESULT for captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, or BROWSER_INTERACTION for a real supported GRID; checks integration.workflows and the local adapter. No workflow switch parameter or automatic HTTP_SUBMIT integration. Detects visible reCAPTCHA image grids; for other regular image grids supply observed grid DOM selectors and mode. Unsupported canvas/custom widgets need a site adapter. Select challengeId if multiple widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or timeout are blockers, not reasons to substitute GRID or raw nex_captcha_buy. Grid capture preserves the original instructions and image; quote each round fee and approve tile clicks and CAPTCHA verify before submit. Never silently reload a filled form.",
+    "description": "Check enabled products and online schema, then capture the page challenge. Free; no purchase or quotation. Chooses BROWSER_RESULT for captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, or BROWSER_INTERACTION for a real supported GRID; checks integration.workflows and the local adapter. No workflow switch parameter or automatic HTTP_SUBMIT integration. Detects visible reCAPTCHA image grids; for other regular image grids supply observed grid DOM selectors and mode. Unsupported canvas/custom widgets need a site adapter. Select challengeId if multiple widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or timeout are blockers, not reasons to substitute GRID or raw nex_captcha_buy. Grid capture preserves the original instructions and image. Once ready, submit directly for the requested task. Never silently reload a filled form.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3759,35 +3667,16 @@
   },
   {
     "name": "nex_browser_captcha_submit",
-    "description": "After explicit approval of the product, single-round fee and callback or Grid tile/verification interaction, submit exactly once. confirmed=true records approval; maxTotalPrice is the approved ceiling. Rechecks product price, team, document and current Grid image. Never repurchase after timeout. Every new Grid round needs its own quote/approval. Saves the local task ID for complete; does not click final signup/login.",
+    "description": "Submit a prepared page CAPTCHA exactly once and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Use when needed for the user's task; inquiries alone do not authorize purchases. Rechecks product availability, team, document and current Grid image. Never repurchase after timeout. Each new Grid round has its own prepareId. Saves the local task ID for complete; does not click final signup/login.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "prepareId": {
           "type": "string"
-        },
-        "confirmed": {
-          "type": "boolean",
-          "const": true
-        },
-        "maxTotalPrice": {
-          "anyOf": [
-            {
-              "type": "number",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^\\d+(?:\\.\\d+)?$"
-            }
-          ],
-          "description": "Maximum total USDT explicitly approved by the user. Live preflight only; the backend does not support an atomic price ceiling."
         }
       },
       "required": [
-        "prepareId",
-        "confirmed",
-        "maxTotalPrice"
+        "prepareId"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false
@@ -3799,7 +3688,7 @@
   },
   {
     "name": "nex_browser_captcha_complete",
-    "description": "Query once; on SUCCEEDED apply to the original callback or click validated 1-based Grid tiles and CAPTCHA verify. Obtain interaction approval first. Grid waits for image replacement and inspects the next round; returns nextPrepareId/nextQuote without purchasing. Approve and submit that quote separately. Repeated complete only inspects applied Grid progress, never clicks again. Pending solver polls require 3–5 seconds. Stops on failure or unknown application. Website success requires explicit evidence; never click final signup/login.",
+    "description": "Query once; on SUCCEEDED apply to the original callback or click validated 1-based Grid tiles and CAPTCHA verify as part of the requested task. Grid waits for image replacement and inspects the next round; returns nextPrepareId/nextPreparation without purchasing. Submit each prepared round directly when needed. Repeated complete only inspects applied Grid progress, never clicks again. Pending solver polls require 3–5 seconds. Confirmed FAILED/EXPIRED permits a genuinely new challenge after records/billing checks, at most 3 attempts including the first; do not ask again. Unknown purchase/application blocks new charges. Website success requires explicit evidence; never click final signup/login.",
     "inputSchema": {
       "type": "object",
       "properties": {

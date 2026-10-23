@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { bindTools, type McpToolSpec } from '../../shared/define-tool.js';
+import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
+import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
+import { resourceRecovery, servicePollDelay } from '../../shared/service-recovery.js';
 import {
-  maxTotalPrice,
   parseServiceJson,
   serviceId,
   servicePage,
@@ -18,12 +19,14 @@ import {
   MAIL_DETAIL_ROUTE
 } from '../../transport/routes.js';
 
+export const MAIL_MAX_WAIT_SECONDS = 180;
+const MAIL_POLL_INTERVAL_MS = 10_000;
+
 // MCP SDK 需要根对象 schema；类型互斥校验在对象检查中完成，避免工具目录丢失参数。
 const buy = z
   .object({
     type: z.enum(['TEMPORARY', 'MAINSTREAM']),
     durationHours: z.enum(['HOUR_1', 'DAY_1', 'DAY_7', 'DAY_30', 'DAY_120']),
-    maxTotalPrice,
     domainId: serviceId
       .describe('TEMPORARY only; omit for automatic domain assignment.')
       .optional(),
@@ -93,7 +96,7 @@ export const MAIL_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_mail_buy',
     description:
-      'Buy a temporary or mainstream mailbox for receiving email. Charges the balance and is non-refundable: quote the enabled plan and total and obtain explicit confirmation first. Preflight maxTotalPrice is not atomic. MAINSTREAM requires a supported suffix and has no login password; TEMPORARY optionally uses domainId. No custom prefix, renewal or refund. Never automatically retry.',
+      "Buy a temporary or mainstream mailbox for receiving email and charge the balance directly at the current server price, without a separate quotation or payment confirmation. Use only for a requested purchase or when needed for the user's task; price inquiries alone do not authorize purchases. MAINSTREAM requires a supported suffix and has no login password; TEMPORARY optionally uses domainId. No custom prefix, renewal or refund. After a confirmed 180-second empty verification-mail wait or site rejection, continue with a task-scoped replacement without asking again, at most 3 mailbox attempts including the first. A purchase error, timeout or missing allocation requires records/billing reconciliation; stop new charges until its outcome is established.",
     schema: buy,
     route: MAIL_BUY_ROUTE,
     method: 'POST',
@@ -102,7 +105,15 @@ export const MAIL_TOOL_SPECS: readonly McpToolSpec[] = [
       'Refresh nex_mail_record_list and nex_billing_trade_list to verify allocation and charges.',
     project: (data) => ({
       text: 'Mailbox purchase accepted. Use the local record id and server expireTime; refresh records and billing if allocation is unclear.',
-      data: { record: data ? mailboxView(data) : null }
+      data: {
+        record: data ? mailboxView(data) : null,
+        ...(!Number.isSafeInteger(data?.id) || data.id <= 0
+          ? {
+              code: 'OUTCOME_UNKNOWN',
+              recovery: resourceRecovery('mail', 'RECONCILE', 'ALLOCATION_UNKNOWN')
+            }
+          : {})
+      }
     })
   }),
   serviceTool({
@@ -117,19 +128,93 @@ export const MAIL_TOOL_SPECS: readonly McpToolSpec[] = [
       data: servicePage(data, mailboxView)
     })
   }),
-  serviceTool({
+  defineTool({
     name: 'nex_mail_message_list',
     description:
-      'Synchronize and list email for a local mailbox id. Fixed 10 messages per page; keyword filters messages. Copy full keyword, never keywordDisplay. Poll at 10–15 second intervals only while needed and unexpired, without overlapping requests. Read endpoints allow at most 5 calls per user per 3 seconds.',
-    schema: z
-      .object({ id: serviceId, page: serviceId.default(1), keyword: z.string().optional() })
+      'Synchronize and list email for a local mailbox id. Fixed 10 messages per page; keyword filters messages. Copy full keyword, never keywordDisplay. waitSeconds defaults to 0 (one sync); set 180 when waiting for verification mail. Polls every 10 seconds, at most 180 seconds in one identity/team. receivedAfter is an ISO timestamp with timezone for the current send request; ignore older email and still match recipient/site from returned fields. onlyNew defaults to false; true ignores messages present on the first sync, so use it only after requesting a resend. A confirmed empty wait returns MAIL_MESSAGE_TIMEOUT and allows a task-scoped replacement, at most 3 mailbox attempts including the first. A purchase timeout never permits replacement until allocation and billing are reconciled. Read endpoints allow at most 5 calls per user per 3 seconds.',
+    inputSchema: z
+      .object({
+        id: serviceId,
+        page: serviceId.default(1),
+        keyword: z.string().optional(),
+        receivedAfter: z.string().datetime({ offset: true }).optional(),
+        waitSeconds: z.number().int().min(0).max(MAIL_MAX_WAIT_SECONDS).default(0),
+        onlyNew: z.boolean().default(false)
+      })
       .strict(),
-    route: MAIL_PULL_ROUTE,
-    method: 'POST',
-    project: (data) => ({
-      text: 'Synchronized email list. Use each numeric id as mailId for details; keyword is the full verification value.',
-      data: servicePage(data, messageView)
-    })
+    annotations: { readOnlyHint: false },
+    execute: async (args, ctx) => {
+      const { waitSeconds, onlyNew, receivedAfter, ...payload } = args;
+      const minimumReceivedAt = receivedAfter ? Date.parse(receivedAfter) : undefined;
+      const deadline = Date.now() + waitSeconds * 1000;
+      let contextId: string | undefined;
+      let seen: Set<number> | undefined;
+      for (;;) {
+        let response;
+        try {
+          response = await ctx.api.request(MAIL_PULL_ROUTE, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            ...(contextId ? { headers: { 'X-Nex-Service-Context': contextId } } : {})
+          });
+        } catch {
+          ctx.signal?.throwIfAborted();
+          return errorResult(
+            'Mailbox sync failed. Check the connection and current login; this does not establish an empty inbox or authorize another purchase.',
+            {
+              code: 'MAIL_SYNC_FAILED',
+              recovery: resourceRecovery('mail', 'STOP', 'READ_OUTCOME_UNKNOWN', args.id)
+            }
+          );
+        }
+        if (response.code !== 0) return apiErrorResult('Mailbox sync failed', response);
+        if (contextId && response.contextId !== contextId)
+          return apiErrorResult('Mailbox sync stopped', {
+            code: 'SESSION_CONTEXT_CHANGED',
+            msg: 'Session or team changed while waiting for email; return to the original context.'
+          });
+        contextId ??= response.contextId;
+        const page = servicePage(response.data, messageView);
+        const rows = page.rows as ReturnType<typeof messageView>[];
+        seen ??= onlyNew ? new Set(rows.map((row) => row.id)) : new Set();
+        const fresh = rows.filter(
+          (row) =>
+            !seen!.has(row.id) &&
+            (minimumReceivedAt === undefined ||
+              Date.parse(String(row.receivedAt)) >= minimumReceivedAt)
+        );
+        if (fresh.length || waitSeconds === 0)
+          return successResult(
+            'Synchronized email list. Use each numeric id as mailId for details; keyword is the full verification value.',
+            {
+              ...page,
+              rows: fresh,
+              mailboxId: args.id,
+              ...(fresh.length
+                ? { recovery: resourceRecovery('mail', 'COMPLETE', 'EMAIL_RECEIVED', args.id) }
+                : {})
+            }
+          );
+        if (Date.now() + MAIL_POLL_INTERVAL_MS > deadline)
+          return errorResult(
+            'No matching email arrived within the mailbox wait. Continue the task with another suitable mailbox without another payment confirmation, within the 3-attempt limit. Purchases cannot be refunded; keep this mailbox record.',
+            {
+              ...page,
+              rows: [],
+              code: 'MAIL_MESSAGE_TIMEOUT',
+              mailboxId: args.id,
+              purchaseOutcomeKnown: true,
+              recovery: resourceRecovery(
+                'mail',
+                'REPLACE_RESOURCE',
+                'NO_VERIFICATION_EMAIL',
+                args.id
+              )
+            }
+          );
+        await servicePollDelay(MAIL_POLL_INTERVAL_MS, ctx.signal);
+      }
+    }
   }),
   serviceTool({
     name: 'nex_mail_message_detail',

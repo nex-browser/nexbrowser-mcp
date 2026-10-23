@@ -15,9 +15,7 @@ function fixture(productCode = 'FUTURE_PRODUCT') {
   }));
   const tools = createCaptchaTools({ request } as unknown as NexApiClient);
   const buy = (adapter: Record<string, unknown> = {}) =>
-    tools
-      .find((tool) => tool.name === 'nex_captcha_buy')!
-      .execute({ productCode, adapter, maxTotalPrice: '0.005' });
+    tools.find((tool) => tool.name === 'nex_captcha_buy')!.execute({ productCode, adapter });
   const purchases = () => request.mock.calls.filter(([route]) => route === '/captcha/buy');
   return { contract, request, tools, buy, purchases };
 }
@@ -111,8 +109,7 @@ describe('online NexCaptcha contracts', () => {
         headers: { 'X-Nex-Service-Context': 'team-a' },
         body: JSON.stringify({
           productCode: 'RECAPTCHA_V2_ENTERPRISE',
-          adapter: { newField: false },
-          maxTotalPrice: '0.005'
+          adapter: { newField: false }
         })
       })
     ]);
@@ -152,6 +149,11 @@ describe('online NexCaptcha contracts', () => {
       const result = await f.buy();
       expect(result.isError).toBe(true);
       expect(JSON.stringify(result)).toContain('No purchase attempted');
+      expect(result.structuredContent).toMatchObject({
+        code: 'CAPTCHA_PREFLIGHT_FAILED',
+        purchaseAttempted: false,
+        recovery: { action: 'RETRY_CHALLENGE', reason: 'PREPARATION_REQUIRED' }
+      });
       expect(JSON.stringify(result)).not.toContain('private transport details');
       expect(f.purchases()).toHaveLength(0);
       expect(f.request).toHaveBeenCalledTimes(1);

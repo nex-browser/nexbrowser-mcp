@@ -18,7 +18,8 @@ describe('NexCaptcha routing for external hosts', () => {
       expect(instructions).not.toMatch(/follow-up.*resources from nex_mail_\*/i);
       expect(instructions).toMatch(/do not.*CDP.*Python.*CAPTCHA/i);
       expect(instructions).toContain('nex_browser_captcha_prepare');
-      expect(instructions).toMatch(/explicit fee and site callback approval/i);
+      expect(instructions).toMatch(/charge directly without a quotation or payment confirmation/i);
+      expect(instructions).toMatch(/inquiry alone never authorizes a purchase/i);
       expect(instructions).toMatch(/unsupported.*raw.*nex_captcha_buy/i);
     } finally {
       await session.close();

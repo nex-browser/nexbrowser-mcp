@@ -3,7 +3,10 @@ import { createSmsTools, TOOLS, type NexApiClient } from '../src/index.js';
 
 function toolWith(name: string, ...responses: unknown[]) {
   const queue = [...responses];
-  const request = vi.fn(async () => queue.shift() ?? { code: 0, msg: 'ok', data: null });
+  const request = vi.fn(
+    async (_route: string, _options?: RequestInit) =>
+      queue.shift() ?? { code: 0, msg: 'ok', data: null }
+  );
   const client = { request, getActiveSessionId: () => undefined } as unknown as NexApiClient;
   const tool = createSmsTools(client).find((candidate) => candidate.name === name)!;
   expect(tool, `Expected tool ${name} to be registered`).toBeDefined();
@@ -39,7 +42,7 @@ describe('nex_sms_buy', () => {
       { ...ok(null), contextId: 'team-a' },
       { ...ok({ data: [{ countryId: 6, projectId: 101, tel: '+15550001' }] }), contextId: 'team-b' }
     );
-    const result = await tool.execute({ countryId: 6, projectId: 101, maxTotalPrice: 2 });
+    const result = await tool.execute({ countryId: 6, projectId: 101 });
     expect(request).toHaveBeenLastCalledWith(
       '/sms/records?page=1&size=100',
       expect.objectContaining({ headers: { 'X-Nex-Service-Context': 'team-a' } })
@@ -52,15 +55,18 @@ describe('nex_sms_buy', () => {
   it('does not automatically retry a lost purchase response', async () => {
     const { tool, request } = toolWith('nex_sms_buy');
     request.mockRejectedValueOnce(new Error('timeout'));
-    const result = await tool.execute({ countryId: 6, projectId: 101, maxTotalPrice: 2 });
+    const result = await tool.execute({ countryId: 6, projectId: 101 });
     expect(result.isError).toBe(true);
     expect(text(result)).toContain('outcome is unknown');
+    expect(result.structuredContent).toMatchObject({
+      recovery: { action: 'RECONCILE', resourceType: 'sms' }
+    });
     expect(request).toHaveBeenCalledTimes(1);
   });
 
   it('reconciles an empty allocation array rather than claiming requested numbers were delivered', async () => {
     const { tool } = toolWith('nex_sms_buy', ok([]), ok({ count: 0, total: 0, data: [] }));
-    const result = await tool.execute({ countryId: 6, projectId: 101, maxTotalPrice: 2 });
+    const result = await tool.execute({ countryId: 6, projectId: 101 });
     expect(result.structuredContent).toMatchObject({
       deliveryConfirmed: false,
       candidateRecords: []
@@ -79,7 +85,7 @@ describe('nex_sms_buy', () => {
         ]
       })
     );
-    const result = await tool.execute({ countryId: 6, projectId: 101, maxTotalPrice: 2 });
+    const result = await tool.execute({ countryId: 6, projectId: 101 });
     expect(request).toHaveBeenCalledTimes(2);
     expect(result.structuredContent).toMatchObject({
       deliveryConfirmed: false,
@@ -94,7 +100,7 @@ describe('nex_sms_buy', () => {
       code: -1209,
       msg: 'Login expired'
     });
-    const result = await tool.execute({ countryId: 6, projectId: 101, maxTotalPrice: 2 });
+    const result = await tool.execute({ countryId: 6, projectId: 101 });
     expect(result.isError).not.toBe(true);
     expect(result.structuredContent).toMatchObject({
       recordsRefreshed: false,
@@ -102,42 +108,40 @@ describe('nex_sms_buy', () => {
     });
     expect(request.mock.calls).toHaveLength(2);
   });
-  it('forwards the price ceiling with the order', async () => {
+  it('buys directly without quotation or confirmation fields', async () => {
     const { request, tool } = toolWith(
       'nex_sms_buy',
       ok([{ tel: '+15550001', projectName: 'Telegram', state: 0 }])
     );
 
-    const result = await tool.execute({ countryId: 6, projectId: 101, maxTotalPrice: 2 });
+    const result = await tool.execute({ countryId: 6, projectId: 101 });
 
     expect(request).toHaveBeenLastCalledWith(
       '/sms/buy',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ countryId: 6, projectId: 101, quantity: 1, maxTotalPrice: 2 })
+        body: JSON.stringify({ countryId: 6, projectId: 101, quantity: 1 })
       })
     );
     expect(text(result)).toContain('+15550001');
   });
 
-  it('requires maxTotalPrice and caps quantity', async () => {
+  it('rejects obsolete payment fields and caps quantity', async () => {
     const { request, tool } = toolWith('nex_sms_buy');
-    expect(() => tool.execute({ countryId: 6, projectId: 101 })).toThrow();
-    expect(() =>
-      tool.execute({ countryId: 6, projectId: 101, quantity: 11, maxTotalPrice: 100 })
-    ).toThrow();
+    expect(() => tool.execute({ countryId: 6, projectId: 101, maxTotalPrice: 2 })).toThrow();
+    expect(() => tool.execute({ countryId: 6, projectId: 101, quantity: 11 })).toThrow();
     expect(request).not.toHaveBeenCalled();
   });
 
   it('surfaces a refused order as an error', async () => {
     const { tool } = toolWith('nex_sms_buy', {
       code: 1,
-      msg: 'total price 3 exceeds maxTotalPrice 2',
+      msg: 'Insufficient balance',
       data: null
     });
-    const result = await tool.execute({ countryId: 6, projectId: 101, maxTotalPrice: 2 });
+    const result = await tool.execute({ countryId: 6, projectId: 101 });
     expect(result.isError).toBe(true);
-    expect(text(result)).toContain('exceeds maxTotalPrice');
+    expect(text(result)).toContain('Insufficient balance');
   });
 });
 
@@ -166,6 +170,63 @@ describe('nex_sms_record_list', () => {
 });
 
 describe('nex_sms_code_get', () => {
+  it.each(['2026-10-23T12:00:00Z', '2026-10-23T20:00:01+08:00'])(
+    'accepts a first-pull code at or after the send timestamp %s while hiding older codes',
+    async (smsTime) => {
+      const { tool, request } = toolWith(
+        'nex_sms_code_get',
+        ok({
+          tel: '+15550001',
+          state: 1,
+          message: JSON.stringify([
+            { code: '111111', sms: 'Old message', smsTime: '2026-10-23T11:59:59Z' },
+            { code: '222222', sms: 'Current message', smsTime }
+          ])
+        })
+      );
+      const result = await tool.execute({
+        tel: '+15550001',
+        receivedAfter: '2026-10-23T12:00:00Z'
+      });
+      expect(result.structuredContent?.record).toMatchObject({
+        code: '222222',
+        messages: [{ code: '222222' }]
+      });
+      expect(JSON.stringify(result)).not.toContain('111111');
+      expect(request).toHaveBeenCalledExactlyOnceWith(
+        '/sms/pull',
+        expect.objectContaining({ body: JSON.stringify({ tel: '+15550001' }) })
+      );
+    }
+  );
+
+  it.each([undefined, 'not-a-time'])(
+    'waits when an existing SMS has unverifiable time %s',
+    async (smsTime) => {
+      vi.useFakeTimers();
+      try {
+        const { tool, request } = toolWith(
+          'nex_sms_code_get',
+          ok({ state: 1, message: JSON.stringify([{ code: '111111', smsTime }]) }),
+          ok({
+            state: 1,
+            message: JSON.stringify([{ code: '222222', smsTime: '2026-10-23T12:00:01Z' }])
+          })
+        );
+        const pending = tool.execute({
+          tel: '+15550001',
+          receivedAfter: '2026-10-23T12:00:00Z',
+          waitSeconds: 30
+        });
+        await vi.advanceTimersByTimeAsync(5_000);
+        expect((await pending).structuredContent?.record).toMatchObject({ code: '222222' });
+        expect(request).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    }
+  );
+
   it('pins subsequent polls to the initial team and stops on a context change', async () => {
     vi.useFakeTimers();
     try {
@@ -237,6 +298,103 @@ describe('nex_sms_code_fill', () => {
       state,
       message: JSON.stringify([{ code, smsTime: '2026-10-14 10:00:00' }])
     });
+
+  it('waits past an old verification code and fills only the current send code', async () => {
+    vi.useFakeTimers();
+    try {
+      const { request, tool } = toolWith(
+        'nex_sms_code_fill',
+        ok({
+          state: 1,
+          message: JSON.stringify([{ code: '111111', smsTime: '2026-10-23T11:59:59Z' }])
+        }),
+        ok({
+          state: 1,
+          message: JSON.stringify([{ code: '222222', smsTime: '2026-10-23T12:00:01Z' }])
+        }),
+        ok({})
+      );
+      const pending = tool.execute({
+        sessionId: 's1',
+        tel: '+15550001',
+        target: 'e12',
+        receivedAfter: '2026-10-23T12:00:00Z'
+      });
+      await vi.advanceTimersByTimeAsync(1);
+      expect(request).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(4_999);
+      await pending;
+      expect(request).toHaveBeenLastCalledWith(
+        '/automation/sessions/s1/actions',
+        expect.objectContaining({
+          body: JSON.stringify({ action: 'fill', params: { target: 'e12', value: '222222' } })
+        })
+      );
+      expect(
+        request.mock.calls
+          .filter(([route]) => route === '/sms/pull')
+          .every(([, options]) => JSON.parse(String(options?.body)).receivedAfter === undefined)
+      ).toBe(true);
+      expect(
+        request.mock.calls.some(([, options]) => String(options?.body).includes('111111'))
+      ).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([undefined, 'not-a-time'])(
+    'never fills a code with unverifiable receipt time %s',
+    async (smsTime) => {
+      const { request, tool } = toolWith(
+        'nex_sms_code_fill',
+        ok({ state: 1, message: JSON.stringify([{ code: '111111', smsTime }]) })
+      );
+      const result = await tool.execute({
+        sessionId: 's1',
+        tel: '+15550001',
+        target: 'e12',
+        receivedAfter: '2026-10-23T12:00:00Z',
+        waitSeconds: 0
+      });
+      expect(result.structuredContent).toMatchObject({
+        code: 'SMS_CODE_TIMEOUT',
+        unverifiableMessageTimes: true
+      });
+      expect(text(result)).toContain('missing or invalid receipt times');
+      expect(JSON.stringify(result)).not.toContain('111111');
+      expect(request).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it('defaults to a 120-second business wait and returns bounded replacement guidance', async () => {
+    vi.useFakeTimers();
+    try {
+      const { request, tool } = toolWith('nex_sms_code_fill');
+      request.mockResolvedValue(ok({ tel: '+15550001', state: 0 }));
+      const pending = tool.execute({ sessionId: 's1', tel: '+15550001', target: 'e12' });
+      await vi.advanceTimersByTimeAsync(115_000);
+      let settled = false;
+      void pending.then(() => {
+        settled = true;
+      });
+      await Promise.resolve();
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect((await pending).structuredContent).toMatchObject({
+        code: 'SMS_CODE_TIMEOUT',
+        recovery: {
+          action: 'REPLACE_RESOURCE',
+          resourceType: 'sms',
+          resourceId: '+15550001',
+          maxAttempts: 3
+        }
+      });
+      expect(request.mock.calls.every(([route]) => route === '/sms/pull')).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it('fills the code into the session target without echoing it', async () => {
     const { request, tool } = toolWith('nex_sms_code_fill', withCode('482913'), ok({}));

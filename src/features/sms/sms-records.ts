@@ -1,5 +1,6 @@
 import type { NexApiRequester, NexApiResponse } from '../../shared/types.js';
 import { SMS_PULL_ROUTE } from '../../transport/routes.js';
+import { servicePollDelay } from '../../shared/service-recovery.js';
 
 const SMS_POLL_INTERVAL_MS = 5_000;
 
@@ -100,10 +101,9 @@ async function pull(api: NexApiRequester, tel: string, contextId?: string) {
   });
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 type CodeWaitResult =
-  { ok: true; view: ReturnType<typeof recordView> } | { ok: false; response: NexApiResponse };
+  | { ok: true; view: ReturnType<typeof recordView> & { unverifiableMessageTimes?: boolean } }
+  | { ok: false; response: NexApiResponse };
 
 /**
  * Polls one number until a usable code arrives, the number leaves the waiting
@@ -116,9 +116,12 @@ export async function waitForCode(
   api: NexApiRequester,
   tel: string,
   waitSeconds = 0,
-  onlyNew = false
+  onlyNew = false,
+  receivedAfter?: string,
+  signal?: AbortSignal
 ): Promise<CodeWaitResult> {
   const deadline = Date.now() + waitSeconds * 1000;
+  const minimumReceivedAt = receivedAfter ? Date.parse(receivedAfter) : undefined;
   let seen: Set<string> | undefined;
   let contextId: string | undefined;
   for (;;) {
@@ -136,14 +139,28 @@ export async function waitForCode(
     const view = recordView(response.data);
     const codes = view.messages.map((message) => message.code).filter(Boolean) as string[];
     seen ??= onlyNew ? new Set(codes) : new Set();
-    const fresh = view.messages.find((message) => message.code && !seen!.has(message.code));
-    const current = { ...view, code: fresh?.code };
+    const messages =
+      minimumReceivedAt === undefined
+        ? view.messages
+        : view.messages.filter((message) => Date.parse(message.time ?? '') >= minimumReceivedAt);
+    const unverifiableMessageTimes =
+      minimumReceivedAt !== undefined &&
+      view.messages.some(
+        (message) => Boolean(message.code) && !Number.isFinite(Date.parse(message.time ?? ''))
+      );
+    const fresh = messages.find((message) => message.code && !seen!.has(message.code));
+    const current = {
+      ...view,
+      messages,
+      code: fresh?.code,
+      ...(unverifiableMessageTimes ? { unverifiableMessageTimes: true } : {})
+    };
     // Only state 0 is still waiting; 1 may receive more SMS, anything else is final.
     // 仅 state 0/1 仍可能收到短信，其余为终态。
     const final = view.state !== undefined && view.state !== 0 && view.state !== 1;
     if (current.code || final || Date.now() + SMS_POLL_INTERVAL_MS > deadline) {
       return { ok: true, view: current };
     }
-    await sleep(SMS_POLL_INTERVAL_MS);
+    await servicePollDelay(SMS_POLL_INTERVAL_MS, signal);
   }
 }

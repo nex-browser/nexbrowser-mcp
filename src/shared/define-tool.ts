@@ -15,6 +15,8 @@ import type {
 export interface ToolContext {
   api: NexApiRequester;
   sessions: ActiveSessionStore;
+  /** Cancels local polling delays as well as the in-flight request. */
+  signal?: AbortSignal;
 }
 
 /**
@@ -69,7 +71,7 @@ export function bindTools(specs: readonly McpToolSpec[], ctx: ToolContext): McpT
             }
           }
         : ctx.api;
-      return spec.execute(spec.inputSchema.parse(arguments_), { ...ctx, api });
+      return spec.execute(spec.inputSchema.parse(arguments_), { ...ctx, api, signal });
     }
   }));
 }

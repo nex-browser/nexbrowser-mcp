@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  apiErrorResult,
   errorResult,
   MAX_MCP_STRUCTURED_BYTES,
   MAX_MCP_TEXT_CHARS,
@@ -16,6 +17,46 @@ function jsonCopy(result: McpToolResult): unknown {
   expect(parsed).toEqual(result.structuredContent);
   return parsed;
 }
+
+describe('billing failure results', () => {
+  it.each([-1208, '-1208', 'insufficient_balance', 'insufficient_points', 'INSUFFICIENT_BALANCE'])(
+    'preserves the server failure and stops paid work for %j',
+    (code) => {
+      const result = apiErrorResult('Purchase outcome may be unknown', {
+        code,
+        msg: 'Server-localized balance message'
+      });
+
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent).toMatchObject({
+        code,
+        message: 'Server-localized balance message',
+        billingBlocked: true,
+        retryable: false,
+        stopPaidOperations: true,
+        hint: expect.stringContaining('top up')
+      });
+      expect(jsonCopy(result)).toEqual(result.structuredContent);
+      expect(result.content[0]).toMatchObject({
+        text: expect.stringContaining('Insufficient account balance')
+      });
+      expect(JSON.stringify(result)).not.toContain('outcome may be unknown');
+    }
+  );
+
+  it('does not classify unrelated codes or balance wording as a billing block', () => {
+    const result = apiErrorResult('Request failed', {
+      code: 'UPSTREAM_FAILURE',
+      msg: 'insufficient_balance appears in upstream diagnostic text'
+    });
+
+    expect(result.structuredContent).toEqual({
+      code: 'UPSTREAM_FAILURE',
+      message: 'insufficient_balance appears in upstream diagnostic text'
+    });
+    expect(result.content[0]).toMatchObject({ text: expect.stringContaining('Request failed:') });
+  });
+});
 
 describe.each([
   { name: 'successResult', wrap: successResult, isError: undefined },

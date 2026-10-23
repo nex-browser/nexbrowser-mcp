@@ -2,6 +2,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMcpSession, installFetchMock, onlineCaptchaContract } from './helpers.js';
 import { createCaptchaTools } from '../src/features/captcha/captcha-tools.js';
 import type { NexApiClient } from '../src/transport/nex-api-client.js';
+import type { McpToolResult } from '../src/shared/types.js';
+
+function expectNoPurchase(result: McpToolResult, message?: string) {
+  expect(result.isError).toBe(true);
+  expect(result.structuredContent).toMatchObject({
+    code: 'CAPTCHA_PREPARATION_REQUIRED',
+    purchaseAttempted: false,
+    recovery: { action: 'RETRY_CHALLENGE', reason: 'PREPARATION_REQUIRED' }
+  });
+  if (message) expect(JSON.stringify(result)).toContain(message);
+}
 
 function fixture() {
   const candidate = {
@@ -108,8 +119,7 @@ function fixture() {
   const call = async (suffix: string, args = {}) =>
     tools.find((tool) => tool.name === `nex_browser_captcha_${suffix}`)!.execute(args);
   const prepare = async (args = {}) => (await call('prepare', args)).structuredContent as any;
-  const submit = (id: string, maxTotalPrice: string | number = '0.005') =>
-    call('submit', { prepareId: id, confirmed: true, maxTotalPrice });
+  const submit = (id: string) => call('submit', { prepareId: id });
   const buys = () => request.mock.calls.filter(([route]) => route === '/captcha/buy');
   const applies = () =>
     request.mock.calls.filter(([, options]) => String(options?.body).includes('captchaApply'));
@@ -173,7 +183,7 @@ describe('browser NexCaptcha workflow', () => {
     return f;
   }
 
-  it('quotes a captured Grid, keeps the image private, and sends only body/comment to the online adapter', async () => {
+  it('prepares a captured Grid, keeps the image private, and sends only body/comment to the online adapter', async () => {
     const f = gridFixture();
     const quote = await f.prepare();
     expect(quote).toMatchObject({
@@ -200,7 +210,7 @@ describe('browser NexCaptcha workflow', () => {
     expect(JSON.stringify(requests)).not.toContain('private-grid-base64');
   });
 
-  it('captures a changed round and provides a new approval quote without automatically charging', async () => {
+  it('captures a changed round and prepares it without automatically charging', async () => {
     const f = gridFixture();
     const first = await f.prepare();
     await f.submit(first.prepareId);
@@ -227,15 +237,12 @@ describe('browser NexCaptcha workflow', () => {
       .structuredContent as any;
     expect(completed).toMatchObject({
       gridState: 'NEXT_ROUND',
-      nextQuote: { requiresConfirmation: true, price: '0.005', ready: true }
+      nextPreparation: { ready: true }
     });
-    expect(completed.nextPrepareId).toBe(completed.nextQuote.prepareId);
+    expect(completed.nextPrepareId).toBe(completed.nextPreparation.prepareId);
     expect(JSON.stringify(completed)).not.toContain('grid-base64');
     await f.call('complete', { prepareId: first.prepareId });
     expect(f.buys()).toHaveLength(1);
-    await expect(
-      f.call('submit', { prepareId: completed.nextPrepareId, maxTotalPrice: '0.005' })
-    ).rejects.toThrow();
     await f.submit(completed.nextPrepareId);
     expect(f.buys()).toHaveLength(2);
   });
@@ -250,7 +257,7 @@ describe('browser NexCaptcha workflow', () => {
       }
       f.candidate.challengeId = 'new-image';
       if (phase === 'submit')
-        await expect(f.submit(quote.prepareId)).rejects.toThrow('challenge changed');
+        expectNoPurchase(await f.submit(quote.prepareId), 'challenge changed');
       else
         await expect(f.call('complete', { prepareId: quote.prepareId })).rejects.toThrow(
           'challenge changed'
@@ -348,7 +355,7 @@ describe('browser NexCaptcha workflow', () => {
           return original(route, options);
         });
       }
-      await expect(f.submit(quote.prepareId)).rejects.toThrow();
+      expectNoPurchase(await f.submit(quote.prepareId));
       expect(f.buys()).toHaveLength(0);
     }
   );
@@ -416,7 +423,7 @@ describe('browser NexCaptcha workflow', () => {
         });
         expect(JSON.stringify(blocked)).not.toContain('private-challenge-parameter');
       } else {
-        await expect(f.submit(quote.prepareId)).rejects.toThrow('online contract');
+        expectNoPurchase(await f.submit(quote.prepareId), 'online contract');
       }
       expect(f.buys()).toHaveLength(0);
     }
@@ -446,12 +453,9 @@ describe('browser NexCaptcha workflow', () => {
     const f = fixture();
     const quote = await f.prepare();
     f.candidate.adapter.apiKey = 'private-key-not-for-the-service';
-    let message = '';
-    try {
-      await f.submit(quote.prepareId);
-    } catch (error) {
-      message = String(error);
-    }
+    const result = await f.submit(quote.prepareId);
+    expectNoPurchase(result);
+    const message = JSON.stringify(result);
     expect(message).toContain('Platform API keys');
     expect(message).not.toContain('private-key-not-for-the-service');
     expect(f.buys()).toHaveLength(0);
@@ -487,15 +491,14 @@ describe('browser NexCaptcha workflow', () => {
     f.catalog.productCode = product;
     f.record.productCode = product;
     const quote = await f.prepare();
-    expect(quote).toMatchObject({ productCode: product, ready: true, price: '0.005' });
+    expect(quote).toMatchObject({ productCode: product, ready: true });
     expect(f.buys()).toHaveLength(0);
     await f.submit(quote.prepareId);
     await f.submit(quote.prepareId);
     expect(f.buys()).toHaveLength(1);
     expect(JSON.parse(String(f.buys()[0]![1]?.body))).toEqual({
       productCode: product,
-      adapter: { websiteURL: 'https://site.test/register', websiteKey: 'public-key' },
-      maxTotalPrice: '0.005'
+      adapter: { websiteURL: 'https://site.test/register', websiteKey: 'public-key' }
     });
     f.record.state = 'SUCCEEDED';
     f.record.solution = { token: 'private-token' };
@@ -513,7 +516,7 @@ describe('browser NexCaptcha workflow', () => {
     f.products.unshift({ productCode: 'CLOUDFLARE_TURNSTILE', price: '0.009' });
     f.record.productCode = 'TURNSTILE';
     const quote = await f.prepare();
-    expect(quote).toMatchObject({ productCode: 'TURNSTILE', price: '0.005' });
+    expect(quote).toMatchObject({ productCode: 'TURNSTILE', ready: true });
     await f.submit(quote.prepareId);
     expect(JSON.parse(String(f.buys()[0]![1]?.body)).productCode).toBe('TURNSTILE');
   });
@@ -529,14 +532,14 @@ describe('browser NexCaptcha workflow', () => {
     }
   );
 
-  it('requires a new quote if the catalog switches between canonical and legacy product codes', async () => {
+  it('requires new preparation if the catalog switches between canonical and legacy product codes', async () => {
     const f = fixture();
     f.candidate.productCode = 'TURNSTILE';
     f.candidate.adapter = { websiteURL: 'https://site.test/register', websiteKey: 'public-key' };
     f.catalog.productCode = 'CLOUDFLARE_TURNSTILE';
     const quote = await f.prepare();
     f.catalog.productCode = 'TURNSTILE';
-    await expect(f.submit(quote.prepareId)).rejects.toThrow('price/product changed');
+    expectNoPurchase(await f.submit(quote.prepareId), 'product changed');
     expect(f.buys()).toHaveLength(0);
   });
 
@@ -544,7 +547,7 @@ describe('browser NexCaptcha workflow', () => {
     const f = fixture();
     const quote = await f.prepare();
     f.candidate.productCode = 'TURNSTILE';
-    await expect(f.submit(quote.prepareId)).rejects.toThrow('page/document/challenge changed');
+    expectNoPurchase(await f.submit(quote.prepareId), 'page/document/challenge changed');
     expect(f.buys()).toHaveLength(0);
   });
 
@@ -560,7 +563,9 @@ describe('browser NexCaptcha workflow', () => {
       if (phase === 'query') await f.submit(quote.prepareId);
       f.record.productCode = 'TURNSTILE';
       if (phase === 'creation') {
-        await expect(f.submit(quote.prepareId)).rejects.toThrow('outcome is unknown');
+        expect((await f.submit(quote.prepareId)).structuredContent).toMatchObject({
+          recovery: { action: 'RECONCILE', resourceType: 'captcha' }
+        });
         await f.submit(quote.prepareId);
       } else {
         f.record.state = 'SUCCEEDED';
@@ -590,7 +595,8 @@ describe('browser NexCaptcha workflow', () => {
       const schema = listed.tools.find(
         (tool) => tool.name === 'nex_browser_captcha_submit'
       )!.inputSchema;
-      expect(schema.properties).toHaveProperty('confirmed');
+      expect(Object.keys(schema.properties ?? {})).toEqual(['prepareId']);
+      expect(schema.required).toEqual(['prepareId']);
       const quote = await session.client.callTool({
         name: 'nex_browser_captcha_prepare',
         arguments: { sessionId: 'session', pageId: 'page-1' }
@@ -599,7 +605,7 @@ describe('browser NexCaptcha workflow', () => {
       expect(prepareId).toBeTypeOf('string');
       const submitted = await session.client.callTool({
         name: 'nex_browser_captcha_submit',
-        arguments: { prepareId, confirmed: true, maxTotalPrice: '0.005' }
+        arguments: { prepareId }
       });
       expect(submitted.isError).not.toBe(true);
       expect(JSON.parse(String(f.buys()[0]![1]?.body))).toEqual({
@@ -608,8 +614,7 @@ describe('browser NexCaptcha workflow', () => {
           websiteURL: 'https://site.test/register',
           captchaId: 'public-id',
           userAgent: 'Fixture'
-        },
-        maxTotalPrice: '0.005'
+        }
       });
       f.record.state = 'SUCCEEDED';
       f.record.solution = { token: 'private-answer' };
@@ -628,11 +633,13 @@ describe('browser NexCaptcha workflow', () => {
     }
   });
 
-  it('retains the quoted ceiling even if the caller approves a larger maximum', async () => {
+  it('uses the current server price without stopping for price changes', async () => {
     const f = fixture();
     const quote = await f.prepare();
-    await f.submit(quote.prepareId, 1);
-    expect(JSON.parse(String(f.buys()[0]![1]?.body)).maxTotalPrice).toBe('0.005');
+    f.catalog.price = '0.006';
+    await f.submit(quote.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body))).not.toHaveProperty('maxTotalPrice');
+    expect(f.buys()).toHaveLength(1);
   });
 
   it('does not dispatch again when application times out after a site request may have started', async () => {
@@ -660,6 +667,7 @@ describe('browser NexCaptcha workflow', () => {
     const ids: string[] = [];
     for (let n = 0; n < 6; n++) {
       f.candidate.challengeId = `challenge-${n}`;
+      f.candidate.frameIndex = n;
       const quote = await f.prepare();
       ids.push(quote.prepareId);
       await f.submit(quote.prepareId);
@@ -668,15 +676,13 @@ describe('browser NexCaptcha workflow', () => {
     expect(f.request.mock.calls.filter(([route]) => route === '/captcha/query')).toHaveLength(5);
     expect(results[5]!.structuredContent?.retryAfterMs).toBeGreaterThan(0);
   });
-  it('quotes freely, requires confirmation, submits once and applies without exposing the solution', async () => {
+  it('prepares freely, charges directly once and applies without exposing the solution', async () => {
     const f = fixture();
     const quote = await f.prepare();
-    expect(quote).toMatchObject({ price: '0.005', currency: 'USDT', requiresConfirmation: true });
+    expect(quote).toMatchObject({ ready: true });
+    expect(quote).not.toHaveProperty('requiresConfirmation');
+    expect(quote).not.toHaveProperty('price');
     expect(f.buys()).toHaveLength(0);
-    await expect(
-      f.call('submit', { prepareId: quote.prepareId, maxTotalPrice: 1 })
-    ).rejects.toThrow();
-    await expect(f.submit(quote.prepareId, '0.004999999999999999')).rejects.toThrow('ceiling');
     await f.submit(quote.prepareId);
     await f.submit(quote.prepareId);
     expect(f.buys()).toHaveLength(1);
@@ -696,12 +702,11 @@ describe('browser NexCaptcha workflow', () => {
     );
   });
 
-  it.each(['price', 'team', 'navigation', 'challenge', 'expiry'] as const)(
+  it.each(['team', 'navigation', 'challenge', 'expiry'] as const)(
     'does not charge after %s changes',
     async (change) => {
       const f = fixture();
       const quote = await f.prepare();
-      if (change === 'price') f.catalog.price = '0.006';
       if (change === 'team') f.changeTeam();
       if (change === 'navigation') f.page.url = 'https://other.test/';
       if (change === 'challenge') f.candidate.challengeId = 'reset';
@@ -709,7 +714,7 @@ describe('browser NexCaptcha workflow', () => {
         f.candidate.ready = false;
         (f.candidate as any).reason = 'Expired';
       }
-      await expect(f.submit(quote.prepareId)).rejects.toThrow();
+      expectNoPurchase(await f.submit(quote.prepareId));
       expect(f.buys()).toHaveLength(0);
     }
   );
@@ -722,11 +727,105 @@ describe('browser NexCaptcha workflow', () => {
       if (route === '/captcha/buy') throw new Error('timeout after debit');
       return original(route, options);
     });
-    await expect(f.submit(quote.prepareId)).rejects.toThrow('timeout');
+    expect((await f.submit(quote.prepareId)).structuredContent).toMatchObject({
+      recovery: { action: 'RECONCILE', resourceType: 'captcha' }
+    });
+    expect((await f.submit(quote.prepareId)).structuredContent).not.toHaveProperty(
+      'purchaseAttempted',
+      false
+    );
     await f.submit(quote.prepareId);
     expect((await f.prepare()).state).toBe('OUTCOME_UNKNOWN');
+    f.candidate.challengeId = 'changed-after-unknown-purchase';
+    expect(await f.prepare()).toMatchObject({ ready: false, state: 'OUTCOME_UNKNOWN' });
     expect(f.buys()).toHaveLength(1);
   });
+
+  it('recovers from an unknown prepareId without a purchase or financial reconciliation lock', async () => {
+    const f = fixture();
+    expectNoPurchase(await f.submit('missing-prepare-id'), 'Unknown prepareId');
+    expect(f.request).not.toHaveBeenCalled();
+    const prepared = await f.prepare();
+    await f.submit(prepared.prepareId);
+    expect(f.buys()).toHaveLength(1);
+  });
+
+  it('re-prepares an expired unpurchased workflow without marking the outcome unknown', async () => {
+    const f = fixture();
+    const prepared = await f.prepare();
+    const now = vi.spyOn(Date, 'now').mockReturnValue(prepared.expiresAt + 1);
+    try {
+      expectNoPurchase(await f.submit(prepared.prepareId), 'preparation expired');
+      expect(f.buys()).toHaveLength(0);
+    } finally {
+      now.mockRestore();
+    }
+    const fresh = await f.prepare();
+    await f.submit(fresh.prepareId);
+    expect(f.buys()).toHaveLength(1);
+  });
+
+  it('identifies a concurrent preflight as unpurchased while the original workflow completes once', async () => {
+    const f = fixture();
+    const prepared = await f.prepare();
+    const original = f.request.getMockImplementation()!;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    f.request.mockImplementation(async (route, options) => {
+      if (route === '/captcha/products') await gate;
+      return original(route, options);
+    });
+    const first = f.submit(prepared.prepareId);
+    expectNoPurchase(await f.submit(prepared.prepareId), 'workflow is busy');
+    release();
+    await first;
+    expect(f.buys()).toHaveLength(1);
+  });
+
+  it('preserves insufficient balance as a paid-operation stop instead of an unknown purchase', async () => {
+    const f = fixture();
+    const prepared = await f.prepare();
+    const original = f.request.getMockImplementation()!;
+    f.request.mockImplementation(async (route, options) =>
+      route === '/captcha/buy'
+        ? ({ code: -1208, msg: '余额不足', contextId: 'team-a-revision', data: null } as any)
+        : original(route, options)
+    );
+    const result = await f.submit(prepared.prepareId);
+    expect(result.structuredContent).toMatchObject({
+      code: -1208,
+      billingBlocked: true,
+      stopPaidOperations: true
+    });
+    expect(result.structuredContent).not.toHaveProperty('recovery');
+    expect(JSON.stringify(result)).not.toContain('outcome is unknown');
+    expect(f.buys()).toHaveLength(1);
+  });
+
+  it.each(['FAILED', 'EXPIRED'])(
+    'permits a genuinely new challenge after confirmed %s but never the same challenge',
+    async (state) => {
+      const f = fixture();
+      const first = await f.prepare();
+      await f.submit(first.prepareId);
+      f.record.state = state;
+      expect(
+        (await f.call('complete', { prepareId: first.prepareId })).structuredContent
+      ).toMatchObject({
+        recovery: { action: 'RETRY_CHALLENGE', resourceType: 'captcha', maxAttempts: 3 }
+      });
+      expect(await f.prepare()).toMatchObject({ ready: false, prepareId: first.prepareId });
+      f.candidate.challengeId = 'fresh-challenge';
+      const next = await f.prepare();
+      expect(next).toMatchObject({ ready: true });
+      expect(next.prepareId).not.toBe(first.prepareId);
+      f.record.state = 'PROCESSING';
+      await f.submit(next.prepareId);
+      expect(f.buys()).toHaveLength(2);
+    }
+  );
 
   it('prevents a concurrent prepare or submit from creating two tasks', async () => {
     const f = fixture();
@@ -770,7 +869,7 @@ describe('browser NexCaptcha workflow', () => {
     expect(f.buys()).toHaveLength(0);
   });
 
-  it('requires a fresh GeeTest v3 endpoint and refreshes only after confirmation', async () => {
+  it('requires a fresh GeeTest v3 endpoint and refreshes only on submit', async () => {
     const f = fixture();
     f.candidate.productCode = 'GEETEST';
     f.candidate.adapter = { websiteURL: 'https://site.test/register', gt: 'gt' };

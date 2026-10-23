@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { BROWSER_CAPTCHA_TOOL_SPECS } from './browser-captcha-tools.js';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
+import { resourceRecovery } from '../../shared/service-recovery.js';
 import {
   assertCaptchaReady,
   captchaAdapterInput,
@@ -11,7 +12,6 @@ import {
   validateOnlineCaptchaAdapter
 } from './online-schema.js';
 import {
-  maxTotalPrice,
   parseServiceJson,
   serviceId,
   servicePage,
@@ -88,19 +88,18 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
     method: 'POST',
     readOnly: true,
     project: (data, args) => ({
-      text: 'Current online NexCaptcha product contract. No offline fallback; use actual challenge inputs and obtain fee approval before purchasing.',
+      text: 'Current online NexCaptcha product contract. No offline fallback; use actual challenge inputs before purchasing.',
       data: requireCaptchaContract(data, args.productCode)
     })
   }),
   defineTool({
     name: 'nex_captcha_buy',
     description:
-      'Create a CAPTCHA solving task and precharge once after explicit fee/scope approval (the host approval panel may supply it). Read nex_captcha_product_schema and use actual challenge inputs. For HTTP_SUBMIT, confirm integration.workflows permits it and a separate site integration can maintain the session and submit verification/business requests. This tool creates recognition tasks only; it does not submit to the target website or choose a workflow. Page CAPTCHAs use nex_browser_captcha_prepare/submit/complete; never bypass unsupported browser adapters with a raw purchase. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. Preflight maxTotalPrice is not atomic. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Never automatically retry or substitute GRID.',
+      "Create a CAPTCHA solving task and charge once directly at the current server price, without a separate quotation or payment confirmation. Use only for a requested task or when needed for the user's task; price inquiries alone do not authorize purchases. Read nex_captcha_product_schema and use actual challenge inputs. For HTTP_SUBMIT, confirm integration.workflows permits it and a separate site integration can maintain the session and submit verification/business requests. This tool creates recognition tasks only; it does not submit to the target website or choose a workflow. Page CAPTCHAs use nex_browser_captcha_prepare/submit/complete; never bypass unsupported browser adapters with a raw purchase. Rechecks the online schema before buying; schema errors, unavailable contracts and DOCUMENTATION_REQUIRED stop before payment. Product rules come exclusively from the server, with no bundled catalog or aliases. adapter must be an object without platform API keys. Retain local id, never upstream taskId. Confirmed FAILED/EXPIRED or explicit site rejection permits a fresh challenge within 3 attempts including the first, after records/billing checks, without another payment confirmation. Never repeat an unknown purchase/application or substitute GRID.",
     inputSchema: z
       .object({
         productCode: captchaProductCode,
-        adapter: captchaAdapterInput,
-        maxTotalPrice
+        adapter: captchaAdapterInput
       })
       .strict(),
     annotations: { destructiveHint: true, idempotentHint: false },
@@ -113,7 +112,12 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
         contextId = online.contextId;
       } catch (error) {
         return errorResult(
-          `No purchase attempted. ${error instanceof Error ? error.message : 'Online CAPTCHA schema unavailable.'}`
+          `No purchase attempted. ${error instanceof Error ? error.message : 'Online CAPTCHA schema unavailable.'}`,
+          {
+            code: 'CAPTCHA_PREFLIGHT_FAILED',
+            purchaseAttempted: false,
+            recovery: resourceRecovery('captcha', 'RETRY_CHALLENGE', 'PREPARATION_REQUIRED')
+          }
         );
       }
       try {
@@ -122,18 +126,38 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
           headers: { 'X-Nex-Service-Context': contextId },
           body: JSON.stringify(args)
         });
-        if (response.code !== 0)
-          return apiErrorResult(
+        if (response.code !== 0) {
+          const result = apiErrorResult(
             'CAPTCHA purchase failed; reconcile records and billing before any new purchase',
             response
           );
+          if (result.structuredContent?.billingBlocked === true) return result;
+          return errorResult(String((result.content[0] as { text: string }).text), {
+            ...result.structuredContent,
+            recovery: resourceRecovery('captcha', 'RECONCILE', 'PURCHASE_OUTCOME_UNKNOWN')
+          });
+        }
         return successResult(
           'Task creation accepted; query the local id with nex_captcha_query. Creation does not mean solving succeeded.',
-          { record: response.data ? taskSummary(response.data) : null }
+          {
+            record: response.data ? taskSummary(response.data) : null,
+            ...(!Number.isSafeInteger((response.data as any)?.id) ||
+            (response.data as any).id <= 0 ||
+            (response.data as any).productCode !== args.productCode
+              ? {
+                  code: 'OUTCOME_UNKNOWN',
+                  recovery: resourceRecovery('captcha', 'RECONCILE', 'ALLOCATION_UNKNOWN')
+                }
+              : {})
+          }
         );
       } catch {
         return errorResult(
-          'Purchase outcome is unknown. Reconcile nex_captcha_record_list and nex_billing_trade_list; do not automatically repeat this purchase.'
+          'Purchase outcome is unknown. Reconcile nex_captcha_record_list and nex_billing_trade_list; do not automatically repeat this purchase.',
+          {
+            code: 'OUTCOME_UNKNOWN',
+            recovery: resourceRecovery('captcha', 'RECONCILE', 'PURCHASE_OUTCOME_UNKNOWN')
+          }
         );
       }
     }
@@ -164,7 +188,17 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
       data: {
         record: data
           ? { ...taskSummary(data), solution: parseServiceJson(data.solution, {}) }
-          : null
+          : null,
+        ...(['FAILED', 'EXPIRED'].includes(data?.state)
+          ? {
+              recovery: resourceRecovery(
+                'captcha',
+                'RETRY_CHALLENGE',
+                'CONFIRMED_SOLVER_FAILURE',
+                data.id
+              )
+            }
+          : {})
       }
     })
   }),

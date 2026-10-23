@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { defineTool, type McpToolSpec } from './define-tool.js';
 import { apiErrorResult, errorResult, successResult } from './tool-result.js';
+import { resourceRecovery } from './service-recovery.js';
 import { NexConfigurationError } from './types.js';
 
 export const serviceId = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
@@ -11,11 +12,6 @@ export const servicePager = z
     keyword: z.string().optional()
   })
   .strict();
-export const maxTotalPrice = z
-  .union([z.number().nonnegative().finite(), z.string().regex(/^\d+(?:\.\d+)?$/)])
-  .describe(
-    'Maximum total USDT explicitly approved by the user. Live preflight only; the backend does not support an atomic price ceiling.'
-  );
 
 /** 解析持久化 JSON 字符串，空值和无效历史值保留为给定默认值。 */
 export function parseServiceJson(value: unknown, fallback: unknown = null): any {
@@ -65,6 +61,17 @@ export function serviceTool<S extends z.ZodType>(options: {
   reconcile?: string;
   project: (data: any, args: z.output<S>) => { text: string; data: Record<string, unknown> };
 }): McpToolSpec {
+  const recovery = options.reconcile
+    ? resourceRecovery(
+        options.route.startsWith('/ip')
+          ? 'proxy'
+          : options.route.startsWith('/mail')
+            ? 'mail'
+            : 'captcha',
+        'RECONCILE',
+        'PURCHASE_OUTCOME_UNKNOWN'
+      )
+    : undefined;
   return defineTool({
     name: options.name,
     description: options.description,
@@ -98,19 +105,30 @@ export function serviceTool<S extends z.ZodType>(options: {
           options.reconcile
             ? `Request outcome is unknown (${reason}). ${options.reconcile} Do not automatically repeat this operation.`
             : `Service request failed (${reason}). Check the connection and current login.`,
-          { code: options.reconcile ? 'OUTCOME_UNKNOWN' : 'REQUEST_FAILED', reason }
+          {
+            code: options.reconcile ? 'OUTCOME_UNKNOWN' : 'REQUEST_FAILED',
+            reason,
+            ...(recovery ? { recovery } : {})
+          }
         );
       }
       if (response.code !== 0) {
         const result = apiErrorResult('Service request failed', response);
-        if (options.reconcile)
-          result.content.push({
-            type: 'text',
-            text: `${options.reconcile} Do not automatically repeat this operation.`
-          });
+        if (options.reconcile && result.structuredContent?.billingBlocked !== true) {
+          const summary = result.content[0];
+          return errorResult(
+            `${summary?.type === 'text' ? summary.text : 'Service request failed.'}\n${options.reconcile} Do not automatically repeat this operation.`,
+            { ...result.structuredContent, recovery }
+          );
+        }
         return result;
       }
       const result = options.project(response.data, args);
+      if (recovery && response.data == null)
+        return successResult(
+          `${result.text}\nAllocation is unconfirmed. ${options.reconcile} Do not automatically repeat this operation.`,
+          { ...result.data, code: 'OUTCOME_UNKNOWN', recovery }
+        );
       return successResult(result.text, result.data);
     }
   });

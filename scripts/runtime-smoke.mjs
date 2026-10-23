@@ -13,7 +13,7 @@ const cjs = require('../lib/index.cjs');
 for (const loaded of [esm, cjs]) {
   assert.equal(loaded.MCP_SERVER_NAME, 'nexbrowser-mcp');
   assert.equal(loaded.MCP_SERVER_VERSION, loaded.PKG_VERSION);
-  assert.equal(loaded.TOOLS.length, 96);
+  assert.equal(loaded.TOOLS.length, 95);
   for (const name of [
     'nex_ip_buy',
     'nex_mail_buy',
@@ -30,8 +30,15 @@ for (const loaded of [esm, cjs]) {
   );
   assert.deepEqual(
     Object.keys(loaded.TOOLS.find((tool) => tool.name === 'nex_mail_buy').inputSchema.properties),
-    ['type', 'durationHours', 'maxTotalPrice', 'domainId', 'suffix']
+    ['type', 'durationHours', 'domainId', 'suffix']
   );
+  const mailPolling = loaded.TOOLS.find(
+    (tool) => tool.name === 'nex_mail_message_list'
+  ).inputSchema;
+  assert.equal(mailPolling.properties.waitSeconds.maximum, 180);
+  assert.equal(mailPolling.properties.waitSeconds.default, 0);
+  assert.equal(mailPolling.properties.onlyNew.default, false);
+  assert.ok(mailPolling.properties.receivedAfter);
   assert.equal(typeof loaded.NexBrowserMCPServer, 'function');
 }
 

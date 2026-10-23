@@ -75,7 +75,7 @@ describe('bundled automation skill', () => {
     expect(example).toMatch(/ephemeral bundle.*browser window/i);
   });
 
-  it('routes page CAPTCHAs through NexCaptcha confirmation and result verification', () => {
+  it('routes page CAPTCHAs through NexCaptcha direct charging and result verification', () => {
     const skill = readFileSync(SKILL_PATH, 'utf8');
     const guide = readFileSync(resolve(SKILL_DIR, 'guides/captcha.md'), 'utf8');
     for (const tool of [
@@ -86,7 +86,8 @@ describe('bundled automation skill', () => {
       expect(skill).toContain(tool);
       expect(guide).toContain(tool);
     }
-    expect(guide).toContain('explicit confirmation');
+    expect(guide).toContain('without a quotation stage or payment confirmation');
+    expect(guide).not.toMatch(/maxTotalPrice|confirmed=true|fee approval/);
     expect(guide).toContain('websiteVerified=false');
     expect(guide).toContain('fresh matching challenge');
     expect(skill).not.toMatch(/Stop on CAPTCHA/);

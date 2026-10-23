@@ -73,7 +73,7 @@ describe('NexBrowser MCP protocol', () => {
       const pending = session.client.callTool(
         {
           name: 'nex_captcha_buy',
-          arguments: { productCode: 'TEST', adapter: {}, maxTotalPrice: 1 }
+          arguments: { productCode: 'TEST', adapter: {} }
         },
         undefined,
         { signal: controller.signal }
@@ -98,29 +98,20 @@ describe('NexBrowser MCP protocol', () => {
       expect(Object.keys(buy.inputSchema.properties ?? {})).toEqual([
         'type',
         'durationHours',
-        'maxTotalPrice',
         'domainId',
         'suffix'
       ]);
-      expect(buy.inputSchema.required).toEqual(['type', 'durationHours', 'maxTotalPrice']);
+      expect(buy.inputSchema.required).toEqual(['type', 'durationHours']);
     } finally {
       await session.close();
     }
   });
   it.each([
-    [
-      'nex_ip_buy',
-      { productId: 'p1', quantity: 1, duration: 30, maxTotalPrice: '0.10' },
-      '/ip/buy'
-    ],
+    ['nex_ip_buy', { productId: 'p1', quantity: 1, duration: 30 }, '/ip/buy'],
+    ['nex_mail_buy', { type: 'TEMPORARY', durationHours: 'DAY_1' }, '/mail/buy'],
     [
       'nex_mail_buy',
-      { type: 'TEMPORARY', durationHours: 'DAY_1', maxTotalPrice: '0.005' },
-      '/mail/buy'
-    ],
-    [
-      'nex_mail_buy',
-      { type: 'MAINSTREAM', suffix: 'gmail.com', durationHours: 'DAY_1', maxTotalPrice: '0.005' },
+      { type: 'MAINSTREAM', suffix: 'gmail.com', durationHours: 'DAY_1' },
       '/mail/buy'
     ],
     ['nex_captcha_query', { id: 101 }, '/captcha/query']
@@ -174,16 +165,16 @@ describe('NexBrowser MCP protocol', () => {
     }
   });
 
-  // Regression: a sign-up asked only for the user's own email without checking owned
-  // mailboxes or offering a quoted NexMail purchase.
-  it('guides sign-ups to owned mailboxes and numbers, then a quoted purchase offer', async () => {
+  // Reuse owned resources before directly buying a needed signup resource.
+  it('guides sign-ups to owned mailboxes and numbers, then a direct purchase', async () => {
     const session = await createMcpSession(config);
 
     try {
       const instructions = session.client.getInstructions()!;
       expect(instructions).toMatch(/sign-up.*email address or phone number.*nex_mail_record_list/i);
-      expect(instructions).toMatch(/own address or number, or a NexMail mailbox/i);
-      expect(instructions).toContain('A registration request alone does not approve a purchase');
+      expect(instructions).toMatch(/obtain the needed NexMail mailbox or NexSMS number directly/i);
+      expect(instructions).toContain('do not ask for a separate price confirmation');
+      expect(instructions).toContain('inquiry alone never authorizes a purchase');
       expect(instructions).toMatch(/refs from the latest nex_browser_snapshot/);
     } finally {
       await session.close();
@@ -199,7 +190,7 @@ describe('NexBrowser MCP protocol', () => {
     try {
       const listed = await session.client.listTools();
       const names = listed.tools.map((tool) => tool.name);
-      expect(names).toHaveLength(96);
+      expect(names).toHaveLength(95);
       expect(
         names.every(
           (name) =>

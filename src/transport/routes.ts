@@ -91,7 +91,7 @@ export const ACCOUNT_DELETE_ROUTE = '/account/delete';
 export const SMS_COUNTRIES_ROUTE = '/sms/countries';
 /** Projects, live prices, and stock of one country; parameters go in the query string. 单个国家的项目、实时价格与库存；参数经 query string 传递。 */
 export const SMS_STOCKS_ROUTE = '/sms/stocks';
-/** Buys numbers; charges the account balance and is guarded by maxTotalPrice. 购买号码；扣减账户余额，受 maxTotalPrice 保护。 */
+/** Buys numbers and charges the account balance at the server price. 购买号码并按服务端价格扣减账户余额。 */
 export const SMS_BUY_ROUTE = '/sms/buy';
 /** Paginated purchased-number records; parameters go in the query string. 已购号码分页记录；参数经 query string 传递。 */
 export const SMS_RECORDS_ROUTE = '/sms/records';
@@ -104,7 +104,6 @@ export const SMS_RECOVER_ROUTE = '/sms/recover';
 export const IP_PRODUCTS_ROUTE = '/ip/products';
 export const IP_BUY_ROUTE = '/ip/buy';
 export const IP_ORDERS_ROUTE = '/ip/orders';
-export const IP_RENEW_CALC_ROUTE = '/ip/renew_calc';
 export const IP_RENEW_ROUTE = '/ip/renew';
 export const IP_SNAP_PLANS_ROUTE = '/ip/snap/plans';
 export const IP_SNAP_PRODUCTS_ROUTE = '/ip/snap/products';
