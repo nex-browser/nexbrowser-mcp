@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.24-beta.1] - 2026-10-23
+
+### Changed
+
+- Publish the same window renaming tool and condensed server guidance as `2026.10.24` on the `beta` channel. The `latest` channel remains the stable `2026.10.24` release.
+
 ## [2026.10.24] - 2026-10-23
 
 ### Added
@@ -294,7 +300,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.24...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.24-beta.1...HEAD
+[2026.10.24-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.24...v2026.10.24-beta.1
 [2026.10.24]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.23-beta.1...v2026.10.24
 [2026.10.23-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.23...v2026.10.23-beta.1
 [2026.10.23]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.19-beta.4...v2026.10.23
