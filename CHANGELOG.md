@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.23-beta.1] - 2026-10-23
+
+### Changed
+
+- Publish the same service recovery features and MCP SDK 1.32.0 audit fixes as `2026.10.23` on the `beta` channel. The `latest` channel remains the stable `2026.10.23` release.
+
 ## [2026.10.23] - 2026-10-23
 
 ### Added
