@@ -115,6 +115,104 @@ afterEach(() => {
 });
 
 describe('agent-driven CAPTCHA detection and existing Nex payment', () => {
+  it('does not silently replace an explicit workflow in the HTML shortcut', async () => {
+    const f = fixture();
+    const result = (await f.detect({ workflow: 'HTTP_SUBMIT' })).structuredContent as any;
+    expect(result.ready).toBe(false);
+    expect(result.candidates[0]).not.toHaveProperty('purchase');
+    expect(result.candidates[0].reason).toContain('will not be silently replaced');
+    expect(f.buys()).toHaveLength(0);
+  });
+
+  it.each([
+    [
+      'TEXT',
+      'TEXT_ANSWER',
+      'BROWSER_RESULT',
+      { comment: 'If tomorrow is Saturday, what day is today?' },
+      { text: 'FRIDAY' }
+    ],
+    [
+      'CLICK',
+      'IMAGE_COORDINATES',
+      'BROWSER_INTERACTION',
+      { body: 'actual-challenge-image', comment: 'Select in this order:' },
+      { coordinates: [{ x: 135, y: 59 }] }
+    ],
+    [
+      'FUTURE_PRODUCT',
+      'FUTURE_RESULT',
+      'BROWSER_RESULT',
+      { challengeProof: 'actual-runtime-proof' },
+      { proof: 'solver-proof' }
+    ]
+  ] as const)(
+    'plans and submits %s through the live contract without HTML, sitekey or a product branch',
+    async (code, kind, workflow, adapter, solution) => {
+      const f = fixture();
+      f.contract.productCode = code;
+      f.products[0].productCode = code;
+      f.record.productCode = code;
+      f.contract.schema = {
+        type: 'object',
+        properties: Object.fromEntries(
+          Object.keys(adapter).map((key) => [key, { type: 'string' }])
+        ),
+        required: Object.keys(adapter),
+        additionalProperties: false
+      };
+      Object.assign(f.contract.integration, {
+        resultKind: kind,
+        workflows: [workflow],
+        resultGuide: 'Apply this result in the original challenge.'
+      });
+      const result = await f.detect({ html: undefined, productCode: code, adapter });
+      const plan = result.structuredContent as any;
+      expect(plan).toMatchObject({
+        route: 'AGENT',
+        ready: true,
+        workflow,
+        purchaseAttempted: false,
+        onlineContract: { productCode: code },
+        application: { resultKind: kind },
+        purchase: { tool: 'nex_captcha_buy', arguments: { productCode: code, adapter, workflow } }
+      });
+      expect(f.buys()).toHaveLength(0);
+      await f.call('buy', plan.purchase.arguments);
+      expect(f.buys()).toHaveLength(1);
+      expect(JSON.parse(String(f.buys()[0]![1]?.body))).toEqual({ productCode: code, adapter });
+      Object.assign(f.record, { state: 'SUCCEEDED', solution });
+      const queried = await f.call('query', { id: 41 });
+      expect(queried.structuredContent).toMatchObject({ record: { state: 'SUCCEEDED', solution } });
+    }
+  );
+
+  it.each([
+    'missing-input',
+    'invalid-input',
+    'permission',
+    'workflow',
+    'undocumented',
+    'disabled',
+    'wrong-page'
+  ])('blocks explicit integration before charging on %s', async (failure) => {
+    const f = fixture();
+    const args: Record<string, unknown> = { html: undefined, productCode, adapter: f.adapter };
+    if (failure === 'missing-input') args.adapter = undefined;
+    if (failure === 'invalid-input') args.adapter = { websiteURL: url };
+    if (failure === 'permission') args.canApply = false;
+    if (failure === 'workflow') args.workflow = 'BROWSER_INTERACTION';
+    if (failure === 'undocumented') f.contract.integration.readiness = 'DOCUMENTATION_REQUIRED';
+    if (failure === 'disabled') f.products.length = 0;
+    if (failure === 'wrong-page')
+      args.adapter = { ...f.adapter, websiteURL: 'https://other.test/' };
+    const plan = (await f.detect(args)).structuredContent as any;
+    expect(plan.ready).toBe(false);
+    expect(plan.purchaseAttempted).toBe(false);
+    expect(plan).not.toHaveProperty('purchase');
+    expect(f.buys()).toHaveLength(0);
+  });
+
   it('does not suggest a purchase when the live result kind is unsupported by the helper', async () => {
     const f = fixture();
     f.contract.integration.resultKind = 'COOKIE';

@@ -6,6 +6,20 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.31-beta.1] - 2026-10-31
+
+### Changed
+
+- Plan agent CAPTCHA integration from the live product schema and result contract using explicit product inputs; HTML and site keys are no longer mandatory for text, image-interaction or other documented products.
+- Remove the fixed browser bridge product whitelist and return agent integration guidance when a fixed capture is unavailable.
+- Validate captured adapter parameters unchanged against the online schema instead of renaming legacy fields, stripping undeclared inputs or inferring optional Grid values.
+- Preserve challenge binding, browser permissions, workflow validation and purchase reconciliation across both integration paths.
+
+### Tests
+
+- Cover generic TEXT, CLICK and future-product planning, execution-capability checks, workflow conflicts and unchanged online parameter validation.
+- Refresh tool catalog snapshots and bundled guidance for the generic integration path.
+
 ## [2026.10.30-beta.4] - 2026-10-30
 
 ### Fixed
@@ -348,7 +362,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.4...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.31-beta.1...HEAD
+[2026.10.31-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.4...v2026.10.31-beta.1
 [2026.10.30-beta.4]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.3...v2026.10.30-beta.4
 [2026.10.30-beta.3]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.2...v2026.10.30-beta.3
 [2026.10.30-beta.2]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.1...v2026.10.30-beta.2

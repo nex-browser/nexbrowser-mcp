@@ -84,7 +84,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_captcha_product_schema',
     description:
-      'Free, read-only: read the online adapter schema, example, integration/result contract and workflowGuide for one exact productCode. Keep all schema constraints; examples are placeholders. Agent-driven browser tasks may use nex_captcha_detect, buy/query and nex_captcha_apply_result with actual inputs and already permitted browser tools; the fixed Desktop bridge is optional. HTTP_SUBMIT needs a separate site HTTP integration. DOCUMENTATION_REQUIRED blocks paid tasks.',
+      'Free, read-only: read the online adapter schema, example, integration/result contract and workflowGuide for one exact productCode. These define product integration; fixed browser adapters are optional shortcuts, not a product whitelist. Keep all schema constraints; examples are placeholders. For any documented enabled product, use nex_captcha_detect with actual productCode/adapter and a confirmed permitted application path, then buy/query and apply the documented result using browser tools. Text may use fill_form, coordinates may use mouse_click_xy with image origin/scale conversion; the token script helper is optional. HTTP_SUBMIT needs a separate site HTTP integration. DOCUMENTATION_REQUIRED blocks paid tasks.',
     schema: z.object({ productCode: captchaProductCode }).strict(),
     route: CAPTCHA_SCHEMA_ROUTE,
     method: 'POST',

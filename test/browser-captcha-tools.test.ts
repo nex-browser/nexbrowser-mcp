@@ -211,7 +211,7 @@ describe('browser NexCaptcha workflow', () => {
   });
 
   /** 只有当前在线契约明确允许的增强字段才能随识别请求提交。 */
-  it('submits captured dimensions and permits no matches when the online Grid schema supports them', async () => {
+  it('requires explicitly captured Grid inputs instead of inventing values from declared fields', async () => {
     const f = gridFixture();
     Object.assign(f.schemas.GRID!.properties, {
       rows: { type: 'integer', minimum: 2 },
@@ -219,6 +219,9 @@ describe('browser NexCaptcha workflow', () => {
       canNoAnswer: { type: 'integer', enum: [0, 1] }
     });
     f.schemas.GRID!.required.push('rows', 'columns', 'canNoAnswer');
+    expect(await f.prepare()).toMatchObject({ ready: false });
+    expect(f.buys()).toHaveLength(0);
+    Object.assign(f.candidate.adapter, { rows: 3, columns: 3, canNoAnswer: 1 });
     const quote = await f.prepare();
     expect(quote.ready).toBe(true);
     await f.submit(quote.prepareId);
@@ -496,6 +499,7 @@ describe('browser NexCaptcha workflow', () => {
     };
     const prepared = await f.prepare();
     expect(prepared.ready).toBe(true);
+    expect(prepared.warnings).toBeUndefined();
     await f.submit(prepared.prepareId);
     expect(JSON.parse(String(f.buys()[0]![1]?.body))).toEqual({
       productCode: 'RECAPTCHA_V2_ENTERPRISE',
@@ -508,6 +512,91 @@ describe('browser NexCaptcha workflow', () => {
       productCode: 'RECAPTCHA_V2_ENTERPRISE',
       solution: { token: 'enterprise-token' }
     });
+  });
+
+  /** 使用线上 Nex Enterprise 字段集，所有购买请求仍由本地 mock 截获。 */
+  function enterpriseFixture() {
+    const f = fixture();
+    f.candidate.productCode =
+      f.catalog.productCode =
+      f.record.productCode =
+        'RECAPTCHA_V2_ENTERPRISE';
+    f.candidate.adapter = {
+      websiteURL: 'https://site.test/register',
+      websiteKey: 'enterprise-key',
+      isInvisible: false,
+      enterprisePayload: { s: 'observed-s' }
+    };
+    f.schemas.RECAPTCHA_V2_ENTERPRISE = {
+      type: 'object',
+      properties: {
+        websiteURL: { type: 'string' },
+        websiteKey: { type: 'string' },
+        pageAction: { type: 'string' },
+        apiDomain: { type: 'string' },
+        isEnterprise: { type: 'boolean' },
+        minScore: { type: 'number' },
+        userAgent: { type: 'string' },
+        isInvisible: { type: 'boolean' }
+      },
+      required: ['websiteURL', 'websiteKey'],
+      additionalProperties: false
+    };
+    return f;
+  }
+
+  it('does not drop an Enterprise payload absent from the online schema', async () => {
+    const f = enterpriseFixture();
+    const original = structuredClone(f.candidate.adapter);
+    expect(await f.prepare()).toMatchObject({
+      ready: false,
+      reason: expect.stringContaining('online contract'),
+      agentIntegration: { route: 'AGENT' }
+    });
+    expect(f.candidate.adapter).toEqual(original);
+    expect(f.buys()).toHaveLength(0);
+  });
+
+  it.each(['recaptchaDataSValue', 's'])(
+    'does not rename Enterprise payload to declared %s',
+    async (field) => {
+      const f = enterpriseFixture();
+      f.schemas.RECAPTCHA_V2_ENTERPRISE!.properties[field] = { type: 'string' };
+      expect(await f.prepare()).toMatchObject({ ready: false });
+      expect(f.candidate.adapter).not.toHaveProperty(field);
+      expect(f.candidate.adapter.enterprisePayload).toEqual({ s: 'observed-s' });
+      expect(f.buys()).toHaveLength(0);
+    }
+  );
+
+  it('revalidates the unchanged Enterprise payload if the submit-time schema removes support', async () => {
+    const f = enterpriseFixture();
+    f.schemas.RECAPTCHA_V2_ENTERPRISE!.properties.enterprisePayload = { type: 'object' };
+    const prepared = await f.prepare();
+    expect(prepared.ready).toBe(true);
+    delete f.schemas.RECAPTCHA_V2_ENTERPRISE!.properties.enterprisePayload;
+    expectNoPurchase(await f.submit(prepared.prepareId), 'online contract');
+    expect(f.candidate.adapter.enterprisePayload).toEqual({ s: 'observed-s' });
+    expect(f.buys()).toHaveLength(0);
+  });
+
+  it('honors nested Enterprise payload constraints without stripping extra members', async () => {
+    const f = enterpriseFixture();
+    f.schemas.RECAPTCHA_V2_ENTERPRISE!.properties.enterprisePayload = {
+      type: 'object',
+      properties: { s: { type: 'string' } },
+      required: ['s'],
+      additionalProperties: false
+    };
+    const prepared = await f.prepare();
+    expect(prepared.ready).toBe(true);
+    f.candidate.adapter.enterprisePayload = { s: 'observed-s', extra: 'observed-value' };
+    expectNoPurchase(await f.submit(prepared.prepareId), 'online contract');
+    expect(f.candidate.adapter.enterprisePayload).toEqual({
+      s: 'observed-s',
+      extra: 'observed-value'
+    });
+    expect(f.buys()).toHaveLength(0);
   });
 
   it('does not downgrade enterprise reCAPTCHA to a standard product or ignore online constraints', async () => {
@@ -524,6 +613,7 @@ describe('browser NexCaptcha workflow', () => {
     f.schemas.RECAPTCHA_V2_ENTERPRISE = {
       type: 'object',
       properties: { websiteURL: { type: 'string' }, websiteKey: { type: 'string' } },
+      required: ['websiteURL', 'websiteKey', 'requiredRuntimeInput'],
       additionalProperties: false
     };
     expect(await f.prepare()).toMatchObject({ ready: false });
@@ -550,7 +640,7 @@ describe('browser NexCaptcha workflow', () => {
     }
   );
 
-  it('normalizes the legacy GeeTest field before quoting and after challenge refresh', async () => {
+  it('preserves schema-correct GeeTest inputs before and after challenge refresh', async () => {
     const f = fixture();
     f.candidate.productCode = 'GEETEST';
     f.catalog.productCode = 'GEETEST';
@@ -558,7 +648,7 @@ describe('browser NexCaptcha workflow', () => {
     f.candidate.adapter = {
       websiteURL: 'https://site.test/register',
       gt: 'gt',
-      geetestApiServerSubdomain: 'api.geetest.test'
+      apiServerSubdomain: 'api.geetest.test'
     };
     f.candidate.ready = false;
     (f.candidate as any).reason = 'Fresh challenge required';
@@ -578,7 +668,7 @@ describe('browser NexCaptcha workflow', () => {
     });
   });
 
-  it('blocks conflicting GeeTest field aliases before preparation or purchase', async () => {
+  it('rejects undeclared GeeTest field aliases without renaming or stripping them', async () => {
     const f = fixture();
     f.candidate.productCode = 'GEETEST';
     f.catalog.productCode = 'GEETEST';
@@ -591,7 +681,7 @@ describe('browser NexCaptcha workflow', () => {
     };
     expect(await f.prepare()).toMatchObject({
       ready: false,
-      reason: expect.stringContaining('Conflicting')
+      reason: expect.stringContaining('online contract')
     });
     expect(f.buys()).toHaveLength(0);
   });
@@ -651,19 +741,45 @@ describe('browser NexCaptcha workflow', () => {
     expect(f.buys()).toHaveLength(0);
   });
 
-  it.each(['RECAPTCHA_V3', 'CUSTOM', 'FUTURE_PRODUCT'])(
-    'does not expand automatic browser application to %s',
+  it.each(['RECAPTCHA_V3', 'FUTURE_PRODUCT'])(
+    'trusts a ready Desktop capture for %s without an MCP product whitelist',
     async (productCode) => {
       const f = fixture();
       f.candidate.productCode = productCode;
       f.catalog.productCode = productCode;
-      expect(await f.prepare()).toMatchObject({
-        ready: false,
-        reason: expect.stringContaining('no supported automatic')
-      });
+      expect(await f.prepare()).toMatchObject({ ready: true, productCode });
       expect(f.buys()).toHaveLength(0);
     }
   );
+
+  it('hands off a missing fixed capture without suggesting a charge', async () => {
+    const f = fixture();
+    f.page.candidates.length = 0;
+    expect(await f.prepare()).toMatchObject({
+      ready: false,
+      agentIntegration: { route: 'AGENT', purchaseAttempted: false }
+    });
+    expect(f.buys()).toHaveLength(0);
+    expect(f.applies()).toHaveLength(0);
+  });
+
+  it('hands off an interaction contract instead of treating it as an unsupported product', async () => {
+    const f = fixture();
+    f.candidate.productCode = f.catalog.productCode = 'CLICK';
+    f.integration.workflows = ['BROWSER_INTERACTION'];
+    f.integration.resultKind = 'IMAGE_COORDINATES';
+    expect(await f.prepare()).toMatchObject({
+      ready: false,
+      agentIntegration: {
+        route: 'AGENT',
+        workflow: 'BROWSER_INTERACTION',
+        purchaseAttempted: false,
+        onlineContract: { productCode: 'CLICK' }
+      }
+    });
+    expect(f.buys()).toHaveLength(0);
+    expect(f.applies()).toHaveLength(0);
+  });
 
   it.each([
     ['TURNSTILE', 'CLOUDFLARE_TURNSTILE'],
@@ -675,8 +791,7 @@ describe('browser NexCaptcha workflow', () => {
     f.candidate.productCode = widget;
     f.candidate.adapter = {
       websiteURL: 'https://site.test/register',
-      websiteKey: 'public-key',
-      userAgent: 'Fixture'
+      websiteKey: 'public-key'
     };
     f.catalog.productCode = product;
     f.record.productCode = product;
@@ -697,6 +812,37 @@ describe('browser NexCaptcha workflow', () => {
     expect(JSON.stringify(completed)).not.toContain('private-token');
     expect(JSON.parse(String(f.applies()[0]![1]?.body)).params.productCode).toBe(widget);
   });
+
+  it.each([false, true])(
+    'preserves captured Turnstile userAgent and follows online declaration=%s',
+    async (declared) => {
+      const f = fixture();
+      f.candidate.productCode =
+        f.catalog.productCode =
+        f.record.productCode =
+          'CLOUDFLARE_TURNSTILE';
+      f.candidate.adapter = {
+        websiteURL: 'https://site.test/register',
+        websiteKey: 'public-key',
+        userAgent: 'Actual browser UA'
+      };
+      if (declared) f.schemas.CLOUDFLARE_TURNSTILE!.properties.userAgent = { type: 'string' };
+      const original = structuredClone(f.candidate.adapter);
+      const prepared = await f.prepare();
+      expect(prepared.ready).toBe(declared);
+      expect(f.candidate.adapter).toEqual(original);
+      expect(f.buys()).toHaveLength(0);
+      if (declared) {
+        await f.submit(prepared.prepareId);
+        expect(JSON.parse(String(f.buys()[0]![1]?.body)).adapter).toEqual(original);
+      } else {
+        expect(prepared).toMatchObject({
+          reason: expect.stringContaining('online contract'),
+          agentIntegration: { route: 'AGENT' }
+        });
+      }
+    }
+  );
 
   it('prefers an exact Turnstile catalog code over its alias regardless of catalog order', async () => {
     const f = fixture();

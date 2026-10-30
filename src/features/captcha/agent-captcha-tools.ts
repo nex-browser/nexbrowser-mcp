@@ -14,6 +14,7 @@ import {
 import { inspectCaptchaHtml, type CaptchaObservation } from './agent-captcha-html.js';
 import { captchaTaskBinding, sameCaptchaUrl } from './agent-captcha-state.js';
 import { buildCaptchaApplication } from './agent-captcha-application.js';
+import { captchaWorkflow, planAgentCaptcha } from './agent-captcha-plan.js';
 
 const pageUrl = z
   .string()
@@ -71,16 +72,21 @@ export const AGENT_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_captcha_detect',
     description:
-      'Free: inspect current HTML supplied by the agent and check enabled NexCaptcha products and their live contracts. Detects reCAPTCHA v2/enterprise and Turnstile without requiring Desktop initialization hooks. HTML is parsed locally, never executed or sent to the solver. Pass optional productCode/adapter only for actual runtime inputs observed in the same page/frame. Set canApply=true only after verifying an already permitted browser tool can read and apply JavaScript in that page. Missing required inputs, unsupported non-optional parameters or a disabled application capability block purchase. Enterprise s is optional: forward it when supported by the online schema; otherwise omit it with a warning and continue. Never guess parameters or omit schema-required inputs. Use the returned nex_captcha_buy arguments for payment through Nex, then query the local id and request nex_captcha_apply_result.',
+      'Free, no purchase: plan agent integration for any enabled product using its current online schema, result contract and workflowGuide. Pass actual url, productCode and adapter; HTML is optional for explicit integration, including text answers, image coordinates and future products. Set workflow when needed and canApply=true only after verifying permitted tools can apply this result in the original page/frame (fill/click need no JavaScript permission). Without productCode, current HTML enables shortcut detection of reCAPTCHA v2/enterprise and Turnstile; HTML is parsed locally, never executed or sent to the solver. Captured observations are checked for conflicts. A missing fixed bridge or generated token script does not make a product unsupported. Missing required inputs, undocumented contracts and unavailable execution capabilities block purchase. Enterprise s is optional when unsupported by the online schema. Use returned nex_captcha_buy arguments, query the local id and apply the documented result with permitted tools; nex_captcha_apply_result is an optional token helper. Never guess inputs or bypass disabled permissions.',
     inputSchema: z
       .object({
         url: pageUrl,
-        html: z.string().min(1).max(1_000_000),
+        html: z.string().min(1).max(1_000_000).optional(),
         canApply: z.boolean().default(false),
         productCode: captchaProductCode.optional(),
-        adapter: captchaAdapterInput.optional()
+        adapter: captchaAdapterInput.optional(),
+        workflow: captchaWorkflow.optional()
       })
-      .strict(),
+      .strict()
+      .refine((args) => Boolean(args.html || args.productCode), {
+        message:
+          'Supply current HTML for detection or an exact productCode for explicit integration.'
+      }),
     annotations: { readOnlyHint: true, idempotentHint: true },
     execute: async (args, ctx) => {
       const catalog = await ctx.api.request<any[]>(CAPTCHA_PRODUCTS_ROUTE);
@@ -88,15 +94,35 @@ export const AGENT_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
         return apiErrorResult('CAPTCHA product lookup failed; no purchase attempted', catalog);
       if (!catalog.contextId)
         return errorResult('Service identity/team context is unavailable. No purchase attempted.');
-      const observations = inspectCaptchaHtml(args.html);
-      if (!observations.length && args.productCode && args.adapter)
-        observations.push({
-          productCode: args.productCode,
-          websiteKey:
-            typeof args.adapter.websiteKey === 'string' ? args.adapter.websiteKey : undefined,
-          initialized: true,
-          fields: {}
-        });
+      const observations = args.html ? inspectCaptchaHtml(args.html) : [];
+      // 显式产品按通用契约接入；已检测的同类控件仍保留参数冲突和挑战绑定校验。
+      const matchingObservation = observations.some(
+        (row) =>
+          row.productCode === args.productCode ||
+          (row.productCode === 'CLOUDFLARE_TURNSTILE' && args.productCode === 'TURNSTILE')
+      );
+      if (args.productCode && !matchingObservation) {
+        const product = Array.isArray(catalog.data)
+          ? catalog.data.find((row) => row.productCode === args.productCode)
+          : undefined;
+        if (!product)
+          return successResult('The selected product is not enabled in NexCaptcha.', {
+            ready: false,
+            route: 'AGENT',
+            purchaseAttempted: false,
+            candidates: []
+          });
+        const { contract } = await readCaptchaContract(ctx, product.productCode, catalog.contextId);
+        const plan = planAgentCaptcha(contract, args);
+        return successResult(
+          'Explicit agent integration planned from the online contract. No task created.',
+          {
+            ...plan,
+            candidates: [plan],
+            detected: false
+          }
+        );
+      }
       const candidates = [];
       for (const [index, observation] of observations.slice(0, 20).entries()) {
         if (
@@ -144,9 +170,13 @@ export const AGENT_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
           );
           const adapter = { ...observed, ...args.adapter };
           const reasons: string[] = [];
+          if (args.workflow && args.workflow !== 'BROWSER_RESULT')
+            reasons.push(
+              'The HTML/token shortcut uses BROWSER_RESULT. For another documented workflow, use explicit productCode/adapter without HTML; the requested workflow will not be silently replaced.'
+            );
           if (contract.integration.resultKind !== 'TOKEN')
             reasons.push(
-              'The current result contract is not TOKEN; this HTML/application helper cannot complete it. Use a documented explicit integration without purchasing through this suggestion.'
+              'The current result contract is not TOKEN. Read its resultGuide, then use explicit productCode/adapter without HTML for agent integration; this token helper is not a product restriction.'
             );
           if (
             Object.entries(observed).some(

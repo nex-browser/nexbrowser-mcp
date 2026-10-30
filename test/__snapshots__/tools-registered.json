@@ -1421,7 +1421,7 @@
   },
   {
     "name": "nex_browser_connect",
-    "description": "For nexbrowser-mcp browser tasks, use a NexBrowser environment by default. Connects one window (active team by default) and creates an isolated automation session; startIfNeeded=true opens a closed window. For several windows, call nex_browser_open once with all IDs, then connect each with startIfNeeded=false. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "For nexbrowser-mcp browser tasks, use a NexBrowser environment by default. Connects one window (active team by default) and creates an isolated automation session; startIfNeeded=true opens a closed window. For several windows, call nex_browser_open once with all IDs, then connect each with startIfNeeded=false. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1547,7 +1547,7 @@
   },
   {
     "name": "nex_browser_navigate",
-    "description": "Navigate the selected page and return its refreshed accessibility snapshot. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Navigate the selected page and return its refreshed accessibility snapshot. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1572,7 +1572,7 @@
   },
   {
     "name": "nex_browser_reload",
-    "description": "Reload the page. Ask the user before reloading a filled form. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Reload the page. Ask the user before reloading a filled form. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1629,7 +1629,7 @@
   },
   {
     "name": "nex_browser_click",
-    "description": "Click or double-click an element from the latest snapshot or a CSS selector. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Click or double-click an element from the latest snapshot or a CSS selector. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1666,7 +1666,7 @@
   },
   {
     "name": "nex_browser_mouse_click_xy",
-    "description": "Click at x/y in viewport CSS pixels, including canvas, iframes and extension overlays injected into the page (not native toolbar popups). Take coordinates from a fresh screenshot: divide image pixels by pixelsPerCssPixel, then add the returned origin. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Click at x/y in viewport CSS pixels, including canvas, iframes and extension overlays injected into the page (not native toolbar popups). Take coordinates from a fresh screenshot: divide image pixels by pixelsPerCssPixel, then add the returned origin. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2052,7 +2052,7 @@
   },
   {
     "name": "nex_browser_drag",
-    "description": "Drag one snapshot ref or selector to another. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Drag one snapshot ref or selector to another. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2181,7 +2181,7 @@
   },
   {
     "name": "nex_browser_snapshot",
-    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2259,7 +2259,7 @@
   },
   {
     "name": "nex_browser_get_text",
-    "description": "Read visible text from the page or one target. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Read visible text from the page or one target. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2390,7 +2390,7 @@
   },
   {
     "name": "nex_browser_evaluate",
-    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2415,7 +2415,7 @@
   },
   {
     "name": "nex_browser_run_code",
-    "description": "Run page JavaScript when the separate runCode permission is enabled. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Run page JavaScript when the separate runCode permission is enabled. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2440,7 +2440,7 @@
   },
   {
     "name": "nex_browser_take_screenshot",
-    "description": "Capture the viewport, one target, or a viewport clip (target, clip and fullPage=true are mutually exclusive). The returned origin and pixelsPerCssPixel map image pixels to nex_browser_mouse_click_xy coordinates. Page CAPTCHA: prefer free nex_captcha_detect with current HTML and already permitted browser tools; nex_browser_captcha_prepare is an optional fixed bridge. Check result application capability before paying; never bypass browser permissions.",
+    "description": "Capture the viewport, one target, or a viewport clip (target, clip and fullPage=true are mutually exclusive). The returned origin and pixelsPerCssPixel map image pixels to nex_browser_mouse_click_xy coordinates. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3194,7 +3194,7 @@
   },
   {
     "name": "nex_captcha_product_schema",
-    "description": "Free, read-only: read the online adapter schema, example, integration/result contract and workflowGuide for one exact productCode. Keep all schema constraints; examples are placeholders. Agent-driven browser tasks may use nex_captcha_detect, buy/query and nex_captcha_apply_result with actual inputs and already permitted browser tools; the fixed Desktop bridge is optional. HTTP_SUBMIT needs a separate site HTTP integration. DOCUMENTATION_REQUIRED blocks paid tasks.",
+    "description": "Free, read-only: read the online adapter schema, example, integration/result contract and workflowGuide for one exact productCode. These define product integration; fixed browser adapters are optional shortcuts, not a product whitelist. Keep all schema constraints; examples are placeholders. For any documented enabled product, use nex_captcha_detect with actual productCode/adapter and a confirmed permitted application path, then buy/query and apply the documented result using browser tools. Text may use fill_form, coordinates may use mouse_click_xy with image origin/scale conversion; the token script helper is optional. HTTP_SUBMIT needs a separate site HTTP integration. DOCUMENTATION_REQUIRED blocks paid tasks.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3305,7 +3305,7 @@
   },
   {
     "name": "nex_browser_captcha_prepare",
-    "description": "Free, no purchase: capture the page CAPTCHA and check product availability and the online schema. Supports captured GeeTest v3/v4, reCAPTCHA v2/enterprise with an associated callback and Turnstile, and real image grids (reCAPTCHA grids are detected; for other grids pass the observed grid selectors and mode). Canvas or custom widgets need a site adapter. Updated Desktop recovers existing and implicit reCAPTCHA widgets when their callback is associated. Pass challengeId when several widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or a timeout are blockers to report, not reasons to switch to GRID or raw nex_captcha_buy. Never silently reload a filled form. When ready, call nex_browser_captcha_submit.",
+    "description": "Free, no purchase: prepare a fixed Desktop CAPTCHA bridge using captured execution capability and the current online contract, without a local product whitelist. Desktop supplies captured widgets and real image grids (for other regular grids pass observed selectors and mode). If no unique ready bridge exists, continue through agentIntegration: read the exact product schema and use nex_captcha_detect with actual productCode/adapter and permitted application tools. Missing fixed capture is not product unavailability; TEXT, CLICK and other enabled products can use the general agent flow. Pass challengeId for multiple widgets. Missing required parameters and schema conflicts must be resolved before charging; never switch to GRID to evade failures or silently reload a filled form. A ready prepareId uses nex_browser_captcha_submit/complete; agentIntegration uses nex_captcha_buy/query and the documented result application.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3419,7 +3419,7 @@
   },
   {
     "name": "nex_captcha_detect",
-    "description": "Free: inspect current HTML supplied by the agent and check enabled NexCaptcha products and their live contracts. Detects reCAPTCHA v2/enterprise and Turnstile without requiring Desktop initialization hooks. HTML is parsed locally, never executed or sent to the solver. Pass optional productCode/adapter only for actual runtime inputs observed in the same page/frame. Set canApply=true only after verifying an already permitted browser tool can read and apply JavaScript in that page. Missing required inputs, unsupported non-optional parameters or a disabled application capability block purchase. Enterprise s is optional: forward it when supported by the online schema; otherwise omit it with a warning and continue. Never guess parameters or omit schema-required inputs. Use the returned nex_captcha_buy arguments for payment through Nex, then query the local id and request nex_captcha_apply_result.",
+    "description": "Free, no purchase: plan agent integration for any enabled product using its current online schema, result contract and workflowGuide. Pass actual url, productCode and adapter; HTML is optional for explicit integration, including text answers, image coordinates and future products. Set workflow when needed and canApply=true only after verifying permitted tools can apply this result in the original page/frame (fill/click need no JavaScript permission). Without productCode, current HTML enables shortcut detection of reCAPTCHA v2/enterprise and Turnstile; HTML is parsed locally, never executed or sent to the solver. Captured observations are checked for conflicts. A missing fixed bridge or generated token script does not make a product unsupported. Missing required inputs, undocumented contracts and unavailable execution capabilities block purchase. Enterprise s is optional when unsupported by the online schema. Use returned nex_captcha_buy arguments, query the local id and apply the documented result with permitted tools; nex_captcha_apply_result is an optional token helper. Never guess inputs or bypass disabled permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3448,11 +3448,18 @@
             }
           },
           "additionalProperties": {}
+        },
+        "workflow": {
+          "type": "string",
+          "enum": [
+            "HTTP_SUBMIT",
+            "BROWSER_RESULT",
+            "BROWSER_INTERACTION"
+          ]
         }
       },
       "required": [
-        "url",
-        "html"
+        "url"
       ],
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false

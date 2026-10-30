@@ -2,7 +2,7 @@
 
 现已支持 `nex_ip_*` 代理市场、续费与短效额度，`nex_mail_*` 邮箱申请与收信，`nex_captcha_*` 识别任务，以及 `nex_billing_trade_list` 账单核对。需要同时更新提供 `/ip`、`/mail`、`/captcha`、`/billing` 路由的 Desktop 客户端，并保持登录及现有服务端权限。
 
-页面验证码优先保留 agent 已有的浏览器会话：先确认现有工具有权读取当前 HTML 并应用结果，再免费调用 `nex_captcha_detect({url, html, canApply: true})`。首批 HTML 检测支持 reCAPTCHA v2/enterprise 和 Turnstile，返回实际观察到的参数、在线契约及具体冲突；`canApply` 默认 false，不会授予执行权限。Desktop 固定捕获桥接改为可选增强，未捕获初始化不再单独阻断 agent 接入，但缺真实参数、契约不匹配或没有执行能力时仍不能付费。详见[选路与能力边界](skills/nexbrowser-automation/guides/captcha.md#choose-the-integration-workflow)。
+页面验证码保留 agent 已有的浏览器会话，产品接入要求统一来自在线目录和 Schema，不受固定桥接产品列表限制。对 TEXT、CLICK 和其他有明确契约的启用产品，可先读取 `nex_captcha_product_schema`，采集真实参数并确认已有工具能应用结果，再免费调用 `nex_captcha_detect({url, productCode, adapter, workflow, canApply: true})`；显式接入不要求 HTML、sitekey 或 JavaScript 权限，普通填表和坐标点击可直接使用已有浏览器工具。`canApply` 默认 false，不会授予执行权限。HTML 自动检测仍作为 reCAPTCHA v2/enterprise 和 Turnstile 的快捷路径。固定桥接未就绪时返回 `agentIntegration` 引导通用接入；缺真实参数、契约不匹配或没有执行能力时仍不能付费。详见[选路与能力边界](skills/nexbrowser-automation/guides/captcha.md#choose-the-integration-workflow)。
 
 付费识别统一走我们的 NexCaptcha：使用启用产品的精确 productCode、当前在线 Schema 和真实参数，通过 `nex_captcha_buy` 创建一次任务，再用返回的本地 id 调用 `nex_captcha_query`。agent 浏览器 Token 流程传入 `workflow: "BROWSER_RESULT"`，购买前仍检查线上流程和完整参数契约。免费 `nex_captcha_apply_result({id, url, websiteKey, selector?})` 只查询当前 MCP 进程购买的受支持 Token 任务，返回 `apply.javascript`，由 agent 在原页面/iframe 中使用已有权限执行；它不新建任务、不执行代码、不绕过浏览器权限。重启后应查询、核对原任务并使用明确的接入方式，不能为恢复绑定重购。价格、团队权限、记录、退款和账单继续由我们的服务管理。
 

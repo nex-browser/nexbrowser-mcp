@@ -20,6 +20,7 @@ import {
 } from '../../transport/routes.js';
 import { sessionId } from '../browser-automation/common.js';
 import { automationSchema } from '../browser-automation/schema.js';
+import { AGENT_CAPTCHA_HANDOFF, planAgentCaptcha } from './agent-captcha-plan.js';
 
 const gridOptions = z
   .object({
@@ -87,76 +88,23 @@ function enabledProduct(catalog: unknown, productCode: string) {
   return alias ? catalog.find((row: any) => row.productCode === alias) : undefined;
 }
 
-/** 只保留已实现的页面桥接；产品参数全部按本次在线 Schema 校验。 */
+/** 原样校验捕获参数；字段含义、类型和必填项完全由本次在线 Schema 决定。 */
 function browserAdapter(
   candidate: Candidate,
   contract: CaptchaContract,
   awaitingFreshChallenge = false
 ) {
-  const code =
-    candidate.productCode === 'TURNSTILE' ? 'CLOUDFLARE_TURNSTILE' : candidate.productCode;
   if (
-    ![
-      'GRID',
-      'GEETEST',
-      'GEETEST_V4',
-      'RECAPTCHA_V2',
-      'RECAPTCHA_V2_ENTERPRISE',
-      'CLOUDFLARE_TURNSTILE'
-    ].includes(code)
-  )
-    return { reason: 'This product has no supported automatic browser CAPTCHA adapter.' };
-  if (
-    code === 'GRID' &&
-    (!candidate.grid ||
-      contract.integration.resultKind !== 'GRID_CELLS' ||
+    candidate.grid &&
+    (contract.integration.resultKind !== 'GRID_CELLS' ||
       contract.integration.indexBase !== 1 ||
       contract.integration.order !== 'ROW_MAJOR')
   )
-    return {
-      reason: 'GRID requires a captured grid and a documented 1-based ROW_MAJOR result contract.'
-    };
+    return { reason: 'Grid execution requires a documented 1-based ROW_MAJOR result contract.' };
   const adapter = { ...candidate.adapter };
-  if (code === 'GRID' && candidate.grid) {
-    const properties = contract.schema.properties as Record<string, unknown> | undefined;
-    const enriched = { ...adapter };
-    const options = {
-      rows: candidate.grid.rows,
-      columns: candidate.grid.columns,
-      canNoAnswer: 1
-    };
-    for (const [key, value] of Object.entries(options)) {
-      if (properties && Object.hasOwn(properties, key) && !Object.hasOwn(adapter, key))
-        enriched[key] = value;
-    }
-    try {
-      validateOnlineCaptchaAdapter(contract, enriched);
-      Object.assign(adapter, enriched);
-    } catch {
-      // 可选增强不符合完整在线约束时保留原参数，仍由下方完整校验决定能否购买。
-    }
-  }
-  if (code === 'GEETEST' && Object.hasOwn(adapter, 'geetestApiServerSubdomain')) {
-    if (
-      adapter.apiServerSubdomain !== undefined &&
-      adapter.apiServerSubdomain !== adapter.geetestApiServerSubdomain
-    )
-      return {
-        reason: 'Conflicting GeeTest apiServerSubdomain fields; inspect the current widget.'
-      };
-    adapter.apiServerSubdomain = adapter.geetestApiServerSubdomain;
-    delete adapter.geetestApiServerSubdomain;
-  }
-  // 旧桥接附带的 UA 仅在线规则明确不接受时移除，不维护固定产品字段表。
-  if (
-    code === 'CLOUDFLARE_TURNSTILE' &&
-    contract.schema.additionalProperties === false &&
-    !(contract.schema.properties as Record<string, unknown> | undefined)?.userAgent
-  )
-    delete adapter.userAgent;
   try {
     captchaAdapterInput.parse(adapter);
-    // GeeTest v3 的新 challenge 在提交前获取，完整线上校验推迟到刷新完成后。
+    // 固定桥接先刷新挑战，再用完整在线契约校验最终提交参数。
     if (!awaitingFreshChallenge) validateOnlineCaptchaAdapter(contract, adapter);
   } catch (error) {
     return {
@@ -354,7 +302,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_prepare',
     description:
-      'Free, no purchase: capture the page CAPTCHA and check product availability and the online schema. Supports captured GeeTest v3/v4, reCAPTCHA v2/enterprise with an associated callback and Turnstile, and real image grids (reCAPTCHA grids are detected; for other grids pass the observed grid selectors and mode). Canvas or custom widgets need a site adapter. Updated Desktop recovers existing and implicit reCAPTCHA widgets when their callback is associated. Pass challengeId when several widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or a timeout are blockers to report, not reasons to switch to GRID or raw nex_captcha_buy. Never silently reload a filled form. When ready, call nex_browser_captcha_submit.',
+      'Free, no purchase: prepare a fixed Desktop CAPTCHA bridge using captured execution capability and the current online contract, without a local product whitelist. Desktop supplies captured widgets and real image grids (for other regular grids pass observed selectors and mode). If no unique ready bridge exists, continue through agentIntegration: read the exact product schema and use nex_captcha_detect with actual productCode/adapter and permitted application tools. Missing fixed capture is not product unavailability; TEXT, CLICK and other enabled products can use the general agent flow. Pass challengeId for multiple widgets. Missing required parameters and schema conflicts must be resolved before charging; never switch to GRID to evade failures or silently reload a filled form. A ready prepareId uses nex_browser_captcha_submit/complete; agentIntegration uses nex_captcha_buy/query and the documented result application.',
     inputSchema: automationSchema({
       challengeId: z.string().optional(),
       challengeUrl: z.string().url().optional(),
@@ -380,8 +328,13 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
           : undefined;
       if (!selected)
         return successResult(
-          'No unique captured CAPTCHA. Select challengeId or arm capture before navigation. Reinitializing an existing filled form requires user approval.',
-          { ...publicPage, products: catalog.data, ready: false }
+          'No unique fixed-bridge challenge. Select the observed challengeId, or continue with the agent integration using real inputs. Do not reload a filled form.',
+          {
+            ...publicPage,
+            products: catalog.data,
+            ready: false,
+            agentIntegration: AGENT_CAPTCHA_HANDOFF
+          }
         );
       const product = enabledProduct(catalog.data, selected.productCode);
       const needsFreshChallenge =
@@ -392,11 +345,29 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
           product
             ? (selected.reason ?? 'CAPTCHA is not ready')
             : 'This CAPTCHA product is not currently enabled in NexCaptcha',
-          { ...publicPage, ready: false, product }
+          {
+            ...publicPage,
+            ready: false,
+            product,
+            ...(product ? { agentIntegration: AGENT_CAPTCHA_HANDOFF } : {})
+          }
         );
       }
       const { contract } = await readCaptchaContract(ctx, product.productCode, catalog.contextId);
-      assertCaptchaReady(contract, selected.productCode === 'GRID' ? 'BROWSER_INTERACTION' : true);
+      assertCaptchaReady(contract);
+      const fixedWorkflow = selected.grid ? 'BROWSER_INTERACTION' : 'BROWSER_RESULT';
+      if (
+        !Array.isArray(contract.integration.workflows) ||
+        !contract.integration.workflows.includes(fixedWorkflow)
+      )
+        return successResult(
+          'This result needs agent execution according to the online contract.',
+          {
+            ...publicPage,
+            ready: false,
+            agentIntegration: planAgentCaptcha(contract, { url: page.url })
+          }
+        );
       const preparedAdapter = browserAdapter(
         selected,
         contract,
@@ -408,7 +379,8 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
           challengeId: selected.challengeId,
           productCode: product.productCode,
           ready: false,
-          reason: preparedAdapter.reason
+          reason: preparedAdapter.reason,
+          agentIntegration: planAgentCaptcha(contract, { url: page.url })
         });
       if (!page.pageId) throw new Error('Missing stable CAPTCHA page ID');
       if (
