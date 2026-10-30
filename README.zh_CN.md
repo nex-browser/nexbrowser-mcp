@@ -6,7 +6,7 @@ NexCaptcha 有三种接入流程：`HTTP_SUBMIT` 仅在线上契约允许、且�
 
 独立 NexCaptcha 任务先用 `nex_captcha_product_list` 获取启用产品与单次应付价格，再用返回的原始 productCode 调用 `nex_captcha_product_schema(productCode)`。此免费只读查询需要 Desktop 登录和网络连接，完整返回 `/nex_captcha_schema` 的参数 Schema、示例、integration 结果契约、workflowGuide 及未来字段。产品规则只来自线上接口，不再维护本地目录、固定产品数量、查询别名或离线回退。购买前重新读取线上规则，完整校验 oneOf、additionalProperties 等约束；Schema 不可用、不完整或返回 DOCUMENTATION_REQUIRED 时停止购买。填入真实挑战参数后，直接调用 `nex_captcha_buy(productCode, adapter)`，按服务端当前价格扣费。线上产品支持不等于已实现页面采集和回填，详见 [NexCaptcha 流程](skills/nexbrowser-automation/guides/captcha.md)。
 
-页面验证码先用 `nex_browser_captcha_prepare` 检查 NexCaptcha 并采集参数，不扣费。任务需要时直接用 `nex_browser_captcha_submit(prepareId)` 提交并扣费，再用 `nex_browser_captcha_complete` 查询并应用结果。支持已捕获的 GeeTest v3/v4、显式渲染的 reCAPTCHA v2、Turnstile，以及可见图片网格（自动检测 reCAPTCHA，其他网格显式提供选择器）。Grid 会自动点击当前格子、检查局部换图与下一轮，并免费准备下一轮；任务需要时直接提交下一轮并扣费。Grid 桥接需要同时更新 MCP 和 Desktop。配置、新 challenge、已加载页面的限制及超时核对见[页面验证码流程](skills/nexbrowser-automation/guides/captcha.md)。
+页面验证码先用 `nex_browser_captcha_prepare` 检查 NexCaptcha 并采集参数，不扣费。任务需要时直接用 `nex_browser_captcha_submit(prepareId)` 提交并扣费，再用 `nex_browser_captcha_complete` 查询并应用结果。支持已捕获的 GeeTest v3/v4、能够关联成功回调的 reCAPTCHA v2/enterprise（含已初始化及隐式渲染控件）、Turnstile，以及可见图片网格（自动检测 reCAPTCHA，其他网格显式提供选择器）。Grid 会自动点击当前格子、检查局部换图与下一轮，并免费准备下一轮；任务需要时直接提交下一轮并扣费。Grid 桥接需要同时更新 MCP 和 Desktop。配置、新 challenge、已加载页面的限制及超时核对见[页面验证码流程](skills/nexbrowser-automation/guides/captcha.md)。
 
 任务所需的购买、续费和短效提取直接执行，按服务端当前价格扣费，无需单独报价或付费确认。遵守用户的范围和限制；仅询问价格、库存或套餐不会下单。交互任务中短信等待 120 秒、验证邮件等待 180 秒；确认收不到、站点拒绝、代理不可用或打码失败后，可以自动更换兼容资源或新挑战并继续，每类恢复流程最多 3 次（含首次），切换国家、产品或邮箱域不重置次数。保留用户约束，核对记录与账单，并展示等待、失败、替换和结果。购买或回填结果未知时先停止新增扣费，余额不足立即停止付费操作。语言默认使用 Desktop 设置。详见[业务服务接入指南](skills/nexbrowser-automation/guides/services.md)。
 

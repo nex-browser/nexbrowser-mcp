@@ -95,7 +95,16 @@ function browserAdapter(
 ) {
   const code =
     candidate.productCode === 'TURNSTILE' ? 'CLOUDFLARE_TURNSTILE' : candidate.productCode;
-  if (!['GRID', 'GEETEST', 'GEETEST_V4', 'RECAPTCHA_V2', 'CLOUDFLARE_TURNSTILE'].includes(code))
+  if (
+    ![
+      'GRID',
+      'GEETEST',
+      'GEETEST_V4',
+      'RECAPTCHA_V2',
+      'RECAPTCHA_V2_ENTERPRISE',
+      'CLOUDFLARE_TURNSTILE'
+    ].includes(code)
+  )
     return { reason: 'This product has no supported automatic browser CAPTCHA adapter.' };
   if (
     code === 'GRID' &&
@@ -345,7 +354,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_prepare',
     description:
-      'Free, no purchase: capture the page CAPTCHA and check product availability and the online schema. Supports captured GeeTest v3/v4, explicit reCAPTCHA v2 and Turnstile, and real image grids (reCAPTCHA grids are detected; for other grids pass the observed grid selectors and mode). Canvas or custom widgets need a site adapter. Pass challengeId when several widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or a timeout are blockers to report, not reasons to switch to GRID or raw nex_captcha_buy. Never silently reload a filled form. When ready, call nex_browser_captcha_submit.',
+      'Free, no purchase: capture the page CAPTCHA and check product availability and the online schema. Supports captured GeeTest v3/v4, reCAPTCHA v2/enterprise with an associated callback and Turnstile, and real image grids (reCAPTCHA grids are detected; for other grids pass the observed grid selectors and mode). Canvas or custom widgets need a site adapter. Updated Desktop recovers existing and implicit reCAPTCHA widgets when their callback is associated. Pass challengeId when several widgets exist. Missing parameters, an uncaptured callback, HTTP 403 or a timeout are blockers to report, not reasons to switch to GRID or raw nex_captcha_buy. Never silently reload a filled form. When ready, call nex_browser_captcha_submit.',
     inputSchema: automationSchema({
       challengeId: z.string().optional(),
       challengeUrl: z.string().url().optional(),

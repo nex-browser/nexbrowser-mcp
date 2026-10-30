@@ -466,6 +466,70 @@ describe('browser NexCaptcha workflow', () => {
     );
   });
 
+  it('prepares and applies enterprise reCAPTCHA only with its exact online product contract', async () => {
+    const f = fixture();
+    f.candidate.productCode =
+      f.catalog.productCode =
+      f.record.productCode =
+        'RECAPTCHA_V2_ENTERPRISE';
+    f.candidate.adapter = {
+      websiteURL: 'https://site.test/register',
+      websiteKey: 'enterprise-key',
+      isInvisible: false,
+      enterprisePayload: { s: 'observed-s' }
+    };
+    f.schemas.RECAPTCHA_V2_ENTERPRISE = {
+      type: 'object',
+      properties: {
+        websiteURL: { type: 'string' },
+        websiteKey: { type: 'string' },
+        isInvisible: { type: 'boolean' },
+        enterprisePayload: {
+          type: 'object',
+          properties: { s: { type: 'string' } },
+          required: ['s'],
+          additionalProperties: false
+        }
+      },
+      required: ['websiteURL', 'websiteKey'],
+      additionalProperties: false
+    };
+    const prepared = await f.prepare();
+    expect(prepared.ready).toBe(true);
+    await f.submit(prepared.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body))).toEqual({
+      productCode: 'RECAPTCHA_V2_ENTERPRISE',
+      adapter: f.candidate.adapter
+    });
+    f.record.state = 'SUCCEEDED';
+    f.record.solution = { token: 'enterprise-token' };
+    expect((await f.call('complete', { prepareId: prepared.prepareId })).isError).not.toBe(true);
+    expect(JSON.parse(String(f.applies()[0]![1]?.body)).params).toMatchObject({
+      productCode: 'RECAPTCHA_V2_ENTERPRISE',
+      solution: { token: 'enterprise-token' }
+    });
+  });
+
+  it('does not downgrade enterprise reCAPTCHA to a standard product or ignore online constraints', async () => {
+    const f = fixture();
+    f.candidate.productCode = 'RECAPTCHA_V2_ENTERPRISE';
+    f.candidate.adapter = {
+      websiteURL: 'https://site.test/register',
+      websiteKey: 'key',
+      enterprisePayload: { s: 'observed-s' }
+    };
+    f.catalog.productCode = 'RECAPTCHA_V2';
+    expect(await f.prepare()).toMatchObject({ ready: false });
+    f.catalog.productCode = 'RECAPTCHA_V2_ENTERPRISE';
+    f.schemas.RECAPTCHA_V2_ENTERPRISE = {
+      type: 'object',
+      properties: { websiteURL: { type: 'string' }, websiteKey: { type: 'string' } },
+      additionalProperties: false
+    };
+    expect(await f.prepare()).toMatchObject({ ready: false });
+    expect(f.buys()).toHaveLength(0);
+  });
+
   it.each(['DOCUMENTATION_REQUIRED', 'workflow', 'network', 'changed-rule'])(
     'stops before buying when the online page contract is %s',
     async (change) => {
