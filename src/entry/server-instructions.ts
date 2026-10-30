@@ -16,6 +16,7 @@ const PAGE_INTERACTION = `## Page interaction
 
 const CAPTCHA = `## Page CAPTCHA
 ${PAGE_CAPTCHA_GUIDANCE}
+- Initial HTML detection and generated token application support reCAPTCHA v2/enterprise and Turnstile only. Other products require the online contract plus an explicit agent integration or a supported fixed Desktop adapter; no generic cookie or hCaptcha application is implied.
 - An explicit sign-up/login request authorizes its final submit and the CAPTCHA solving it needs, unless the user restricted it.`;
 
 const PAID_SERVICES = `## Paid services

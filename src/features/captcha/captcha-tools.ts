@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { BROWSER_CAPTCHA_TOOL_SPECS } from './browser-captcha-tools.js';
+import { AGENT_CAPTCHA_TOOL_SPECS } from './agent-captcha-tools.js';
+import { rememberCaptchaTask } from './agent-captcha-state.js';
 import { bindTools, defineTool, type McpToolSpec } from '../../shared/define-tool.js';
 import { apiErrorResult, errorResult, successResult } from '../../shared/tool-result.js';
 import { PAID_TOOL_NOTE, resourceRecovery } from '../../shared/service-recovery.js';
@@ -82,7 +84,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   serviceTool({
     name: 'nex_captcha_product_schema',
     description:
-      'Free, read-only: read the online adapter schema, example, integration/result contract and workflowGuide for one productCode from nex_captcha_product_list (exact match; no aliases or offline fallback). Keep every schema constraint; examples are placeholders. Check integration.workflows: HTTP_SUBMIT needs a separate site HTTP integration, browser workflows need a supported local adapter, and page CAPTCHAs start with nex_browser_captcha_prepare. DOCUMENTATION_REQUIRED blocks paid tasks.',
+      'Free, read-only: read the online adapter schema, example, integration/result contract and workflowGuide for one exact productCode. Keep all schema constraints; examples are placeholders. Agent-driven browser tasks may use nex_captcha_detect, buy/query and nex_captcha_apply_result with actual inputs and already permitted browser tools; the fixed Desktop bridge is optional. HTTP_SUBMIT needs a separate site HTTP integration. DOCUMENTATION_REQUIRED blocks paid tasks.',
     schema: z.object({ productCode: captchaProductCode }).strict(),
     route: CAPTCHA_SCHEMA_ROUTE,
     method: 'POST',
@@ -94,11 +96,12 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_captcha_buy',
-    description: `Create a standalone CAPTCHA recognition task from actual challenge inputs that match nex_captcha_product_schema (adapter object, no platform API keys). It only returns a solution and never submits to the website. Page CAPTCHAs must use nex_browser_captcha_prepare/submit/complete; never use this tool to bypass an unsupported page adapter or to substitute GRID. The schema is rechecked before charging. Keep the local id, not the upstream taskId. ${PAID_TOOL_NOTE}`,
+    description: `Create a NexCaptcha recognition task for standalone or agent-driven browser integration, using actual inputs matching the current online schema (adapter, no platform API keys). This is the charging entry for the agent-driven flow; it never submits to the website. For a page, prefer free nex_captcha_detect, confirm a permitted application capability, and pass workflow=BROWSER_RESULT. Never omit observed required inputs such as an unsupported s, guess values or switch to GRID to evade a failure. The fixed Desktop prepare/submit/complete bridge remains optional. The online contract is rechecked before charging. Keep the local id and query it; never repeat a create after an unclear outcome. ${PAID_TOOL_NOTE}`,
     inputSchema: z
       .object({
         productCode: captchaProductCode,
-        adapter: captchaAdapterInput
+        adapter: captchaAdapterInput,
+        workflow: z.enum(['HTTP_SUBMIT', 'BROWSER_RESULT', 'BROWSER_INTERACTION']).optional()
       })
       .strict(),
     annotations: { destructiveHint: true, idempotentHint: false },
@@ -107,6 +110,14 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
       try {
         const online = await readCaptchaContract(ctx, args.productCode);
         assertCaptchaReady(online.contract);
+        if (
+          args.workflow &&
+          (!Array.isArray(online.contract.integration.workflows) ||
+            !online.contract.integration.workflows.includes(args.workflow))
+        )
+          throw new Error(
+            `The online contract does not support ${args.workflow}; stop before purchasing.`
+          );
         validateOnlineCaptchaAdapter(online.contract, args.adapter);
         contextId = online.contextId;
       } catch (error) {
@@ -123,7 +134,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
         const response = await ctx.api.request(CAPTCHA_BUY_ROUTE, {
           method: 'POST',
           headers: { 'X-Nex-Service-Context': contextId },
-          body: JSON.stringify(args)
+          body: JSON.stringify({ productCode: args.productCode, adapter: args.adapter })
         });
         if (response.code !== 0) {
           const result = apiErrorResult(
@@ -136,13 +147,22 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
             recovery: resourceRecovery('captcha', 'RECONCILE', 'PURCHASE_OUTCOME_UNKNOWN')
           });
         }
+        const record = response.data as any;
+        if (
+          Number.isSafeInteger(record?.id) &&
+          record.id > 0 &&
+          record.productCode === args.productCode &&
+          response.contextId === contextId
+        )
+          rememberCaptchaTask(ctx.sessions, record.id, contextId, args.productCode, args.adapter);
         return successResult(
           'Task creation accepted; query the local id with nex_captcha_query. Creation does not mean solving succeeded.',
           {
             record: response.data ? taskSummary(response.data) : null,
             ...(!Number.isSafeInteger((response.data as any)?.id) ||
             (response.data as any).id <= 0 ||
-            (response.data as any).productCode !== args.productCode
+            (response.data as any).productCode !== args.productCode ||
+            response.contextId !== contextId
               ? {
                   code: 'OUTCOME_UNKNOWN',
                   recovery: resourceRecovery('captcha', 'RECONCILE', 'ALLOCATION_UNKNOWN')
@@ -201,7 +221,8 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
       }
     })
   }),
-  ...BROWSER_CAPTCHA_TOOL_SPECS
+  ...BROWSER_CAPTCHA_TOOL_SPECS,
+  ...AGENT_CAPTCHA_TOOL_SPECS
 ];
 
 /** 将识别工具绑定到当前 MCP 客户端。 */
