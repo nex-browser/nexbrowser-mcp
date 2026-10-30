@@ -96,7 +96,7 @@ export const CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   }),
   defineTool({
     name: 'nex_captcha_buy',
-    description: `Create a NexCaptcha recognition task for standalone or agent-driven browser integration, using actual inputs matching the current online schema (adapter, no platform API keys). This is the charging entry for the agent-driven flow; it never submits to the website. For a page, prefer free nex_captcha_detect, confirm a permitted application capability, and pass workflow=BROWSER_RESULT. Never omit observed required inputs such as an unsupported s, guess values or switch to GRID to evade a failure. The fixed Desktop prepare/submit/complete bridge remains optional. The online contract is rechecked before charging. Keep the local id and query it; never repeat a create after an unclear outcome. ${PAID_TOOL_NOTE}`,
+    description: `Create a NexCaptcha recognition task for standalone or agent-driven browser integration, using actual inputs matching the current online schema (adapter, no platform API keys). This is the charging entry for the agent-driven flow; it never submits to the website. For a page, prefer free nex_captcha_detect, confirm a permitted application capability, and pass workflow=BROWSER_RESULT. Never omit schema-required inputs, guess values or switch to GRID to evade a failure. Enterprise s may be omitted when unsupported by the online schema; website acceptance is not guaranteed. The fixed Desktop prepare/submit/complete bridge remains optional. The online contract is rechecked before charging. Keep the local id and query it; never repeat a create after an unclear outcome. ${PAID_TOOL_NOTE}`,
     inputSchema: z
       .object({
         productCode: captchaProductCode,

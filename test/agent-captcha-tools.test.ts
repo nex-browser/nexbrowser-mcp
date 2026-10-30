@@ -180,20 +180,34 @@ describe('agent-driven CAPTCHA detection and existing Nex payment', () => {
     expect(f.buys()).toHaveLength(0);
   });
 
-  it('blocks observed s under the actual Nex enterprise contract instead of deleting the observation', async () => {
+  it('allows omitting unsupported optional Enterprise s and reports a warning', async () => {
     const f = fixture();
     const result = await f.detect({ html: pageHtml('fresh-observed-s') });
     expect(result.structuredContent).toMatchObject({
-      ready: false,
+      ready: true,
       candidates: [
         {
-          ready: false,
-          unsupportedObservations: ['s'],
-          reason: expect.stringContaining('Do not omit')
+          ready: true,
+          unsupportedObservations: [],
+          warnings: [expect.stringContaining('Enterprise s is omitted')]
         }
       ]
     });
-    expect((result.structuredContent as any).candidates[0]).not.toHaveProperty('purchase');
+    const candidate = (result.structuredContent as any).candidates[0];
+    expect(candidate.purchase.arguments.adapter).toEqual(f.adapter);
+    await f.call('buy', candidate.purchase.arguments);
+    expect(f.buys()).toHaveLength(1);
+  });
+
+  it('still blocks a missing Enterprise payload required by the online schema', async () => {
+    const f = fixture();
+    f.contract.schema.properties.enterprisePayload = {
+      type: 'object',
+      properties: { s: { type: 'string' } },
+      required: ['s']
+    };
+    f.contract.schema.required.push('enterprisePayload');
+    expect((await f.detect()).structuredContent).toMatchObject({ ready: false });
     expect(f.buys()).toHaveLength(0);
   });
 

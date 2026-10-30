@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.30-beta.4] - 2026-10-30
+
+### Fixed
+
+- Allow the agent-driven reCAPTCHA Enterprise flow to omit optional `s` when the online NexCaptcha contract has no supported field, returning a warning instead of blocking purchase. Forward it when supported and continue enforcing schema-required inputs.
+- Allow Enterprise token application without a purchased `s` binding while retaining checks for conflicting current sources and changed or missing challenge values when `s` was supplied.
+- Update MCP tool guidance and bundled documentation to describe optional Enterprise `s` consistently.
+
 ## [2026.10.30-beta.3] - 2026-10-30
 
 ### Added
@@ -340,7 +348,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.3...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.4...HEAD
+[2026.10.30-beta.4]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.3...v2026.10.30-beta.4
 [2026.10.30-beta.3]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.2...v2026.10.30-beta.3
 [2026.10.30-beta.2]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.1...v2026.10.30-beta.2
 [2026.10.30-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.24-beta.1...v2026.10.30-beta.1

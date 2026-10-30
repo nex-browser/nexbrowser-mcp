@@ -282,7 +282,11 @@ function applyCaptchaToken(input: CaptchaApplicationInput) {
       (values.length === 0 || values.some((value) => value !== expected))
     )
       throw new Error(`Current CAPTCHA ${name} is missing or changed; do not apply this token.`);
-    if (expected === undefined && values.length > 0)
+    if (
+      expected === undefined &&
+      values.length > 0 &&
+      !(name === 's' && input.productCode === 'RECAPTCHA_V2_ENTERPRISE')
+    )
       throw new Error(
         `Current CAPTCHA ${name} was not bound to this task; do not apply this token.`
       );

@@ -330,7 +330,8 @@ describe('agent CAPTCHA application recipe', () => {
     'rejects %s reCAPTCHA challenge s before writing, dispatching events or invoking a callback',
     (mode) => {
       const f = fixture();
-      const { container, frame, response } = f.widget('RECAPTCHA_V2_ENTERPRISE');
+      const product = mode === 'unbound' ? 'RECAPTCHA_V2' : 'RECAPTCHA_V2_ENTERPRISE';
+      const { container, frame, response } = f.widget(product);
       const callback = vi.fn();
       f.root.done = callback;
       container.attributes['data-callback'] = 'done';
@@ -340,7 +341,7 @@ describe('agent CAPTCHA application recipe', () => {
         frame.attributes.src += `&s=${mode === 'changed' || mode === 'conflicting' ? 'new-challenge' : 'original-challenge'}`;
       }
       const target = {
-        ...f.target('RECAPTCHA_V2_ENTERPRISE'),
+        ...f.target(product),
         ...(mode === 'unbound' ? {} : { challenge: { s: 'original-challenge' } })
       };
       expect(() => f.run(buildCaptchaApplication(target, 'old-task-token'))).toThrow(/CAPTCHA s/);
@@ -372,6 +373,18 @@ describe('agent CAPTCHA application recipe', () => {
     expect(result).toMatchObject({ applied: true, method: 'callback' });
     expect(response.value).toBe('matched-token');
     expect(callback).toHaveBeenCalledWith('matched-token');
+  });
+
+  it('allows Enterprise s to be absent from the purchased task', () => {
+    const f = fixture();
+    const { response } = f.widget('RECAPTCHA_V2_ENTERPRISE');
+    f.root.___grecaptcha_cfg = {
+      clients: { 0: { config: { sitekey: 'observed-key', s: 'runtime-challenge' } } }
+    };
+    expect(
+      f.run(buildCaptchaApplication(f.target('RECAPTCHA_V2_ENTERPRISE'), 'answer'))
+    ).toMatchObject({ applied: true });
+    expect(response.value).toBe('answer');
   });
 
   it('can verify s from a matching current registry without an initialization hook', () => {

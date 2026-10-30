@@ -23,7 +23,7 @@ const pageUrl = z
     return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
   }, 'Use the actual HTTP(S) page URL without credentials.');
 
-/** 仅映射可由线上字段明确表达的观察值；未支持的 s 等输入保留为阻塞。 */
+/** Enterprise 的可选 s 无映射时提示省略，其他未支持的输入仍阻塞。 */
 function observedAdapter(
   observation: CaptchaObservation,
   url: string,
@@ -31,6 +31,7 @@ function observedAdapter(
 ) {
   const adapter: Record<string, unknown> = { websiteURL: url, websiteKey: observation.websiteKey };
   const unsupported: string[] = [];
+  const warnings: string[] = [];
   const fields = observation.fields;
   if (observation.productCode.startsWith('RECAPTCHA_')) {
     if (fields.size) adapter.isInvisible = fields.size === 'invisible';
@@ -41,6 +42,10 @@ function observedAdapter(
         adapter.enterprisePayload = { s: fields.s };
       else if (properties.recaptchaDataSValue) adapter.recaptchaDataSValue = fields.s;
       else if (properties.s) adapter.s = fields.s;
+      else if (observation.productCode === 'RECAPTCHA_V2_ENTERPRISE')
+        warnings.push(
+          'Observed Enterprise s is omitted because the current online contract has no supported field for it. Website acceptance is not guaranteed.'
+        );
       else unsupported.push('s');
     }
     if (fields.action) {
@@ -59,14 +64,14 @@ function observedAdapter(
       else unsupported.push(source!);
     }
   }
-  return { adapter, unsupported };
+  return { adapter, unsupported, warnings };
 }
 
 export const AGENT_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_captcha_detect',
     description:
-      'Free: inspect current HTML supplied by the agent and check enabled NexCaptcha products and their live contracts. Detects reCAPTCHA v2/enterprise and Turnstile without requiring Desktop initialization hooks. HTML is parsed locally, never executed or sent to the solver. Pass optional productCode/adapter only for actual runtime inputs observed in the same page/frame. Set canApply=true only after verifying an already permitted browser tool can read and apply JavaScript in that page. Missing inputs, unsupported s or a disabled application capability block purchase; never drop observed fields or guess parameters. Use the returned nex_captcha_buy arguments for payment through Nex, then query the local id and request nex_captcha_apply_result.',
+      'Free: inspect current HTML supplied by the agent and check enabled NexCaptcha products and their live contracts. Detects reCAPTCHA v2/enterprise and Turnstile without requiring Desktop initialization hooks. HTML is parsed locally, never executed or sent to the solver. Pass optional productCode/adapter only for actual runtime inputs observed in the same page/frame. Set canApply=true only after verifying an already permitted browser tool can read and apply JavaScript in that page. Missing required inputs, unsupported non-optional parameters or a disabled application capability block purchase. Enterprise s is optional: forward it when supported by the online schema; otherwise omit it with a warning and continue. Never guess parameters or omit schema-required inputs. Use the returned nex_captcha_buy arguments for payment through Nex, then query the local id and request nex_captcha_apply_result.',
     inputSchema: z
       .object({
         url: pageUrl,
@@ -128,7 +133,11 @@ export const AGENT_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
             catalog.contextId
           );
           assertCaptchaReady(contract, true);
-          const { adapter: observed, unsupported } = observedAdapter(
+          const {
+            adapter: observed,
+            unsupported,
+            warnings
+          } = observedAdapter(
             observation,
             args.url,
             (contract.schema.properties ?? {}) as Record<string, unknown>
@@ -183,6 +192,7 @@ export const AGENT_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
             ready,
             adapter,
             unsupportedObservations: unsupported,
+            warnings,
             reason: reasons.join(' ') || undefined,
             onlineContract: contract,
             ...(ready
