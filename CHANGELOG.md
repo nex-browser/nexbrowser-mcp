@@ -6,6 +6,19 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.10.30-beta.1] - 2026-10-30
+
+### Fixed
+
+- Include captured Grid dimensions and no-match support only when explicitly declared and accepted by the complete online CAPTCHA schema; retain the original adapter when optional enhancements are incompatible.
+- Clarify dynamic Grid replacement handling and stop automatic purchases after an explicit website rejection.
+- Upgrade Zod to 4.6.6 and pin patched body-parser and fast-uri versions in the lockfile to resolve production dependency audit findings.
+
+### Tests
+
+- Cover online Grid schema constraints, empty solutions, rejection handling and prevention of duplicate clicks or purchases.
+- Refresh tool schema snapshots for Zod 4.6.6, including compact primitive unions and date-time patterns that require seconds.
+
 ## [2026.10.24-beta.1] - 2026-10-23
 
 ### Changed
@@ -300,7 +313,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.24-beta.1...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.1...HEAD
+[2026.10.30-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.24-beta.1...v2026.10.30-beta.1
 [2026.10.24-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.24...v2026.10.24-beta.1
 [2026.10.24]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.23-beta.1...v2026.10.24
 [2026.10.23-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.23...v2026.10.23-beta.1

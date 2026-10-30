@@ -108,6 +108,25 @@ function browserAdapter(
       reason: 'GRID requires a captured grid and a documented 1-based ROW_MAJOR result contract.'
     };
   const adapter = { ...candidate.adapter };
+  if (code === 'GRID' && candidate.grid) {
+    const properties = contract.schema.properties as Record<string, unknown> | undefined;
+    const enriched = { ...adapter };
+    const options = {
+      rows: candidate.grid.rows,
+      columns: candidate.grid.columns,
+      canNoAnswer: 1
+    };
+    for (const [key, value] of Object.entries(options)) {
+      if (properties && Object.hasOwn(properties, key) && !Object.hasOwn(adapter, key))
+        enriched[key] = value;
+    }
+    try {
+      validateOnlineCaptchaAdapter(contract, enriched);
+      Object.assign(adapter, enriched);
+    } catch {
+      // 可选增强不符合完整在线约束时保留原参数，仍由下方完整校验决定能否购买。
+    }
+  }
   if (code === 'GEETEST' && Object.hasOwn(adapter, 'geetestApiServerSubdomain')) {
     if (
       adapter.apiServerSubdomain !== undefined &&
@@ -602,7 +621,7 @@ export const BROWSER_CAPTCHA_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_captcha_complete',
     description:
-      'Query the task once; on SUCCEEDED apply the answer to the captured widget, or click the returned Grid tiles and the verify button. Poll pending tasks every 3–5 seconds. A changed Grid returns nextPrepareId without charging; submit it as the next round. Repeat calls only inspect progress and never click again. On FAILED/EXPIRED, check billing and prepare a fresh challenge, within 3 attempts. An unclear charge or application blocks new charges. Website acceptance needs page evidence; never clicks the final sign-up/login button.',
+      'Query the task once; on SUCCEEDED apply the answer to the captured widget, or click the returned Grid tiles and the verify button. Poll pending tasks every 3–5 seconds. A changed Grid returns nextPrepareId without charging; submit it as the next round. REJECTED stops automatic new purchases; inspect the site verification response. Repeat calls only inspect progress and never click again. On FAILED/EXPIRED, check billing and prepare a fresh challenge, within 3 attempts. An unclear charge or application blocks new charges. Website acceptance needs page evidence; never clicks the final sign-up/login button.',
     annotations: { readOnlyHint: false, idempotentHint: false },
     inputSchema: z.object({ prepareId: z.string() }).strict(),
     execute: async (args, ctx) => {

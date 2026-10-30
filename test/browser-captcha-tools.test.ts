@@ -210,6 +210,132 @@ describe('browser NexCaptcha workflow', () => {
     expect(JSON.stringify(requests)).not.toContain('private-grid-base64');
   });
 
+  /** 只有当前在线契约明确允许的增强字段才能随识别请求提交。 */
+  it('submits captured dimensions and permits no matches when the online Grid schema supports them', async () => {
+    const f = gridFixture();
+    Object.assign(f.schemas.GRID!.properties, {
+      rows: { type: 'integer', minimum: 2 },
+      columns: { type: 'integer', minimum: 2 },
+      canNoAnswer: { type: 'integer', enum: [0, 1] }
+    });
+    f.schemas.GRID!.required.push('rows', 'columns', 'canNoAnswer');
+    const quote = await f.prepare();
+    expect(quote.ready).toBe(true);
+    await f.submit(quote.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body)).adapter).toEqual({
+      body: 'private-grid-base64',
+      comment: 'Select red squares',
+      rows: 3,
+      columns: 3,
+      canNoAnswer: 1
+    });
+  });
+
+  /** 放开额外参数不表示后端实现了未声明的第三方选项。 */
+  it('does not infer Grid options from a permissive additionalProperties rule', async () => {
+    const f = gridFixture();
+    f.schemas.GRID!.additionalProperties = true;
+    const quote = await f.prepare();
+    await f.submit(quote.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body)).adapter).toEqual({
+      body: 'private-grid-base64',
+      comment: 'Select red squares'
+    });
+  });
+
+  /** 不用本地假设覆盖线上类型、枚举或字段组合约束。 */
+  it.each([
+    { canNoAnswer: { type: 'boolean' } },
+    { canNoAnswer: { type: 'integer', enum: [0] } },
+    { rows: { type: 'integer', const: 4 } },
+    { columns: { type: 'string' } }
+  ])(
+    'keeps the original adapter when optional Grid values violate $canNoAnswer $rows $columns',
+    async (properties) => {
+      const f = gridFixture();
+      Object.assign(f.schemas.GRID!.properties, properties);
+      const quote = await f.prepare();
+      expect(quote.ready).toBe(true);
+      await f.submit(quote.prepareId);
+      expect(JSON.parse(String(f.buys()[0]![1]?.body)).adapter).toEqual({
+        body: 'private-grid-base64',
+        comment: 'Select red squares'
+      });
+    }
+  );
+
+  /** 增强字段也必须通过完整 Schema 的组合规则，不能只验证单个属性。 */
+  it('honors full Grid schema constraints when adding optional values', async () => {
+    const f = gridFixture();
+    Object.assign(f.schemas.GRID!.properties, {
+      rows: { type: 'integer' },
+      columns: { type: 'integer' },
+      canNoAnswer: { type: 'integer' }
+    });
+    f.schemas.GRID!.not = { required: ['rows', 'canNoAnswer'] };
+    const quote = await f.prepare();
+    expect(quote.ready).toBe(true);
+    await f.submit(quote.prepareId);
+    expect(JSON.parse(String(f.buys()[0]![1]?.body)).adapter).toEqual({
+      body: 'private-grid-base64',
+      comment: 'Select red squares'
+    });
+  });
+
+  /** 无匹配结果保持空数组传给浏览器，不把它变成重购或重复选择。 */
+  it('dispatches an empty Grid solution once and returns explicit website acceptance', async () => {
+    const f = gridFixture();
+    f.record.solution = { click: [] };
+    Object.assign(f.gridResult, { gridState: 'ACCEPTED', websiteVerified: true });
+    const quote = await f.prepare();
+    await f.submit(quote.prepareId);
+    f.record.state = 'SUCCEEDED';
+    expect(
+      (await f.call('complete', { prepareId: quote.prepareId })).structuredContent
+    ).toMatchObject({
+      applied: true,
+      gridState: 'ACCEPTED',
+      websiteVerified: true
+    });
+    const params = JSON.parse(String(f.applies()[0]![1]?.body)).params;
+    expect(params.solution).toEqual({ click: [] });
+    await f.call('complete', { prepareId: quote.prepareId });
+    expect(
+      f.applies().filter(([, options]) => !JSON.parse(String(options?.body)).params.gridProgress)
+    ).toHaveLength(1);
+    expect(f.buys()).toHaveLength(1);
+  });
+
+  /** 站点拒绝和新题不能混为一谈，拒绝后不准备下一轮或重复购买。 */
+  it('returns Grid rejection without preparing or purchasing another round', async () => {
+    const f = gridFixture();
+    const quote = await f.prepare();
+    await f.submit(quote.prepareId);
+    f.record.state = 'SUCCEEDED';
+    Object.assign(f.gridResult, {
+      gridState: 'REJECTED',
+      guidance: 'The website rejected the Grid answer. Stop automatic purchases.',
+      nextCandidate: structuredClone(f.candidate)
+    });
+    for (let repeat = 0; repeat < 2; repeat++) {
+      const completed = (await f.call('complete', { prepareId: quote.prepareId }))
+        .structuredContent;
+      expect(completed).toMatchObject({
+        applied: true,
+        websiteVerified: false,
+        gridState: 'REJECTED',
+        guidance: expect.stringContaining('Stop automatic purchases')
+      });
+      expect(completed).not.toHaveProperty('nextPrepareId');
+      expect(completed).not.toHaveProperty('nextPreparation');
+    }
+    expect(f.buys()).toHaveLength(1);
+    expect(f.request.mock.calls.filter(([route]) => route === '/captcha/query')).toHaveLength(1);
+    expect(
+      f.applies().filter(([, options]) => !JSON.parse(String(options?.body)).params.gridProgress)
+    ).toHaveLength(1);
+  });
+
   it('captures a changed round and prepares it without automatically charging', async () => {
     const f = gridFixture();
     const first = await f.prepare();

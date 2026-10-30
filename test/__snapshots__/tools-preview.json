@@ -7,13 +7,9 @@
       "type": "object",
       "properties": {
         "teamId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+          "type": [
+            "string",
+            "number"
           ]
         },
         "page": {
@@ -26,15 +22,11 @@
           "type": "string"
         },
         "groupId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Filter by window group from nex_browser_group_list; 0 lists ungrouped windows"
+          "description": "Filter by window group from nex_browser_group_list; 0 lists ungrouped windows",
+          "type": [
+            "string",
+            "number"
+          ]
         }
       },
       "additionalProperties": {}
@@ -129,15 +121,11 @@
           "description": "Proxy host or IP; required unless items is set"
         },
         "port": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Proxy port"
+          "description": "Proxy port",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "ipVersion": {
           "type": "string",
@@ -168,15 +156,11 @@
                 "description": "Proxy host or IP"
               },
               "port": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
-                ],
-                "description": "Proxy port"
+                "description": "Proxy port",
+                "type": [
+                  "string",
+                  "number"
+                ]
               },
               "ipVersion": {
                 "type": "string",
@@ -227,15 +211,11 @@
                 "description": "Proxy host or IP"
               },
               "port": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
-                ],
-                "description": "Proxy port"
+                "description": "Proxy port",
+                "type": [
+                  "string",
+                  "number"
+                ]
               },
               "ipVersion": {
                 "type": "string",
@@ -276,26 +256,18 @@
       "type": "object",
       "properties": {
         "proxyId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Existing proxy resource ID from nex_proxy_list"
+          "description": "Existing proxy resource ID from nex_proxy_list",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Alias of proxyId"
+          "description": "Alias of proxyId",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "protocol": {
           "type": "string",
@@ -305,15 +277,11 @@
           "type": "string"
         },
         "port": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Proxy port"
+          "description": "Proxy port",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "ipVersion": {
           "type": "string",
@@ -344,25 +312,17 @@
         "proxyId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -372,25 +332,17 @@
         "proxyIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -400,25 +352,17 @@
         "items": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -426,15 +370,11 @@
           "description": "Alias of proxyId"
         },
         "id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Single-ID alias of proxyId"
+          "description": "Single-ID alias of proxyId",
+          "type": [
+            "string",
+            "number"
+          ]
         }
       },
       "additionalProperties": {}
@@ -455,38 +395,26 @@
           "maxItems": 50,
           "type": "array",
           "items": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              }
+            "type": [
+              "string",
+              "number"
             ]
           },
           "description": "Saved proxy IDs to detect in one call (up to 50); use this instead of repeated single calls"
         },
         "proxyId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Saved proxy ID to detect; omit when passing host and port"
+          "description": "Saved proxy ID to detect; omit when passing host and port",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Alias of proxyId"
+          "description": "Alias of proxyId",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "protocol": {
           "type": "string",
@@ -496,15 +424,11 @@
           "type": "string"
         },
         "port": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Proxy port"
+          "description": "Proxy port",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "username": {
           "type": "string",
@@ -536,52 +460,36 @@
           "description": "How many to create"
         },
         "groupId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Target window group; 0 keeps them ungrouped"
+          "description": "Target window group; 0 keeps them ungrouped",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "remark": {
           "type": "string"
         },
         "proxyId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Proxy to bind; 0 means no proxy"
+          "description": "Proxy to bind; 0 means no proxy",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "accountIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -591,25 +499,17 @@
         "pluginIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -656,25 +556,17 @@
         "windowId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -684,25 +576,17 @@
         "windowIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -710,15 +594,11 @@
           "description": "Alias of windowId"
         },
         "proxyId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Proxy resource ID to bind; 0 removes the proxy binding"
+          "description": "Proxy resource ID to bind; 0 removes the proxy binding",
+          "type": [
+            "string",
+            "number"
+          ]
         }
       },
       "required": [
@@ -740,25 +620,17 @@
         "windowId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -768,25 +640,17 @@
         "windowIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -796,25 +660,17 @@
         "accountIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -876,26 +732,18 @@
       "type": "object",
       "properties": {
         "groupId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Custom group ID to rename or reorder; the ungrouped bucket 0 is rejected"
+          "description": "Custom group ID to rename or reorder; the ungrouped bucket 0 is rejected",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Alias of groupId"
+          "description": "Alias of groupId",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "name": {
           "type": "string",
@@ -919,26 +767,18 @@
       "type": "object",
       "properties": {
         "groupId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Custom group ID to delete; the ungrouped bucket 0 is rejected"
+          "description": "Custom group ID to delete; the ungrouped bucket 0 is rejected",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Alias of groupId"
+          "description": "Alias of groupId",
+          "type": [
+            "string",
+            "number"
+          ]
         }
       },
       "additionalProperties": {}
@@ -957,25 +797,17 @@
         "windowId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -985,25 +817,17 @@
         "windowIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1011,15 +835,11 @@
           "description": "Alias of windowId"
         },
         "groupId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Target group ID from nex_browser_group_list; 0 moves the windows out of any group"
+          "description": "Target group ID from nex_browser_group_list; 0 moves the windows out of any group",
+          "type": [
+            "string",
+            "number"
+          ]
         }
       },
       "required": [
@@ -1036,15 +856,11 @@
       "type": "object",
       "properties": {
         "windowId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "One window ID from nex_browser_list"
+          "description": "One window ID from nex_browser_list",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "name": {
           "type": "string",
@@ -1070,37 +886,25 @@
       "type": "object",
       "properties": {
         "teamId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+          "type": [
+            "string",
+            "number"
           ]
         },
         "windowId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1110,25 +914,17 @@
         "ids": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1150,38 +946,26 @@
       "type": "object",
       "properties": {
         "teamId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Optional team filter; OpenAPI uses the active team"
+          "description": "Optional team filter; OpenAPI uses the active team",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "windowId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1191,25 +975,17 @@
         "ids": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1231,37 +1007,25 @@
       "type": "object",
       "properties": {
         "teamId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+          "type": [
+            "string",
+            "number"
           ]
         },
         "windowId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1271,25 +1035,17 @@
         "ids": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1313,25 +1069,17 @@
         "windowId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1341,25 +1089,17 @@
         "windowIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1381,13 +1121,9 @@
       "type": "object",
       "properties": {
         "teamId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+          "type": [
+            "string",
+            "number"
           ]
         },
         "page": {
@@ -1418,13 +1154,9 @@
       "type": "object",
       "properties": {
         "teamId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+          "type": [
+            "string",
+            "number"
           ]
         },
         "platformUrl": {
@@ -1456,13 +1188,9 @@
             "type": "object",
             "properties": {
               "teamId": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               },
               "platformUrl": {
@@ -1516,13 +1244,9 @@
             "type": "object",
             "properties": {
               "teamId": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               },
               "platformUrl": {
@@ -1571,35 +1295,23 @@
       "type": "object",
       "properties": {
         "accountId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Platform account ID from nex_account_list"
+          "description": "Platform account ID from nex_account_list",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Alias of accountId"
+          "description": "Alias of accountId",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "teamId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+          "type": [
+            "string",
+            "number"
           ]
         },
         "platformUrl": {
@@ -1636,25 +1348,17 @@
         "accountId": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1664,25 +1368,17 @@
         "accountIds": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1692,25 +1388,17 @@
         "items": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
+              "type": [
+                "string",
+                "number"
               ]
             },
             {
               "type": "array",
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             }
@@ -1718,15 +1406,11 @@
           "description": "Alias of accountId"
         },
         "id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Single-ID alias of accountId"
+          "description": "Single-ID alias of accountId",
+          "type": [
+            "string",
+            "number"
+          ]
         }
       },
       "additionalProperties": {}
@@ -1743,24 +1427,16 @@
       "type": "object",
       "properties": {
         "teamId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Optional team ID. Omit it to use the team currently selected in NexBrowser."
+          "description": "Optional team ID. Omit it to use the team currently selected in NexBrowser.",
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "windowId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+          "type": [
+            "string",
+            "number"
           ]
         },
         "startIfNeeded": {
@@ -2123,13 +1799,9 @@
                 "description": "Snapshot ref (e12) or unique CSS selector"
               },
               "value": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
+                "type": [
+                  "string",
+                  "number"
                 ]
               }
             },
@@ -2163,15 +1835,11 @@
           "description": "Defaults to the active page"
         },
         "accountId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "description": "Vault credential to use; optional when the open window has exactly one"
+          "description": "Vault credential to use; optional when the open window has exactly one",
+          "type": [
+            "string",
+            "number"
+          ]
         }
       },
       "additionalProperties": false
@@ -3038,7 +2706,7 @@
         "receivedAfter": {
           "type": "string",
           "format": "date-time",
-          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
         },
         "onlyNew": {
           "type": "boolean"
@@ -3084,7 +2752,7 @@
         "receivedAfter": {
           "type": "string",
           "format": "date-time",
-          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
         },
         "onlyNew": {
           "type": "boolean"
@@ -3470,7 +3138,7 @@
         "receivedAfter": {
           "type": "string",
           "format": "date-time",
-          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
         },
         "waitSeconds": {
           "default": 0,
@@ -3739,7 +3407,7 @@
   },
   {
     "name": "nex_browser_captcha_complete",
-    "description": "Query the task once; on SUCCEEDED apply the answer to the captured widget, or click the returned Grid tiles and the verify button. Poll pending tasks every 3–5 seconds. A changed Grid returns nextPrepareId without charging; submit it as the next round. Repeat calls only inspect progress and never click again. On FAILED/EXPIRED, check billing and prepare a fresh challenge, within 3 attempts. An unclear charge or application blocks new charges. Website acceptance needs page evidence; never clicks the final sign-up/login button.",
+    "description": "Query the task once; on SUCCEEDED apply the answer to the captured widget, or click the returned Grid tiles and the verify button. Poll pending tasks every 3–5 seconds. A changed Grid returns nextPrepareId without charging; submit it as the next round. REJECTED stops automatic new purchases; inspect the site verification response. Repeat calls only inspect progress and never click again. On FAILED/EXPIRED, check billing and prepare a fresh challenge, within 3 attempts. An unclear charge or application blocks new charges. Website acceptance needs page evidence; never clicks the final sign-up/login button.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
