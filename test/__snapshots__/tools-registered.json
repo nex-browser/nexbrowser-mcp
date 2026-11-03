@@ -1421,7 +1421,7 @@
   },
   {
     "name": "nex_browser_connect",
-    "description": "For nexbrowser-mcp browser tasks, use a NexBrowser environment by default. Connects one window (active team by default) and creates an isolated automation session; startIfNeeded=true opens a closed window. For several windows, call nex_browser_open once with all IDs, then connect each with startIfNeeded=false. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "For nexbrowser-mcp browser tasks, use a NexBrowser environment by default. Connects one window (active team by default) and creates an isolated automation session; startIfNeeded=true opens a closed window. For several windows, call nex_browser_open once with all IDs, then connect each with startIfNeeded=false. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1547,7 +1547,7 @@
   },
   {
     "name": "nex_browser_navigate",
-    "description": "Navigate the selected page and return its refreshed accessibility snapshot. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Navigate the selected page and return its refreshed accessibility snapshot. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1572,7 +1572,7 @@
   },
   {
     "name": "nex_browser_reload",
-    "description": "Reload the page. Ask the user before reloading a filled form. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Reload the page. Ask the user before reloading a filled form. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1629,7 +1629,7 @@
   },
   {
     "name": "nex_browser_click",
-    "description": "Click or double-click an element from the latest snapshot or a CSS selector. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Click or double-click an element from the latest snapshot or a CSS selector. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1666,7 +1666,7 @@
   },
   {
     "name": "nex_browser_mouse_click_xy",
-    "description": "Click at x/y in viewport CSS pixels, including canvas, iframes and extension overlays injected into the page (not native toolbar popups). Take coordinates from a fresh screenshot: divide image pixels by pixelsPerCssPixel, then add the returned origin. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Click at x/y in viewport CSS pixels, including canvas, iframes and extension overlays injected into the page (not native toolbar popups). Take coordinates from a fresh screenshot: divide image pixels by pixelsPerCssPixel, then add the returned origin. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2052,7 +2052,7 @@
   },
   {
     "name": "nex_browser_drag",
-    "description": "Drag one snapshot ref or selector to another. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Drag one snapshot ref or selector to another. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2181,7 +2181,7 @@
   },
   {
     "name": "nex_browser_snapshot",
-    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Capture an accessibility/ARIA snapshot with short-lived actionable refs. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2259,7 +2259,7 @@
   },
   {
     "name": "nex_browser_get_text",
-    "description": "Read visible text from the page or one target. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Read visible text from the page or one target. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2390,7 +2390,7 @@
   },
   {
     "name": "nex_browser_evaluate",
-    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Evaluate JavaScript when the dedicated evaluate permission is enabled. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2415,7 +2415,7 @@
   },
   {
     "name": "nex_browser_run_code",
-    "description": "Run page JavaScript when the separate runCode permission is enabled. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Run page JavaScript when the separate runCode permission is enabled. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2440,7 +2440,7 @@
   },
   {
     "name": "nex_browser_take_screenshot",
-    "description": "Capture the viewport, one target, or a viewport clip (target, clip and fullPage=true are mutually exclusive). The returned origin and pixelsPerCssPixel map image pixels to nex_browser_mouse_click_xy coordinates. Page CAPTCHA: use free nex_captcha_detect with current HTML or explicit productCode/adapter for any documented enabled product; nex_browser_captcha_prepare is an optional fixed bridge. Check permitted result application capability before paying; never bypass browser permissions.",
+    "description": "Capture the viewport, one target, or a viewport clip (target, clip and fullPage=true are mutually exclusive). The returned origin and pixelsPerCssPixel map image pixels to nex_browser_mouse_click_xy coordinates. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {

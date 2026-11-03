@@ -16,7 +16,12 @@ describe('NexCaptcha routing for external hosts', () => {
       );
       expect(instructions).toContain('nex_browser_connect(windowId, startIfNeeded=true)');
       expect(instructions).not.toMatch(/follow-up.*resources from nex_mail_\*/i);
+      expect(instructions).toMatch(
+        /Default page CAPTCHA workflow:.*nex_captcha_product_list.*nex_captcha_product_schema/
+      );
+      expect(instructions).toContain('integration.inputSources');
       expect(instructions).toContain('nex_captcha_detect');
+      expect(instructions).toContain('The default workflow needs no prepareId');
       expect(instructions).toContain('nex_captcha_apply_result');
       expect(instructions).toContain('canApply defaults false and grants no permission');
       expect(instructions).toMatch(/do not bypass disabled evaluate\/runCode permissions/i);
@@ -50,6 +55,7 @@ describe('NexCaptcha routing for external hosts', () => {
         'nex_browser_click'
       ]) {
         const tool = tools.find((item) => item.name === name)!;
+        expect(tool.description, name).toContain('default to nex_captcha_product_schema');
         expect(tool.description, name).toContain('nex_captcha_detect');
         expect(tool.description, name).toContain('nex_browser_captcha_prepare');
         expect(tool.description, name).toMatch(/free/i);
@@ -89,7 +95,7 @@ describe('NexCaptcha routing for external hosts', () => {
         expect.arrayContaining([
           expect.objectContaining({
             type: 'text',
-            text: expect.stringContaining('nex_captcha_detect')
+            text: expect.stringContaining('nex_captcha_product_schema')
           })
         ])
       );
