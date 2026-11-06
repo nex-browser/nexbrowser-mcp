@@ -21,6 +21,7 @@ import { SERVER_INSTRUCTIONS } from './server-instructions.js';
 export class NexBrowserMcpServer {
   private readonly server: McpServer;
   private readonly client: NexApiClient;
+  private closing?: Promise<void>;
 
   /**
    * Registers browser-domain tools with an isolated API client. This is the
@@ -47,6 +48,10 @@ export class NexBrowserMcpServer {
         instructions: SERVER_INSTRUCTIONS
       }
     );
+    // 宿主关闭 transport 时也走统一回收，不能只依赖进程退出信号。
+    this.server.server.onclose = () => {
+      void this.close().catch((error) => console.error('[nex-mcp] shutdown failed', error));
+    };
     const registered = new Set<string>();
     for (const tool of tools) {
       if (registered.has(tool.name)) {
@@ -94,9 +99,15 @@ export class NexBrowserMcpServer {
    * Closes MCP transport state and releases this client's OpenAPI sessions.
    * 关闭 MCP transport 状态并释放当前客户端的 OpenAPI 自动化会话。
    */
-  async close(): Promise<void> {
-    await this.client.close();
-    await this.server.close();
+  close(): Promise<void> {
+    // 先停止接收调用并取消在途工具，再清理全部客户端会话。
+    return (this.closing ??= Promise.resolve().then(async () => {
+      try {
+        await this.server.close();
+      } finally {
+        await this.client.close();
+      }
+    }));
   }
 }
 
@@ -123,5 +134,7 @@ export async function runMcpServer(config?: NexApiConfig): Promise<void> {
   process.once('SIGINT', () => void closeAndExit(0));
   process.once('SIGTERM', () => void closeAndExit(0));
   process.once('beforeExit', () => void close());
+  // stdio 的 EOF 不一定产生 transport.onclose，显式接管宿主断开。
+  process.stdin.once('end', () => void close());
   await server.run();
 }

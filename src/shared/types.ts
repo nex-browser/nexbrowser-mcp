@@ -112,6 +112,7 @@ export interface NexApiRequester {
 export interface ActiveSessionStore {
   getActiveSessionId(): string | undefined;
   setActiveSessionId(sessionId: string | undefined): void;
+  removeSessionId(sessionId: string): void;
 }
 
 /**

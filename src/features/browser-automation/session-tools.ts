@@ -52,19 +52,24 @@ const CONNECT = defineTool({
 
 const DISCONNECT = defineTool({
   name: 'nex_browser_disconnect',
-  description: 'Disconnect an automation session without closing the NexBrowser environment.',
-  inputSchema: z.object({ sessionId: z.string().optional() }).strict(),
-  execute: async (args, ctx) =>
-    callEndpoint(
+  description:
+    'Disconnect an automation session without closing the NexBrowser environment. With all=true, release every session owned by this MCP client. Otherwise omit sessionId to disconnect the latest remaining session.',
+  inputSchema: z.object({ sessionId: z.string().optional(), all: z.boolean().optional() }).strict(),
+  // 清理全部连接时只作用于本 MCP 客户端；单个断开保留其他默认连接。
+  execute: async (args, ctx) => {
+    if (args.all && args.sessionId) return invalidArguments('Use either all or sessionId');
+    const id = args.all ? undefined : sessionId(args, ctx.sessions);
+    return callEndpoint(
       ctx.api,
-      sessionRoute(sessionId(args, ctx.sessions)),
+      id ? sessionRoute(id) : SESSIONS_ROOT,
       { method: 'DELETE' },
       {
         success: 'Browser automation session disconnected.',
         failure: 'Failed to disconnect browser automation session'
       },
-      () => ctx.sessions.setActiveSessionId(undefined)
-    )
+      () => (id ? ctx.sessions.removeSessionId(id) : ctx.sessions.setActiveSessionId(undefined))
+    );
+  }
 });
 
 /** Session lifecycle tool specifications. 会话生命周期工具规格。 */

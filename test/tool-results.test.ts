@@ -108,7 +108,8 @@ describe('tool result mapping', () => {
     }));
     const client = {
       request,
-      setActiveSessionId: vi.fn()
+      setActiveSessionId: vi.fn(),
+      removeSessionId: vi.fn()
     } as unknown as NexApiClient;
     const tool = createBrowserAutomationTools(client).find(
       (candidate) => candidate.name === 'nex_browser_connect'
@@ -142,7 +143,8 @@ describe('tool result mapping', () => {
     }));
     const client = {
       request,
-      setActiveSessionId: vi.fn()
+      setActiveSessionId: vi.fn(),
+      removeSessionId: vi.fn()
     } as unknown as NexApiClient;
     const tool = createBrowserAutomationTools(client).find(
       (candidate) => candidate.name === 'nex_browser_connect'

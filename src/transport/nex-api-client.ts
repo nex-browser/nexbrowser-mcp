@@ -102,6 +102,7 @@ export class NexApiClient {
   /** Sent as X-Nex-Client-Id on every request so the server scopes session ownership per client. 随每个请求以 X-Nex-Client-Id 头上报，服务端据此按客户端隔离会话归属。 */
   readonly clientId: string;
   private activeSessionId?: string;
+  private readonly sessionIds = new Set<string>();
 
   /**
    * Normalizes and stores connection configuration isolated to this MCP process;
@@ -188,7 +189,7 @@ export class NexApiClient {
    */
   async close(): Promise<void> {
     await this.request(SESSIONS_ROOT, { method: 'DELETE' }).catch(() => undefined);
-    this.activeSessionId = undefined;
+    this.setActiveSessionId(undefined);
   }
 
   /**
@@ -197,7 +198,21 @@ export class NexApiClient {
    * 记录最近连接的会话，作为未显式传 sessionId 的自动化工具的默认会话。
    */
   setActiveSessionId(sessionId: string | undefined): void {
+    if (sessionId) {
+      this.sessionIds.delete(sessionId);
+      this.sessionIds.add(sessionId);
+    } else {
+      this.sessionIds.clear();
+    }
     this.activeSessionId = sessionId;
+  }
+
+  /** 只移除指定连接，默认会话回退到最近仍连接的会话。 */
+  removeSessionId(sessionId: string): void {
+    this.sessionIds.delete(sessionId);
+    if (this.activeSessionId === sessionId) {
+      this.activeSessionId = [...this.sessionIds].at(-1);
+    }
   }
 
   /**

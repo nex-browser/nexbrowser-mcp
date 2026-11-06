@@ -79,7 +79,7 @@ Stateless `nex_*` tools that manage NexBrowser environments; no automation sessi
 ## Connection
 
 - `nex_browser_connect` — For nexbrowser-mcp browser tasks, use a NexBrowser environment by default. Connects one window (active team by default) and creates an isolated automation session; startIfNeeded=true opens a closed window. For several windows, call nex_browser_open once with all IDs, then connect each with startIfNeeded=false. Page CAPTCHA: default to nex_captcha_product_schema, collect real page inputs with permitted tools, then use free nex_captcha_detect with productCode/adapter. Confirm application capability before NexCaptcha buy/query and apply the result in the original page. nex_browser_captcha_prepare is optional; never bypass browser permissions. Inputs: `teamId`, `windowId` (required), `startIfNeeded`.
-- `nex_browser_disconnect` — Disconnect an automation session without closing the NexBrowser environment.
+- `nex_browser_disconnect` — Disconnect an automation session without closing the NexBrowser environment. With all=true, release every session owned by this MCP client. Otherwise omit sessionId to disconnect the latest remaining session. Inputs: `all`.
 
 ## Tabs
 

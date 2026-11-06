@@ -1452,13 +1452,16 @@
   },
   {
     "name": "nex_browser_disconnect",
-    "description": "Disconnect an automation session without closing the NexBrowser environment.",
+    "description": "Disconnect an automation session without closing the NexBrowser environment. With all=true, release every session owned by this MCP client. Otherwise omit sessionId to disconnect the latest remaining session.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "sessionId": {
           "type": "string"
+        },
+        "all": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
