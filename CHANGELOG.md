@@ -6,6 +6,21 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.11.10-beta.1] - 2026-11-10
+
+### Added
+
+- Add `all=true` to `nex_browser_disconnect` to release every automation session owned by this MCP client.
+
+### Fixed
+
+- Release automation sessions when the host closes its transport or standard input, cancelling in-flight calls before cleanup.
+- Preserve connection history and fall back to the latest remaining session after disconnecting the active session.
+
+### Changed
+
+- Require `removeSessionId` in custom implementations of the exported `ActiveSessionStore` interface.
+
 ## [2026.11.3] - 2026-11-03
 
 ### Changed
@@ -368,7 +383,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Bundled NexBrowser automation skill and generated tool catalog.
 - Cross-platform type, build, tool-surface, and protocol tests.
 
-[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.11.3...HEAD
+[Unreleased]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.11.10-beta.1...HEAD
+[2026.11.10-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.11.3...v2026.11.10-beta.1
 [2026.11.3]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.24...v2026.11.3
 [2026.10.31-beta.1]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.4...v2026.10.31-beta.1
 [2026.10.30-beta.4]: https://github.com/nex-browser/nexbrowser-mcp/compare/v2026.10.30-beta.3...v2026.10.30-beta.4
