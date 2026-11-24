@@ -444,7 +444,7 @@
   },
   {
     "name": "nex_browser_create",
-    "description": "Create NexBrowser environments in the desktop app's active workspace. Every unset field falls back to the desktop create-window defaults (fingerprint, preferences, layout, startup page), and each created window gets its own generated fingerprint, so pass only the fields that must differ.",
+    "description": "Create NexBrowser environments in the desktop app's active workspace. Set coreType to nexcore or chrome to choose the browser engine; it overrides fingerprint.coreType. Every unset field falls back to the desktop create-window defaults (fingerprint, preferences, layout, startup page), and each created window gets its own generated fingerprint, so pass only the fields that must differ.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -516,6 +516,14 @@
         },
         "startupUrl": {
           "type": "string"
+        },
+        "coreType": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "nexcore"
+          ],
+          "description": "Browser engine type; overrides fingerprint.coreType when provided"
         },
         "screen": {
           "type": "object",

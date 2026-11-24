@@ -81,7 +81,7 @@ npx skills add https://github.com/nex-browser/nexbrowser-mcp --skill nexbrowser-
 
 ## 能力范围
 
-- 环境管理：列出、启动、关闭和查看 NexBrowser 环境。
+- 环境管理：创建、列出、启动、关闭和查看 NexBrowser 环境。通过 `nex_browser_create({ name: "NexCore 窗口", coreType: "nexcore" })` 创建 NexCore 环境。`coreType` 支持 `chrome` 和 `nexcore`，显式传入时优先于 `fingerprint.coreType`，未传字段沿用 Desktop 默认值。
 - 窗口分组：查看分组及各分组窗口数、创建/重命名/删除自建分组，以及把窗口移入或移出分组。
 - 工作区代理与平台账号：列出、新建、修改、删除和检测代理；列出并编辑平台账号目录；把账号绑定到已关闭窗口。结果不返回任何密钥。
 - 页面自动化：连接、导航、点击、输入、上传文件和管理标签页。

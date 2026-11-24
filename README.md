@@ -76,7 +76,7 @@ under the copied configuration. See the [Skill guide](skills/nexbrowser-automati
 
 ## Capabilities
 
-- Manage environments: list, open, close, and inspect NexBrowser environments.
+- Manage environments: create, list, open, close, and inspect NexBrowser environments. Use `nex_browser_create({ name: "NexCore window", coreType: "nexcore" })` to create a NexCore environment. `coreType` accepts `chrome` or `nexcore` and takes precedence over `fingerprint.coreType`; omitted fields use Desktop defaults.
 - Organize windows: list groups with their window counts, create, rename, and delete groups, and move windows in or out of a group.
 - Manage workspace proxies and platform accounts: list, create, update, delete, and detect proxies; list and edit platform-account catalog entries; bind accounts to closed windows. Secrets are never returned.
 - Automate pages: connect, navigate, click, type, upload files, and manage tabs.

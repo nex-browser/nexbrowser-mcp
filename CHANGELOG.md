@@ -6,6 +6,21 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.11.24-beta.1] - 2026-11-24
+
+### Added
+
+- Add the optional `coreType` parameter to `nex_browser_create`, accepting `chrome` and `nexcore` and mapping the selected engine to `fingerprint.coreType`.
+- Preserve additional fingerprint overrides and the existing nested engine input, with the explicit `coreType` taking precedence when both are supplied.
+
+### Changed
+
+- Update the tool schema, bundled Skill, generated tool catalog, and English and Chinese usage examples for NexCore window creation.
+
+### Security
+
+- Refresh compatible transitive dependency resolutions to `hono@4.13.21` and `@hono/node-server@2.1.11`, clearing the production dependency audit findings that blocked publication.
+
 ## [2026.11.10-beta.1] - 2026-11-10
 
 ### Added

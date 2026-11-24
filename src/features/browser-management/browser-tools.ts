@@ -71,6 +71,10 @@ const createBrowsersInputSchema = z
       .optional(),
     pluginIds: browserIdsSchema.optional(),
     startupUrl: z.string().optional(),
+    coreType: z
+      .enum(['chrome', 'nexcore'])
+      .describe('Browser engine type; overrides fingerprint.coreType when provided')
+      .optional(),
     screen: overrideSchema.describe('Raw screen field overrides for the create payload').optional(),
     preference: overrideSchema.describe('Raw preference field overrides').optional(),
     fingerprint: overrideSchema.describe('Raw fingerprint field overrides').optional()
@@ -774,7 +778,7 @@ async function listBrowserEnvironments(
   );
 }
 
-/** 建窗请求只携带 schema 声明的字段，未传字段由 Desktop 建窗默认值补齐。 */
+/** 建窗只转发声明字段，将显式内核类型合并到指纹配置，其他字段由 Desktop 补齐。 */
 function createBrowserPayload(args: z.output<typeof createBrowsersInputSchema>) {
   const fields = [
     'name',
@@ -792,6 +796,9 @@ function createBrowserPayload(args: z.output<typeof createBrowsersInputSchema>) 
   const payload: Record<string, unknown> = {};
   for (const field of fields) {
     if (args[field] !== undefined) payload[field] = args[field];
+  }
+  if (args.coreType !== undefined) {
+    payload.fingerprint = { ...args.fingerprint, coreType: args.coreType };
   }
   payload.count ??= 1;
   return payload;
@@ -1043,7 +1050,7 @@ export const MANAGEMENT_TOOL_SPECS: readonly McpToolSpec[] = [
   defineTool({
     name: 'nex_browser_create',
     description:
-      "Create NexBrowser environments in the desktop app's active workspace. Every unset field falls back to the desktop create-window defaults (fingerprint, preferences, layout, startup page), and each created window gets its own generated fingerprint, so pass only the fields that must differ.",
+      "Create NexBrowser environments in the desktop app's active workspace. Set coreType to nexcore or chrome to choose the browser engine; it overrides fingerprint.coreType. Every unset field falls back to the desktop create-window defaults (fingerprint, preferences, layout, startup page), and each created window gets its own generated fingerprint, so pass only the fields that must differ.",
     inputSchema: createBrowsersInputSchema,
     execute: async (args, ctx) => {
       // 只转发 schema 声明的字段，模型附带的未知键不进入建窗请求；count 范围由 inputSchema 保证。

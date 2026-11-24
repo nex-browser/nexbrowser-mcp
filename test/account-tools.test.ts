@@ -274,6 +274,63 @@ describe('nex_browser_fill_credentials', () => {
 });
 
 describe('nex_browser_create', () => {
+  it.each(['chrome', 'nexcore'])(
+    'maps the explicit %s engine into fingerprint overrides',
+    async (coreType) => {
+      const { request, tool } = toolWith('nex_browser_create', { rows: [] });
+      await tool.execute({
+        name: 'Engine',
+        count: 2,
+        coreType,
+        fingerprint: { language: 'en-US' }
+      });
+
+      expect(request).toHaveBeenLastCalledWith(
+        '/browser/create',
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: 'Engine',
+            count: 2,
+            fingerprint: { language: 'en-US', coreType }
+          })
+        })
+      );
+    }
+  );
+
+  it('gives the explicit engine precedence over the raw fingerprint engine', async () => {
+    const { request, tool } = toolWith('nex_browser_create', { rows: [] });
+    await tool.execute({
+      coreType: 'nexcore',
+      fingerprint: { coreType: 'chrome', coreVersion: '156' }
+    });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/browser/create',
+      expect.objectContaining({
+        body: JSON.stringify({ fingerprint: { coreType: 'nexcore', coreVersion: '156' }, count: 1 })
+      })
+    );
+  });
+
+  it('preserves the existing nested engine input', async () => {
+    const { request, tool } = toolWith('nex_browser_create', { rows: [] });
+    await tool.execute({ fingerprint: { coreType: 'nexcore' } });
+
+    expect(request).toHaveBeenLastCalledWith(
+      '/browser/create',
+      expect.objectContaining({
+        body: JSON.stringify({ fingerprint: { coreType: 'nexcore' }, count: 1 })
+      })
+    );
+  });
+
+  it('rejects unsupported explicit engines before sending a create request', () => {
+    const { request, tool } = toolWith('nex_browser_create', { rows: [] });
+    expect(() => tool.execute({ coreType: 'unsupported' })).toThrow();
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it('forwards a normalized count with the caller overrides', async () => {
     const { request, tool } = toolWith('nex_browser_create', {
       rows: [{ seq: 1, name: 'TikTok-01', success: true, id: '22448' }],
