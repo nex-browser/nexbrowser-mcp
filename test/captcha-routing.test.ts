@@ -15,7 +15,7 @@ describe('NexCaptcha routing for external hosts', () => {
         'When using nexbrowser-mcp for browser tasks, use NexBrowser environments by default.'
       );
       expect(instructions).toContain('nex_browser_connect(windowId, startIfNeeded=true)');
-      expect(instructions).not.toMatch(/follow-up.*resources from nex_mail_\*/i);
+      expect(instructions).not.toMatch(/follow-up.*resources from nex_mask_\*/i);
       expect(instructions).toMatch(
         /Default page CAPTCHA workflow:.*nex_captcha_product_list.*nex_captcha_product_schema/
       );

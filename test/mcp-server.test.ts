@@ -94,7 +94,7 @@ describe('NexBrowser MCP protocol', () => {
     const session = await createMcpSession(config);
     try {
       const listed = await session.client.listTools();
-      const buy = listed.tools.find((tool) => tool.name === 'nex_mail_buy')!;
+      const buy = listed.tools.find((tool) => tool.name === 'nex_mask_buy')!;
       expect(Object.keys(buy.inputSchema.properties ?? {})).toEqual([
         'type',
         'durationHours',
@@ -108,11 +108,11 @@ describe('NexBrowser MCP protocol', () => {
   });
   it.each([
     ['nex_ip_buy', { productId: 'p1', quantity: 1, duration: 30 }, '/ip/buy'],
-    ['nex_mail_buy', { type: 'TEMPORARY', durationHours: 'DAY_1' }, '/mail/buy'],
+    ['nex_mask_buy', { type: 'TEMPORARY', durationHours: 'DAY_1' }, '/mask/buy'],
     [
-      'nex_mail_buy',
+      'nex_mask_buy',
       { type: 'MAINSTREAM', suffix: 'gmail.com', durationHours: 'DAY_1' },
-      '/mail/buy'
+      '/mask/buy'
     ],
     ['nex_captcha_query', { id: 101 }, '/captcha/query']
   ])(
@@ -171,8 +171,8 @@ describe('NexBrowser MCP protocol', () => {
 
     try {
       const instructions = session.client.getInstructions()!;
-      expect(instructions).toMatch(/sign-up.*email address or phone number.*nex_mail_record_list/i);
-      expect(instructions).toMatch(/obtain the needed NexMail mailbox or NexSMS number directly/i);
+      expect(instructions).toMatch(/sign-up.*email address or phone number.*nex_mask_record_list/i);
+      expect(instructions).toMatch(/obtain the needed NexMask mailbox or NexSMS number directly/i);
       expect(instructions).toContain('do not ask for a separate price confirmation');
       expect(instructions).toContain('inquiry alone never authorizes a purchase');
       expect(instructions).toMatch(/refs from the latest nex_browser_snapshot/);
@@ -190,7 +190,7 @@ describe('NexBrowser MCP protocol', () => {
     try {
       const listed = await session.client.listTools();
       const names = listed.tools.map((tool) => tool.name);
-      expect(names).toHaveLength(98);
+      expect(names).toHaveLength(103);
       expect(
         names.every(
           (name) =>
@@ -199,7 +199,8 @@ describe('NexBrowser MCP protocol', () => {
             name.startsWith('nex_account_') ||
             name.startsWith('nex_sms_') ||
             name.startsWith('nex_ip_') ||
-            name.startsWith('nex_mail_') ||
+            name.startsWith('nex_mask_') ||
+            name.startsWith('nex_mailbox_') ||
             name.startsWith('nex_captcha_') ||
             name.startsWith('nex_billing_')
         )

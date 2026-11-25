@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createMailTools, type NexApiClient } from '../src/index.js';
+import { createMaskTools, type NexApiClient } from '../src/index.js';
 
 const ok = (data: unknown, contextId = 'team-a') => ({ code: 0, msg: 'ok', data, contextId });
 const page = (rows: unknown[]) => ({ data: rows, count: rows.length, total: 1, page: 1 });
@@ -14,8 +14,8 @@ function fixture(...responses: unknown[]) {
   const request = vi.fn(
     async (_route: string, _options?: RequestInit) => queue.shift() ?? ok(page([]))
   );
-  const tool = createMailTools({ request } as unknown as NexApiClient).find(
-    (row) => row.name === 'nex_mail_message_list'
+  const tool = createMaskTools({ request } as unknown as NexApiClient).find(
+    (row) => row.name === 'nex_mask_message_list'
   )!;
   return { request, tool };
 }
@@ -27,7 +27,7 @@ describe('mail verification polling', () => {
     const result = await tool.execute({ id: 101 });
     expect(result.isError).not.toBe(true);
     expect(result.structuredContent?.rows).toEqual([]);
-    expect(request).toHaveBeenCalledExactlyOnceWith('/mail/pull', {
+    expect(request).toHaveBeenCalledExactlyOnceWith('/mask/pull', {
       method: 'POST',
       body: JSON.stringify({ id: 101, page: 1 })
     });
@@ -40,10 +40,10 @@ describe('mail verification polling', () => {
     await vi.advanceTimersByTimeAsync(10_000);
     expect((await pending).structuredContent).toMatchObject({
       rows: [mail(1)],
-      recovery: { action: 'COMPLETE', resourceType: 'mail', resourceId: 101 }
+      recovery: { action: 'COMPLETE', resourceType: 'mask', resourceId: 101 }
     });
     expect(request).toHaveBeenLastCalledWith(
-      '/mail/pull',
+      '/mask/pull',
       expect.objectContaining({
         headers: { 'X-Nex-Service-Context': 'team-a' },
         body: JSON.stringify({ id: 101, page: 1 })
@@ -79,16 +79,16 @@ describe('mail verification polling', () => {
     const pending = tool.execute({ id: 101, waitSeconds: 180 });
     await vi.advanceTimersByTimeAsync(180_000);
     expect((await pending).structuredContent).toMatchObject({
-      code: 'MAIL_MESSAGE_TIMEOUT',
+      code: 'MASK_MESSAGE_TIMEOUT',
       purchaseOutcomeKnown: true,
       recovery: {
         action: 'REPLACE_RESOURCE',
-        resourceType: 'mail',
+        resourceType: 'mask',
         resourceId: 101,
         maxAttempts: 3
       }
     });
-    expect(request.mock.calls.every(([route]) => route === '/mail/pull')).toBe(true);
+    expect(request.mock.calls.every(([route]) => route === '/mask/pull')).toBe(true);
   });
 
   it('stops on a context change without buying a replacement', async () => {
@@ -105,7 +105,7 @@ describe('mail verification polling', () => {
     request.mockRejectedValueOnce(new Error('private network detail'));
     const result = await tool.execute({ id: 101, waitSeconds: 180 });
     expect(result.structuredContent).toMatchObject({
-      code: 'MAIL_SYNC_FAILED',
+      code: 'MASK_SYNC_FAILED',
       recovery: { action: 'STOP', retryable: false }
     });
     expect(JSON.stringify(result)).not.toContain('private network detail');

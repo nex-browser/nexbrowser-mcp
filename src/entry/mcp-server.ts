@@ -5,7 +5,8 @@ import { createBrowserAutomationTools } from '../features/browser-automation/ind
 import { createBrowserManagementTools } from '../features/browser-management/browser-tools.js';
 import { createSmsTools } from '../features/sms/sms-tools.js';
 import { createIpTools } from '../features/ip/ip-tools.js';
-import { createMailTools } from '../features/mail/mail-tools.js';
+import { createMaskTools } from '../features/mask/mask-tools.js';
+import { createMailboxTools } from '../features/mailbox/mailbox-tools.js';
 import { createCaptchaTools } from '../features/captcha/captcha-tools.js';
 import { createBillingTools } from '../features/billing/billing-tools.js';
 import { errorResult, invalidArguments } from '../shared/tool-result.js';
@@ -37,7 +38,8 @@ export class NexBrowserMcpServer {
       ...createBrowserAutomationTools(this.client),
       ...createSmsTools(this.client),
       ...createIpTools(this.client),
-      ...createMailTools(this.client),
+      ...createMaskTools(this.client),
+      ...createMailboxTools(this.client),
       ...createCaptchaTools(this.client),
       ...createBillingTools(this.client)
     ];

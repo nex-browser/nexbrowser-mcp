@@ -9,7 +9,8 @@ import {
 } from './features/browser-management/browser-tools.js';
 import { createSmsTools, SMS_TOOL_SPECS } from './features/sms/sms-tools.js';
 import { createIpTools, IP_TOOL_SPECS } from './features/ip/ip-tools.js';
-import { createMailTools, MAIL_TOOL_SPECS } from './features/mail/mail-tools.js';
+import { createMaskTools, MASK_TOOL_SPECS } from './features/mask/mask-tools.js';
+import { createMailboxTools, MAILBOX_TOOL_SPECS } from './features/mailbox/mailbox-tools.js';
 import { createCaptchaTools, CAPTCHA_TOOL_SPECS } from './features/captcha/captcha-tools.js';
 import { createBillingTools, BILLING_TOOL_SPECS } from './features/billing/billing-tools.js';
 import { toToolSchema, type NexApiConfig } from './shared/types.js';
@@ -33,7 +34,8 @@ export const TOOLS = [
   ...AUTOMATION_TOOL_SPECS,
   ...SMS_TOOL_SPECS,
   ...IP_TOOL_SPECS,
-  ...MAIL_TOOL_SPECS,
+  ...MASK_TOOL_SPECS,
+  ...MAILBOX_TOOL_SPECS,
   ...CAPTCHA_TOOL_SPECS,
   ...BILLING_TOOL_SPECS
 ].map(toToolSchema);
@@ -70,8 +72,10 @@ export {
   createSmsTools,
   createIpTools,
   IP_TOOL_SPECS,
-  createMailTools,
-  MAIL_TOOL_SPECS,
+  createMaskTools,
+  MASK_TOOL_SPECS,
+  createMailboxTools,
+  MAILBOX_TOOL_SPECS,
   createCaptchaTools,
   CAPTCHA_TOOL_SPECS,
   createBillingTools,

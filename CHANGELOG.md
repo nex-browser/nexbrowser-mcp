@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.11.25-beta.1] - 2026-11-25
+
+### Added
+
+- Add Mail Service tools `nex_mailbox_product_list`, `nex_mailbox_buy`, `nex_mailbox_list`, `nex_mailbox_message_list` and `nex_mailbox_message_detail` for real mailbox accounts stored and synced by Desktop through the `/mailbox` OpenAPI routes. Credentials never leave Desktop.
+- Add server instructions that separate NexMask receive-only mailboxes from sign-in-capable Mail Service accounts.
+
+### Changed
+
+- **Breaking:** rename the NexMask tools from `nex_mail_*` to `nex_mask_*`, their OpenAPI routes from `/mail/*` to `/mask/*`, their error codes to `MASK_SYNC_FAILED` and `MASK_MESSAGE_TIMEOUT`, and their recovery resource type from `mail` to `mask`. Requires a Desktop version that serves `/mask` and `/mailbox`.
+
 ## [2026.11.24-beta.1] - 2026-11-24
 
 ### Added

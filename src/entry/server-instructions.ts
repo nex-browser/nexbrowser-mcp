@@ -20,26 +20,32 @@ ${PAGE_CAPTCHA_GUIDANCE}
 - An explicit sign-up/login request authorizes its final submit and the CAPTCHA solving it needs, unless the user restricted it.`;
 
 const PAID_SERVICES = `## Paid services
-- nex_sms_* phone numbers, nex_mail_* mailboxes, nex_ip_* proxy marketplace, nex_captcha_* CAPTCHA tasks, nex_billing_* charges and refunds.
+- nex_sms_* phone numbers, nex_mask_* NexMask receive-only mailboxes, nex_mailbox_* Mail Service accounts, nex_ip_* proxy marketplace, nex_captcha_* CAPTCHA tasks, nex_billing_* charges and refunds.
 - When the user's task needs a purchase, renewal, quota extraction or CAPTCHA submission, charge directly without a quotation or payment confirmation. A price, stock or plan inquiry alone never authorizes a purchase. Honor user spending limits and resource scope; never run purchases as tests.
-- Sign-up resources: when a sign-up needs an email address or phone number the user did not supply, check nex_mail_record_list or nex_sms_record_list and reuse a suitable unexpired one. Otherwise obtain the needed NexMail mailbox or NexSMS number directly, choosing type, lifetime and quantity from the live catalog; do not ask for a separate price confirmation.
+- Sign-up resources: when a sign-up needs an email address or phone number the user did not supply, check nex_mask_record_list or nex_sms_record_list and reuse a suitable unexpired one. Otherwise obtain the needed NexMask mailbox or NexSMS number directly, choosing type, lifetime and quantity from the live catalog; do not ask for a separate price confirmation.
 - Unknown outcome: a purchase error, timeout, missing allocation or unclear result may already have charged. Reconcile the module records and nex_billing_trade_list first; while unresolved, buy nothing more for that resource and report the blocker. Pending states and old records do not prove failure.
 - Insufficient balance (-1208, billingBlocked or stopPaidOperations): stop all paid actions and report it.`;
 
+const MAIL_CHOICE = `## NexMask vs Mail Service
+- NexMask (nex_mask_*): cheap receive-only mailboxes that expire; no password, cannot be signed in to. Default for receiving a sign-up verification email.
+- Mail Service (nex_mailbox_*): real Gmail/Outlook/Hotmail/QQ/163 accounts kept in Desktop (bought or imported by the user). Use when the task needs a sign-in-capable mailbox, or reads mail of an account the user already has there. Passwords and tokens stay in Desktop: to sign in to such an account, ask the user for the credentials or use an account bound to the window.
+- Mask ids are numbers; Mail Service account ids are UUIDs. Never pass one module's ids to the other.`;
+
 const RECOVERY = `## Automatic recovery in interactive tasks
-- Confirmed failure means: no SMS within 120 seconds, no matching email within 180 seconds (nex_mail_message_list waitSeconds=180), a confirmed proxy failure, CAPTCHA FAILED/EXPIRED, or the site rejecting the resource. Then replace only the failed task resource and continue without asking: reuse a suitable owned resource first, otherwise buy one.
+- Confirmed failure means: no SMS within 120 seconds, no matching email within 180 seconds (nex_mask_message_list or nex_mailbox_message_list waitSeconds=180), a confirmed proxy failure, CAPTCHA FAILED/EXPIRED, or the site rejecting the resource. Then replace only the failed task resource and continue without asking: reuse a suitable owned resource first, otherwise buy one.
 - At most 3 attempts per resource flow including the first, or the user's lower limit. Changing country, project, domain or type does not reset the count; requested batch quantities are not retries.
 - Phone numbers: track failed numbers and (countryId, projectId) pairs; choose another live-catalog project for the same target site and keep any country the user fixed. Release an eligible task-owned waiting number with nex_sms_release.
-- Mailboxes: track rejected types, domains and suffixes, and choose another supported one.
-- After replacing a number or mailbox, refill the form and send again. Pass that send's ISO timestamp with timezone as receivedAfter to nex_sms_code_get, nex_sms_code_fill or nex_mail_message_list, normally with onlyNew=false. Never reuse a previous resource's code.
+- Mailboxes: track rejected types, domains and suffixes, and choose another supported one. For Mail Service accounts, a set account.error means that account cannot sync; pick another account.
+- After replacing a number or mailbox, refill the form and send again. Pass that send's ISO timestamp with timezone as receivedAfter to nex_sms_code_get, nex_sms_code_fill, nex_mask_message_list or nex_mailbox_message_list, normally with onlyNew=false. Never reuse a previous resource's code.
 - Proxies: save the task URL and form state, close only the task window, bind the replacement and reopen it. Never replace user-supplied or unrelated resources.
 - Report each wait, failure, attempt count and replacement as progress, not as a question.
-- Mail details mark messages read. Keep each module's resource IDs separate.`;
+- Mail details mark messages read in both modules. Keep each module's resource IDs separate.`;
 
 export const SERVER_INSTRUCTIONS = [
   ROUTING,
   PAGE_INTERACTION,
   CAPTCHA,
   PAID_SERVICES,
+  MAIL_CHOICE,
   RECOVERY
 ].join('\n\n');

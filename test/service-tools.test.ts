@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { onlineCaptchaContract } from './helpers.js';
 import {
   createIpTools,
-  createMailTools,
+  createMaskTools,
   createCaptchaTools,
   createBillingTools,
   TOOLS,
@@ -23,7 +23,7 @@ function setup(name: string, response: unknown) {
   const client = { request } as unknown as NexApiClient;
   const tools = [
     ...createIpTools(client),
-    ...createMailTools(client),
+    ...createMaskTools(client),
     ...createCaptchaTools(client),
     ...createBillingTools(client)
   ];
@@ -40,17 +40,17 @@ describe('service tool contracts', () => {
     ['nex_ip_snap_country_list', {}, '/ip/snap/products', 'GET'],
     ['nex_ip_snap_buy', { num: 100 }, '/ip/snap/buy', 'POST'],
     ['nex_ip_snap_pull', { nexIpId: 1, countryCode: 'US', num: 10 }, '/ip/snap/pull', 'POST'],
-    ['nex_mail_plan_list', {}, '/mail/plans', 'GET'],
-    ['nex_mail_domain_list', {}, '/mail/domains', 'GET'],
+    ['nex_mask_plan_list', {}, '/mask/plans', 'GET'],
+    ['nex_mask_domain_list', {}, '/mask/domains', 'GET'],
     [
-      'nex_mail_buy',
+      'nex_mask_buy',
       { type: 'MAINSTREAM', suffix: 'gmail.com', durationHours: 'DAY_1' },
-      '/mail/buy',
+      '/mask/buy',
       'POST'
     ],
-    ['nex_mail_record_list', {}, '/mail/records?page=1&size=20', 'GET'],
-    ['nex_mail_message_list', { id: 101 }, '/mail/pull', 'POST'],
-    ['nex_mail_message_detail', { id: 101, mailId: 500 }, '/mail/detail', 'POST'],
+    ['nex_mask_record_list', {}, '/mask/records?page=1&size=20', 'GET'],
+    ['nex_mask_message_list', { id: 101 }, '/mask/pull', 'POST'],
+    ['nex_mask_message_detail', { id: 101, mailId: 500 }, '/mask/detail', 'POST'],
     ['nex_captcha_product_list', {}, '/captcha/products', 'GET'],
     ['nex_captcha_buy', { productCode: 'TEST', adapter: {} }, '/captcha/buy', 'POST'],
     ['nex_captcha_record_list', {}, '/captcha/records?page=1&size=20', 'GET'],
@@ -70,10 +70,10 @@ describe('service tool contracts', () => {
     ['nex_ip_buy', { productId: 'p', quantity: 0, duration: 30 }],
     ['nex_ip_renew', { items: [1, 1], duration: 30 }],
     ['nex_ip_snap_pull', { nexIpId: 1, countryCode: 'USA', num: 0 }],
-    ['nex_mail_buy', { type: 'TEMPORARY', durationHours: 24 }],
-    ['nex_mail_buy', { type: 'TEMPORARY', durationHours: 'DAY_1', prefix: 'custom' }],
+    ['nex_mask_buy', { type: 'TEMPORARY', durationHours: 24 }],
+    ['nex_mask_buy', { type: 'TEMPORARY', durationHours: 'DAY_1', prefix: 'custom' }],
     [
-      'nex_mail_buy',
+      'nex_mask_buy',
       {
         type: 'MAINSTREAM',
         durationHours: 'DAY_1',
@@ -81,8 +81,8 @@ describe('service tool contracts', () => {
         domainId: 1
       }
     ],
-    ['nex_mail_message_list', { id: 101, size: 10 }],
-    ['nex_mail_message_detail', { id: 101, mailId: '<Message-ID>' }],
+    ['nex_mask_message_list', { id: 101, size: 10 }],
+    ['nex_mask_message_detail', { id: 101, mailId: '<Message-ID>' }],
     ['nex_captcha_buy', { productCode: 'TEST' }],
     ['nex_captcha_buy', { productCode: 'TEST', adapter: null }],
     ['nex_captcha_query', { taskId: 'upstream-id' }]
@@ -136,14 +136,14 @@ describe('service tool contracts', () => {
       keyword: '00AB-CD',
       keywordDisplay: '00AB…'
     };
-    const { tool } = setup('nex_mail_message_list', ok({ count: 1, total: 1, data: [message] }));
+    const { tool } = setup('nex_mask_message_list', ok({ count: 1, total: 1, data: [message] }));
     const result = await tool.execute({ id: 101 });
     expect(result.structuredContent?.rows).toEqual([message]);
   });
 
   it('does not dump cached email codes in mailbox listings', async () => {
     const { tool } = setup(
-      'nex_mail_record_list',
+      'nex_mask_record_list',
       ok({ data: [{ id: 101, message: JSON.stringify([{ keyword: 'private-code' }]) }] })
     );
     const result = await tool.execute({});
@@ -179,7 +179,7 @@ describe('service tool contracts', () => {
     'nex_ip_renew',
     'nex_ip_snap_buy',
     'nex_ip_snap_pull',
-    'nex_mail_buy',
+    'nex_mask_buy',
     'nex_captcha_buy'
   ])('marks %s consequential and non-idempotent', (name) => {
     expect(TOOLS.find((tool) => tool.name === name)?.annotations).toMatchObject({
@@ -188,7 +188,7 @@ describe('service tool contracts', () => {
     });
   });
 
-  it.each(['nex_mail_message_detail', 'nex_mail_message_list', 'nex_captcha_query'])(
+  it.each(['nex_mask_message_detail', 'nex_mask_message_list', 'nex_captcha_query'])(
     'does not label %s pure read-only',
     (name) => {
       expect(TOOLS.find((tool) => tool.name === name)?.annotations?.readOnlyHint).not.toBe(true);
@@ -212,7 +212,7 @@ describe('service tool contracts', () => {
   it.each([
     ['nex_ip_buy', { productId: 'p', quantity: 1, duration: 1 }, []],
     [
-      'nex_mail_buy',
+      'nex_mask_buy',
       { type: 'TEMPORARY', durationHours: 'HOUR_1' },
       { email: 'no-id@example.com' }
     ],
@@ -234,7 +234,7 @@ describe('service tool contracts', () => {
   );
 
   it('classifies transport failures without echoing raw error text', async () => {
-    const { tool, request } = setup('nex_mail_plan_list', null);
+    const { tool, request } = setup('nex_mask_plan_list', null);
     request.mockImplementation(async () => {
       throw Object.assign(new Error('aborted with secret header'), { name: 'AbortError' });
     });
@@ -248,7 +248,7 @@ describe('service tool contracts', () => {
   });
 
   it('preserves backend permission failures', async () => {
-    const { tool } = setup('nex_mail_message_detail', {
+    const { tool } = setup('nex_mask_message_detail', {
       code: -1005,
       msg: 'Permission denied',
       data: null

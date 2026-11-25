@@ -17,7 +17,7 @@ for (const loaded of [esm, cjs]) {
   assert.equal(loaded.TOOLS.length, 98);
   for (const name of [
     'nex_ip_buy',
-    'nex_mail_buy',
+    'nex_mask_buy',
     'nex_captcha_query',
     'nex_captcha_product_schema',
     'nex_billing_trade_list'
@@ -30,11 +30,11 @@ for (const loaded of [esm, cjs]) {
     true
   );
   assert.deepEqual(
-    Object.keys(loaded.TOOLS.find((tool) => tool.name === 'nex_mail_buy').inputSchema.properties),
+    Object.keys(loaded.TOOLS.find((tool) => tool.name === 'nex_mask_buy').inputSchema.properties),
     ['type', 'durationHours', 'domainId', 'suffix']
   );
   const mailPolling = loaded.TOOLS.find(
-    (tool) => tool.name === 'nex_mail_message_list'
+    (tool) => tool.name === 'nex_mask_message_list'
   ).inputSchema;
   assert.equal(mailPolling.properties.waitSeconds.maximum, 180);
   assert.equal(mailPolling.properties.waitSeconds.default, 0);

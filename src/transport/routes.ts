@@ -111,12 +111,24 @@ export const IP_SNAP_PLANS_ROUTE = '/ip/snap/plans';
 export const IP_SNAP_PRODUCTS_ROUTE = '/ip/snap/products';
 export const IP_SNAP_BUY_ROUTE = '/ip/snap/buy';
 export const IP_SNAP_PULL_ROUTE = '/ip/snap/pull';
-export const MAIL_PLANS_ROUTE = '/mail/plans';
-export const MAIL_DOMAINS_ROUTE = '/mail/domains';
-export const MAIL_BUY_ROUTE = '/mail/buy';
-export const MAIL_RECORDS_ROUTE = '/mail/records';
-export const MAIL_PULL_ROUTE = '/mail/pull';
-export const MAIL_DETAIL_ROUTE = '/mail/detail';
+export const MASK_PLANS_ROUTE = '/mask/plans';
+export const MASK_DOMAINS_ROUTE = '/mask/domains';
+export const MASK_BUY_ROUTE = '/mask/buy';
+export const MASK_RECORDS_ROUTE = '/mask/records';
+export const MASK_PULL_ROUTE = '/mask/pull';
+export const MASK_DETAIL_ROUTE = '/mask/detail';
+// Mail Service endpoints: real mailbox accounts stored and synced locally by Desktop. 邮件服务端点：客户端本机保存并收信的真实邮箱账号。
+
+/** Purchasable account products with config price and live stock. 可购买的账号商品、配置单价与实时库存。 */
+export const MAILBOX_PRODUCTS_ROUTE = '/mailbox/products';
+/** Buys accounts and imports them locally; credentials are never returned. 购买账号并导入本机，不返回凭据。 */
+export const MAILBOX_BUY_ROUTE = '/mailbox/buy';
+/** Credential-free account list of the current team. 当前团队的脱敏账号列表。 */
+export const MAILBOX_ACCOUNTS_ROUTE = '/mailbox/accounts';
+/** Syncs one account and lists message summaries. 同步单个账号并列出邮件摘要。 */
+export const MAILBOX_MESSAGES_ROUTE = '/mailbox/messages';
+/** Reads one message body and marks it read. 读取单封邮件正文并标记已读。 */
+export const MAILBOX_MESSAGE_ROUTE = '/mailbox/message';
 export const CAPTCHA_PRODUCTS_ROUTE = '/captcha/products';
 export const CAPTCHA_SCHEMA_ROUTE = '/captcha/schema';
 export const CAPTCHA_BUY_ROUTE = '/captcha/buy';

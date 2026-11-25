@@ -65,9 +65,11 @@ export function serviceTool<S extends z.ZodType>(options: {
     ? resourceRecovery(
         options.route.startsWith('/ip')
           ? 'proxy'
-          : options.route.startsWith('/mail')
-            ? 'mail'
-            : 'captcha',
+          : options.route.startsWith('/mask')
+            ? 'mask'
+            : options.route.startsWith('/mailbox')
+              ? 'mailbox'
+              : 'captcha',
         'RECONCILE',
         'PURCHASE_OUTCOME_UNKNOWN'
       )
