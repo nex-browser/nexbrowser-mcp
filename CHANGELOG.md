@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.11.26-beta.1] - 2026-11-26
+
+### Changed
+
+- Use Private mailboxes (私有邮箱) and Temporary mailboxes (临时邮箱) in tool descriptions, examples, and the bundled skill. Keep the existing tool names and recognize NexMask as an alias for temporary mailboxes.
+- Honor the mailbox source named by the user. When a request leaves the destination unclear, use the mailbox already in context or ask which address to use.
+
 ## [2026.11.25-beta.1] - 2026-11-25
 
 ### Added

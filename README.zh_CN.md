@@ -1,6 +1,6 @@
 # NexBrowser MCP Server
 
-现已支持 `nex_ip_*` 代理市场、续费与短效额度，`nex_mask_*` NexMask 收信邮箱、`nex_mailbox_*` 邮件服务账号收信，`nex_captcha_*` 识别任务，以及 `nex_billing_trade_list` 账单核对。需要同时更新提供 `/ip`、`/mask`、`/mailbox`、`/captcha`、`/billing` 路由的 Desktop 客户端，并保持登录及现有服务端权限。
+现已支持 `nex_ip_*` 代理市场、续费与短效额度，`nex_mask_*` 临时邮箱、`nex_mailbox_*` 私有邮箱账号收信，`nex_captcha_*` 识别任务，以及 `nex_billing_trade_list` 账单核对。例如，“用私有邮箱帮我查看最新邮件”使用私有邮箱，“用临时邮箱帮我查看最新邮件”使用临时邮箱。需要同时更新提供 `/ip`、`/mask`、`/mailbox`、`/captcha`、`/billing` 路由的 Desktop 客户端，并保持登录及现有服务端权限。
 
 页面验证码保留 agent 已有的浏览器会话，产品接入要求统一来自在线目录和 Schema，不受固定桥接产品列表限制。对 TEXT、CLICK 和其他有明确契约的启用产品，可先读取 `nex_captcha_product_schema`，采集真实参数并确认已有工具能应用结果，再免费调用 `nex_captcha_detect({url, productCode, adapter, workflow, canApply: true})`；显式接入不要求 HTML、sitekey 或 JavaScript 权限，普通填表和坐标点击可直接使用已有浏览器工具。`canApply` 默认 false，不会授予执行权限。HTML 自动检测仍作为 reCAPTCHA v2/enterprise 和 Turnstile 的快捷路径。固定桥接未就绪时返回 `agentIntegration` 引导通用接入；缺真实参数、契约不匹配或没有执行能力时仍不能付费。详见[选路与能力边界](skills/nexbrowser-automation/guides/captcha.md#choose-the-integration-workflow)。
 

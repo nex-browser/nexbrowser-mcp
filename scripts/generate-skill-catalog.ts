@@ -27,8 +27,8 @@ const SESSION_DEFAULT_FIELDS = new Set(['sessionId', 'pageId']);
  */
 const GROUPS: ReadonlyArray<{ title: string; note?: string; specs: readonly McpToolSpec[] }> = [
   { title: 'Proxy Marketplace', specs: IP_TOOL_SPECS },
-  { title: 'NexMask Mailboxes', specs: MASK_TOOL_SPECS },
-  { title: 'Mail Service Accounts', specs: MAILBOX_TOOL_SPECS },
+  { title: 'Temporary Mailboxes (临时邮箱)', specs: MASK_TOOL_SPECS },
+  { title: 'Private Mailboxes (私有邮箱)', specs: MAILBOX_TOOL_SPECS },
   { title: 'CAPTCHA Solving', specs: CAPTCHA_TOOL_SPECS },
   { title: 'Billing', specs: BILLING_TOOL_SPECS },
   {

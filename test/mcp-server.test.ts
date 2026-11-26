@@ -171,8 +171,13 @@ describe('NexBrowser MCP protocol', () => {
 
     try {
       const instructions = session.client.getInstructions()!;
+      expect(instructions).toMatch(/用私有邮箱帮我.*?nex_mailbox_\*/);
+      expect(instructions).toMatch(/用临时邮箱帮我.*?nex_mask_\*/);
+      expect(instructions).toMatch(/ask which address received the message/);
       expect(instructions).toMatch(/sign-up.*email address or phone number.*nex_mask_record_list/i);
-      expect(instructions).toMatch(/obtain the needed NexMask mailbox or NexSMS number directly/i);
+      expect(instructions).toMatch(
+        /obtain the needed temporary mailbox or NexSMS number directly/i
+      );
       expect(instructions).toContain('do not ask for a separate price confirmation');
       expect(instructions).toContain('inquiry alone never authorizes a purchase');
       expect(instructions).toMatch(/refs from the latest nex_browser_snapshot/);

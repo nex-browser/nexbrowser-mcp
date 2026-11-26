@@ -83,7 +83,7 @@ under the copied configuration. See the [Skill guide](skills/nexbrowser-automati
 - Inspect pages: snapshots, screenshots, visible text, console messages, and network requests.
 - Isolate sessions: each MCP process owns its browser sessions and active-tab state.
 - Buy and renew NexIP proxies, buy short-term quotas, and extract proxies with `nex_ip_*`.
-- Buy NexMask mailboxes and read email with `nex_mask_*`; create and query NexCaptcha solving tasks with `nex_captcha_*`.
+- Read an added or imported account with `nex_mailbox_*` (“use my private mailbox”). Buy temporary mailboxes and read their email with `nex_mask_*`; create and query NexCaptcha solving tasks with `nex_captcha_*`.
 - Reconcile charges and refunds with `nex_billing_trade_list`.
 
 Keep the agent's existing browser session for CAPTCHA work. Product integration follows the live catalog/schema, not a fixed bridge whitelist. Read `nex_captcha_product_schema`, obtain actual inputs and confirm permitted result-application tools, then call free `nex_captcha_detect({url, productCode, adapter, workflow, canApply: true})` for TEXT, CLICK or any other enabled documented product. Explicit integration requires neither HTML nor a sitekey; ordinary fill/click tools need no JavaScript permission. HTML detection remains a shortcut for reCAPTCHA v2/enterprise and Turnstile. `canApply` defaults to false and never grants execution permission. Missing fixed capture returns `agentIntegration` guidance; missing inputs, contract conflicts or unavailable execution still block payment. See [workflow selection and capability boundaries](skills/nexbrowser-automation/guides/captcha.md#choose-the-integration-workflow).
