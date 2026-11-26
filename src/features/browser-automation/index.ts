@@ -2,6 +2,7 @@ import { bindTools, type McpToolSpec } from '../../shared/define-tool.js';
 import type { McpToolDefinition } from '../../shared/types.js';
 import { NexApiClient } from '../../transport/nex-api-client.js';
 import { ARTIFACT_TOOL_SPECS } from './artifact-tools.js';
+import { BATCH_TOOL_SPEC } from './batch-tools.js';
 import { INSPECTION_TOOL_SPECS } from './inspection-tools.js';
 import { INTERACTION_TOOL_SPECS } from './interaction-tools.js';
 import { SESSION_TOOL_SPECS } from './session-tools.js';
@@ -16,7 +17,8 @@ export const AUTOMATION_TOOL_SPECS: readonly McpToolSpec[] = [
   ...TAB_TOOL_SPECS,
   ...INTERACTION_TOOL_SPECS,
   ...INSPECTION_TOOL_SPECS,
-  ...ARTIFACT_TOOL_SPECS
+  ...ARTIFACT_TOOL_SPECS,
+  BATCH_TOOL_SPEC
 ];
 
 /**

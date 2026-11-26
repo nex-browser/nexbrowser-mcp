@@ -195,7 +195,7 @@ describe('NexBrowser MCP protocol', () => {
     try {
       const listed = await session.client.listTools();
       const names = listed.tools.map((tool) => tool.name);
-      expect(names).toHaveLength(103);
+      expect(names).toHaveLength(104);
       expect(
         names.every(
           (name) =>

@@ -2601,6 +2601,87 @@
     }
   },
   {
+    "name": "nex_browser_batch",
+    "description": "Run tools on several browser windows at the same time in one call. Use it whenever the same step (connect, navigate, click, snapshot, wait, screenshot, ...) must happen in two or more windows; separate calls run one after another. Each task names a tool and its arguments. Every task except nex_browser_connect must pass an explicit sessionId, and each session (or connect windowId) may appear in only one task; put dependent steps for one window in later calls. After connect tasks, the last listed successful connection becomes the default session. Results are returned in task order; one task failing does not stop the others.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tasks": {
+          "minItems": 1,
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "enum": [
+                  "nex_browser_connect",
+                  "nex_browser_tab_list",
+                  "nex_browser_tab_new",
+                  "nex_browser_tab_select",
+                  "nex_browser_tab_close",
+                  "nex_browser_navigate",
+                  "nex_browser_reload",
+                  "nex_browser_go_back",
+                  "nex_browser_go_forward",
+                  "nex_browser_click",
+                  "nex_browser_mouse_click_xy",
+                  "nex_browser_hover",
+                  "nex_browser_type",
+                  "nex_browser_fill_form",
+                  "nex_browser_fill_account",
+                  "nex_browser_select_option",
+                  "nex_browser_check",
+                  "nex_browser_uncheck",
+                  "nex_browser_press_key",
+                  "nex_browser_key_down",
+                  "nex_browser_key_up",
+                  "nex_browser_drag",
+                  "nex_browser_scroll",
+                  "nex_browser_wait_for",
+                  "nex_browser_resize",
+                  "nex_browser_snapshot",
+                  "nex_browser_page_title",
+                  "nex_browser_page_url",
+                  "nex_browser_get_text",
+                  "nex_browser_console_messages",
+                  "nex_browser_network_requests",
+                  "nex_browser_network_request",
+                  "nex_browser_handle_dialog",
+                  "nex_browser_evaluate",
+                  "nex_browser_run_code",
+                  "nex_browser_take_screenshot",
+                  "nex_browser_file_upload",
+                  "nex_browser_drop"
+                ],
+                "description": "Tool to run for this window"
+              },
+              "arguments": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {},
+                "description": "Arguments for that tool, including sessionId (or windowId for nex_browser_connect)"
+              }
+            },
+            "required": [
+              "tool",
+              "arguments"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "tasks"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
     "name": "nex_sms_country_list",
     "description": "List the countries/regions where NexBrowser cloud phone numbers (SMS verification numbers) can be bought. Use the countryId with nex_sms_project_list.",
     "inputSchema": {

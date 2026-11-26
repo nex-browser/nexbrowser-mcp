@@ -14,7 +14,7 @@ const cjs = require('../lib/index.cjs');
 for (const loaded of [esm, cjs]) {
   assert.equal(loaded.MCP_SERVER_NAME, 'nexbrowser-mcp');
   assert.equal(loaded.MCP_SERVER_VERSION, loaded.PKG_VERSION);
-  assert.equal(loaded.TOOLS.length, 103);
+  assert.equal(loaded.TOOLS.length, 104);
   for (const name of [
     'nex_ip_buy',
     'nex_mask_buy',

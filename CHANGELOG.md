@@ -6,6 +6,16 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2026.11.26-beta.2] - 2026-11-26
+
+### Added
+
+- Add `nex_browser_batch` for concurrent browser operations across explicit window or session targets.
+
+### Changed
+
+- Update tool registration snapshots and smoke checks for 104 tools.
+
 ## [2026.11.26-beta.1] - 2026-11-26
 
 ### Changed
